@@ -1,0 +1,66 @@
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
+import '../models/novel.dart';
+import '../models/app_settings.dart';
+
+class StorageService {
+  static const String novelListKey = 'novel_list';
+  static const String settingsKey = 'app_settings';
+
+  Future<List<Novel>> loadNovels() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final novelsJson = prefs.getStringList(novelListKey);
+
+      if (novelsJson != null) {
+        return novelsJson.map((jsonString) {
+          final Map<String, dynamic> json =
+              Map<String, dynamic>.from(Map.castFrom(jsonDecode(jsonString)));
+          return Novel.fromJson(json);
+        }).toList();
+      }
+    } catch (e) {
+      print('小説リストの読み込みエラー: $e');
+    }
+    return [];
+  }
+
+  Future<void> saveNovels(List<Novel> novels) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final novelsJson =
+          novels.map((novel) => jsonEncode(novel.toJson())).toList();
+
+      await prefs.setStringList(novelListKey, novelsJson);
+    } catch (e) {
+      print('小説リストの保存エラー: $e');
+    }
+  }
+
+  Future<AppSettings> loadSettings() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final settingsJson = prefs.getString(settingsKey);
+
+      if (settingsJson != null) {
+        final Map<String, dynamic> json =
+            Map<String, dynamic>.from(Map.castFrom(jsonDecode(settingsJson)));
+        return AppSettings.fromJson(json);
+      }
+    } catch (e) {
+      print('設定の読み込みエラー: $e');
+    }
+    return AppSettings();
+  }
+
+  Future<void> saveSettings(AppSettings settings) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final settingsJson = jsonEncode(settings.toJson());
+
+      await prefs.setString(settingsKey, settingsJson);
+    } catch (e) {
+      print('設定の保存エラー: $e');
+    }
+  }
+}
