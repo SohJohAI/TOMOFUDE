@@ -4,6 +4,12 @@ on:
   push:
     branches: [ main ]
 
+# 権限設定を追加
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
