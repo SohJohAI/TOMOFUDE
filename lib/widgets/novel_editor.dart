@@ -4,7 +4,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
 import 'dart:math' as math;
-import 'dart:async'; // パフォーマンス最適化のためのタイマー
+import 'dart:async';
 import '../models/novel.dart';
 
 class NovelEditor extends StatefulWidget {
@@ -45,12 +45,6 @@ class _NovelEditorState extends State<NovelEditor>
   Color _strokeColor = CupertinoColors.activeBlue;
   double _baseStrokeWidth = 2.0;
 
-  // パフォーマンス最適化用
-  Timer? _frameRateTimer;
-  int _frameCount = 0;
-  double _currentFps = 60.0;
-  bool _showPerformanceStats = false;
-
   // アニメーション
   late AnimationController _animationController;
   late Animation<double> _animation;
@@ -73,32 +67,6 @@ class _NovelEditorState extends State<NovelEditor>
 
     // Apple Pencilの検出
     ServicesBinding.instance.keyboard.addHandler(_handleKeyEvent);
-
-    // パフォーマンスモニタリングの開始
-    _startPerformanceMonitoring();
-  }
-
-  // パフォーマンスモニタリング
-  void _startPerformanceMonitoring() {
-    _frameRateTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      setState(() {
-        _currentFps = _frameCount.toDouble();
-        _frameCount = 0;
-      });
-    });
-
-    // フレームコールバックの登録
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _frameCount++;
-      if (mounted) {
-        WidgetsBinding.instance.scheduleFrameCallback((_) {
-          if (mounted) {
-            _frameCount++;
-            WidgetsBinding.instance.addPostFrameCallback((_) => null);
-          }
-        });
-      }
-    });
   }
 
   @override
@@ -106,7 +74,6 @@ class _NovelEditorState extends State<NovelEditor>
     _transformationController.dispose();
     _animationController.dispose();
     ServicesBinding.instance.keyboard.removeHandler(_handleKeyEvent);
-    _frameRateTimer?.cancel();
     super.dispose();
   }
 
@@ -512,62 +479,6 @@ class _NovelEditorState extends State<NovelEditor>
                 ),
               ),
             ),
-
-          // パフォーマンス情報表示
-          if (_showPerformanceStats)
-            Positioned(
-              top: 8,
-              right: _scale != 1.0 ? 52 : 8,
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? CupertinoColors.darkBackgroundGray.withOpacity(0.8)
-                      : CupertinoColors.white.withOpacity(0.8),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  'FPS: ${_currentFps.toStringAsFixed(1)}',
-                  style: TextStyle(
-                    color: _currentFps < 55
-                        ? CupertinoColors.systemRed
-                        : (isDark
-                            ? CupertinoColors.white
-                            : CupertinoColors.black),
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-            ),
-
-          // パフォーマンスモニタリング切替ボタン
-          Positioned(
-            top: 8,
-            left: _drawMode && _isDrawing ? 120 : 8,
-            child: CupertinoButton(
-              padding: EdgeInsets.zero,
-              child: Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? CupertinoColors.darkBackgroundGray.withOpacity(0.8)
-                      : CupertinoColors.white.withOpacity(0.8),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  CupertinoIcons.speedometer,
-                  color: isDark ? CupertinoColors.white : CupertinoColors.black,
-                  size: 18,
-                ),
-              ),
-              onPressed: () {
-                setState(() {
-                  _showPerformanceStats = !_showPerformanceStats;
-                });
-              },
-            ),
-          ),
         ],
       ),
     );
