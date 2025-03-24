@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'providers/app_state.dart';
 import 'providers/novel_list_provider.dart';
@@ -23,43 +24,36 @@ class TomofudeApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final appState = Provider.of<NovelAppState>(context);
 
-    return MaterialApp(
+    // Cupertinoスタイルのアプリに変更
+    return CupertinoApp(
       debugShowCheckedModeBanner: false,
       title: '共筆。（TOMOFUDE）- AI小説執筆アプリ',
-      theme: ThemeData(
+      theme: CupertinoThemeData(
         primaryColor: const Color(0xFF5D5CDE),
-        colorScheme: const ColorScheme.light(
-          primary: Color(0xFF5D5CDE),
-          secondary: Color(0xFF5D5CDE),
-          surface: Colors.white,
-        ),
-        scaffoldBackgroundColor: Colors.white,
-        cardColor: const Color(0xFFF8F9FA),
-        textTheme: Typography.material2018().black,
-        // TextSelectionThemeDataを使用して入力フィールドの表示を設定
-        textSelectionTheme: const TextSelectionThemeData(
-          cursorColor: Color(0xFF5D5CDE),
-          selectionColor: Color(0xFFD0D0F7),
-          selectionHandleColor: Color(0xFF5D5CDE),
+        brightness: appState.isDarkMode ? Brightness.dark : Brightness.light,
+        scaffoldBackgroundColor:
+            appState.isDarkMode
+                ? const Color(0xFF181818)
+                : CupertinoColors.white,
+        barBackgroundColor:
+            appState.isDarkMode
+                ? const Color(0xFF252525)
+                : CupertinoColors.white,
+        textTheme: CupertinoTextThemeData(
+          primaryColor: const Color(0xFF5D5CDE),
+          textStyle: TextStyle(
+            color:
+                appState.isDarkMode
+                    ? CupertinoColors.white
+                    : CupertinoColors.black,
+            fontFamily: 'Hiragino Sans',
+          ),
         ),
       ),
-      darkTheme: ThemeData(
-        primaryColor: const Color(0xFF5D5CDE),
-        colorScheme: const ColorScheme.dark(
-          primary: Color(0xFF5D5CDE),
-          secondary: Color(0xFF5D5CDE),
-          surface: Color(0xFF252525),
-        ),
-        scaffoldBackgroundColor: const Color(0xFF181818),
-        cardColor: const Color(0xFF252525),
-        textTheme: Typography.material2018().white,
-        textSelectionTheme: const TextSelectionThemeData(
-          cursorColor: Color(0xFF5D5CDE),
-          selectionColor: Color(0xFF3E3E8F),
-          selectionHandleColor: Color(0xFF5D5CDE),
-        ),
-      ),
-      themeMode: appState.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+      // Material Widgetも使用するためのブリッジ
+      builder: (context, child) {
+        return Material(color: Colors.transparent, child: child);
+      },
       home: const NovelListScreen(),
     );
   }

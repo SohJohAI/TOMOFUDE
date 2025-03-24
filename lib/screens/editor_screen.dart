@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
 import '../providers/novel_list_provider.dart';
@@ -6,6 +7,8 @@ import '../models/novel.dart';
 import '../services/export_service.dart';
 import '../services/ai_service.dart';
 import '../widgets/novel_editor.dart';
+
+enum SettingType { text, character, organization, terminology }
 
 class NovelEditorScreen extends StatefulWidget {
   final Novel novel;
@@ -123,73 +126,81 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
 
   // エクスポートメニューを表示
   void _showExportMenu() {
-    showModalBottomSheet(
+    showCupertinoModalPopup(
       context: context,
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // タイトル部分
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  const Icon(Icons.file_download, color: Color(0xFF5D5CDE)),
-                  const SizedBox(width: 16),
-                  const Text(
-                    'ダウンロードオプション',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
+      builder: (context) => CupertinoActionSheet(
+        title: const Text('ダウンロードオプション'),
+        message: const Text('小説をエクスポートする形式を選択してください'),
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(context);
+              _showCustomExportDialog(ExportFormat.text);
+            },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(CupertinoIcons.doc_text,
+                    color: CupertinoColors.activeBlue),
+                const SizedBox(width: 10),
+                const Text('テキストファイル (.txt)'),
+              ],
             ),
-            const Divider(height: 1),
-
-            // メインオプション
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    ListTile(
-                      leading: const Icon(Icons.text_format),
-                      title: const Text('テキストファイル (.txt)'),
-                      subtitle: const Text('プレーンテキストとして保存'),
-                      onTap: () {
-                        Navigator.pop(context);
-                        _showCustomExportDialog(ExportFormat.text);
-                      },
-                    ),
-                    ListTile(
-                      leading: const Icon(Icons.code),
-                      title: const Text('HTMLファイル (.html)'),
-                      subtitle: const Text('整形されたWebページとして保存'),
-                      onTap: () {
-                        Navigator.pop(context);
-                        _showCustomExportDialog(ExportFormat.html);
-                      },
-                    ),
-                    ListTile(
-                      leading: const Icon(Icons.data_object),
-                      title: const Text('JSONファイル (.json)'),
-                      subtitle: const Text('アプリ互換形式で保存'),
-                      onTap: () {
-                        Navigator.pop(context);
-                        _exportService.exportAsJson(widget.novel);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('JSONファイルをエクスポートしました')),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(context);
+              _showCustomExportDialog(ExportFormat.html);
+            },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(CupertinoIcons.doc_richtext,
+                    color: CupertinoColors.activeBlue),
+                const SizedBox(width: 10),
+                const Text('HTMLファイル (.html)'),
+              ],
             ),
-          ],
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(context);
+              _exportService.exportAsJson(widget.novel);
+              _showExportSuccessAlert('JSONファイルをエクスポートしました');
+            },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(CupertinoIcons.doc_on_doc,
+                    color: CupertinoColors.activeBlue),
+                const SizedBox(width: 10),
+                const Text('JSONファイル (.json)'),
+              ],
+            ),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          isDestructiveAction: true,
+          onPressed: () => Navigator.pop(context),
+          child: const Text('キャンセル'),
         ),
+      ),
+    );
+  }
+
+  // エクスポート成功アラートを表示
+  void _showExportSuccessAlert(String message) {
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text('エクスポート完了'),
+        content: Text(message),
+        actions: [
+          CupertinoDialogAction(
+            child: const Text('OK'),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ],
       ),
     );
   }
@@ -200,38 +211,43 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
         text: _titleController.text.isEmpty ? '無題の小説' : _titleController.text);
     final authorController = TextEditingController();
 
-    showDialog(
+    showCupertinoDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => CupertinoAlertDialog(
         title:
             Text('${format == ExportFormat.text ? 'テキスト' : 'HTML'}としてエクスポート'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextField(
+            const SizedBox(height: 10),
+            CupertinoTextField(
               controller: titleController,
-              decoration: const InputDecoration(
-                labelText: 'タイトル',
-                border: OutlineInputBorder(),
+              placeholder: 'タイトル',
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                border: Border.all(color: CupertinoColors.systemGrey4),
+                borderRadius: BorderRadius.circular(8),
               ),
             ),
-            const SizedBox(height: 16),
-            TextField(
+            const SizedBox(height: 10),
+            CupertinoTextField(
               controller: authorController,
-              decoration: const InputDecoration(
-                labelText: '著者名（任意）',
-                border: OutlineInputBorder(),
-                hintText: '未入力の場合は「匿名」になります',
+              placeholder: '著者名（未入力の場合は「匿名」になります）',
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                border: Border.all(color: CupertinoColors.systemGrey4),
+                borderRadius: BorderRadius.circular(8),
               ),
             ),
           ],
         ),
         actions: [
-          TextButton(
+          CupertinoDialogAction(
+            isDestructiveAction: true,
             onPressed: () => Navigator.pop(context),
             child: const Text('キャンセル'),
           ),
-          FilledButton(
+          CupertinoDialogAction(
             onPressed: () {
               Navigator.pop(context);
 
@@ -252,11 +268,8 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
                 );
               }
 
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                    content: Text(
-                        '${format == ExportFormat.text ? 'テキスト' : 'HTML'}ファイルをエクスポートしました')),
-              );
+              _showExportSuccessAlert(
+                  '${format == ExportFormat.text ? 'テキスト' : 'HTML'}ファイルをエクスポートしました');
             },
             child: const Text('エクスポート'),
           ),
@@ -282,9 +295,7 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
     });
 
     // 更新を通知
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('設定情報を更新しました')),
-    );
+    _showExportSuccessAlert('設定情報を更新しました');
   }
 
   // プロット情報を分析
@@ -303,9 +314,7 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
     });
 
     // 更新を通知
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('プロット情報を更新しました')),
-    );
+    _showExportSuccessAlert('プロット情報を更新しました');
   }
 
   // レビューを生成
@@ -324,9 +333,7 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
     });
 
     // 更新を通知
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('レビューを更新しました')),
-    );
+    _showExportSuccessAlert('レビューを更新しました');
   }
 
   // AIに次の展開を提案してもらう
@@ -353,9 +360,7 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
         _isLoading = false;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('エラーが発生しました: $e')),
-      );
+      _showExportSuccessAlert('エラーが発生しました: $e');
     }
   }
 
@@ -363,56 +368,74 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
   void _showAISuggestionsDialog() {
     if (_aiSuggestions.isEmpty) return;
 
-    showDialog(
+    showCupertinoDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => CupertinoAlertDialog(
         title: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.auto_awesome,
-                color: Theme.of(context).colorScheme.primary),
+            Icon(CupertinoIcons.sparkles, color: CupertinoColors.activeBlue),
             const SizedBox(width: 8),
             const Text('AIからの提案'),
           ],
         ),
         content: SizedBox(
-          width: double.maxFinite,
-          child: ListView.separated(
-            shrinkWrap: true,
-            itemCount: _aiSuggestions.length,
-            separatorBuilder: (context, index) => const Divider(),
-            itemBuilder: (context, index) {
-              return InkWell(
-                onTap: () => _applySuggestion(_aiSuggestions[index]),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+          height: 300,
+          child: CupertinoScrollbar(
+            child: SingleChildScrollView(
+              child: Column(
+                children: _aiSuggestions.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final suggestion = entry.value;
+
+                  return Column(
                     children: [
-                      Text(
-                        '提案 ${index + 1}',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).colorScheme.primary,
+                      const SizedBox(height: 10),
+                      GestureDetector(
+                        onTap: () => _applySuggestion(suggestion),
+                        child: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: CupertinoColors.systemGrey6,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                                color: CupertinoColors.activeBlue
+                                    .withOpacity(0.3)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '提案 ${index + 1}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: CupertinoColors.activeBlue,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(suggestion),
+                            ],
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(_aiSuggestions[index]),
+                      if (index < _aiSuggestions.length - 1)
+                        const Divider(height: 20),
                     ],
-                  ),
-                ),
-              );
-            },
+                  );
+                }).toList(),
+              ),
+            ),
           ),
         ),
         actions: [
-          TextButton(
+          CupertinoDialogAction(
             onPressed: () {
               _showingSuggestions = false;
               Navigator.pop(context);
             },
             child: const Text('閉じる'),
           ),
-          TextButton(
+          CupertinoDialogAction(
             onPressed: () {
               _showingSuggestions = false;
               Navigator.pop(context);
@@ -455,34 +478,32 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
       _analyzeSettings();
       _generateReview();
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('AIの提案を追加しました')),
-      );
+      _showExportSuccessAlert('AIの提案を追加しました');
     } catch (e) {
       setState(() {
         _isLoading = false;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('エラーが発生しました: $e')),
-      );
+      _showExportSuccessAlert('エラーが発生しました: $e');
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<NovelAppState>(context);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = CupertinoTheme.of(context).brightness == Brightness.dark;
 
     // ローディング中の表示
     if (_isLoading) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('共筆。（TOMOFUDE）')),
-        body: const Center(
+      return CupertinoPageScaffold(
+        navigationBar: const CupertinoNavigationBar(
+          middle: Text('共筆。（TOMOFUDE）'),
+        ),
+        child: const Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircularProgressIndicator(),
+              CupertinoActivityIndicator(),
               SizedBox(height: 16),
               Text('AIが文章を分析しています...'),
             ],
@@ -491,28 +512,18 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
       );
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Row(
+    return CupertinoPageScaffold(
+      navigationBar: CupertinoNavigationBar(
+        middle: Row(
           children: [
             Expanded(
-              child: TextField(
+              child: CupertinoTextField(
                 controller: _titleController,
-                decoration: InputDecoration(
-                  hintText: 'タイトルを入力',
-                  border: InputBorder.none,
-                  hintStyle: TextStyle(
-                    color: Theme.of(context).brightness == Brightness.light
-                        ? Colors.grey[700] // ライトモードではダークグレー
-                        : Colors.white70, // ダークモードでは薄い白
-                  ),
-                ),
-                style: TextStyle(
-                  fontSize: 20,
+                placeholder: 'タイトルを入力',
+                decoration: null,
+                style: const TextStyle(
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Theme.of(context).brightness == Brightness.light
-                      ? Colors.black // ライトモードでは黒
-                      : Colors.white, // ダークモードでは白
                 ),
               ),
             ),
@@ -520,29 +531,38 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
               'ver 1.0.0',
               style: TextStyle(
                 fontSize: 12,
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? Colors.white70 // ダークモードでは薄い白色
-                    : Colors.black54, // ライトモードでは薄い黒色
+                color: isDark
+                    ? CupertinoColors.systemGrey
+                    : CupertinoColors.systemGrey2,
               ),
             ),
           ],
         ),
-        actions: [
-          // エクスポートボタン
-          IconButton(
-            icon: const Icon(Icons.file_download),
-            tooltip: 'エクスポート',
-            onPressed: _showExportMenu,
-          ),
-          IconButton(
-            icon: Icon(
-              appState.isDarkMode ? Icons.light_mode : Icons.dark_mode,
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              child: Icon(
+                CupertinoIcons.cloud_download,
+                color: isDark ? CupertinoColors.white : CupertinoColors.black,
+              ),
+              onPressed: _showExportMenu,
             ),
-            onPressed: appState.toggleTheme,
-          ),
-        ],
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              child: Icon(
+                appState.isDarkMode
+                    ? CupertinoIcons.sun_max
+                    : CupertinoIcons.moon,
+                color: isDark ? CupertinoColors.white : CupertinoColors.black,
+              ),
+              onPressed: appState.toggleTheme,
+            ),
+          ],
+        ),
       ),
-      body: Column(
+      child: Column(
         children: [
           // メインエディタ部分（エディタと設定パネル）
           Expanded(
@@ -580,20 +600,51 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                OutlinedButton.icon(
+                CupertinoButton(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  color: CupertinoColors.systemGrey5,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        CupertinoIcons.floppy_disk,
+                        size: 18,
+                        color: isDark
+                            ? CupertinoColors.white
+                            : CupertinoColors.black,
+                      ),
+                      const SizedBox(width: 8),
+                      const Text('保存して戻る'),
+                    ],
+                  ),
                   onPressed: () async {
                     final bool success = await _saveNovel();
                     if (success) {
                       Navigator.pop(context);
                     }
                   },
-                  icon: const Icon(Icons.save),
-                  label: const Text('保存して戻る'),
                 ),
-                ElevatedButton.icon(
+                CupertinoButton(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  color: CupertinoColors.activeBlue,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        CupertinoIcons.sparkles,
+                        size: 18,
+                        color: CupertinoColors.white,
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'AIに続きを提案してもらう',
+                        style: TextStyle(color: CupertinoColors.white),
+                      ),
+                    ],
+                  ),
                   onPressed: _getAISuggestions,
-                  icon: const Icon(Icons.auto_awesome),
-                  label: const Text('AIに続きを提案してもらう'),
                 ),
               ],
             ),
@@ -634,15 +685,16 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
 
   // レビューパネルを構築
   Widget _buildReviewPanel() {
-    return Card(
-      elevation: 0,
-      margin: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(
+    final isDark = CupertinoTheme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
         borderRadius: BorderRadius.circular(8),
-        side: BorderSide(
-          color: Theme.of(context).brightness == Brightness.dark
-              ? Colors.grey.shade700
-              : Colors.grey.shade300,
+        border: Border.all(
+          color: isDark
+              ? CupertinoColors.systemGrey.darkColor
+              : CupertinoColors.systemGrey4,
         ),
       ),
       child: Column(
@@ -657,9 +709,9 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
                 Row(
                   children: [
                     Icon(
-                      Icons.rate_review,
+                      CupertinoIcons.text_bubble,
                       size: 18,
-                      color: Theme.of(context).colorScheme.primary,
+                      color: CupertinoColors.activeBlue,
                     ),
                     const SizedBox(width: 8),
                     const Text(
@@ -671,45 +723,55 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
                     ),
                   ],
                 ),
-                IconButton(
-                  icon: const Icon(Icons.refresh, size: 18),
-                  tooltip: 'レビューを更新',
+                CupertinoButton(
+                  padding: EdgeInsets.zero,
+                  child: Icon(
+                    CupertinoIcons.refresh,
+                    size: 18,
+                    color:
+                        isDark ? CupertinoColors.white : CupertinoColors.black,
+                  ),
                   onPressed: _generateReview,
                 ),
               ],
             ),
           ),
 
-          const Divider(height: 1),
+          Container(
+            height: 0.5,
+            color: isDark
+                ? CupertinoColors.systemGrey.darkColor
+                : CupertinoColors.systemGrey4,
+          ),
 
           // レビュー内容
           Expanded(
             child: _isGeneratingReview
-                ? const Center(child: CircularProgressIndicator())
+                ? const Center(child: CupertinoActivityIndicator())
                 : SingleChildScrollView(
                     padding: const EdgeInsets.all(12),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildReviewSection(
-                          icon: Icons.menu_book,
+                          icon: CupertinoIcons.book,
                           title: '読者視点',
                           content: _reviewData['reader'] ?? '',
-                          iconColor: Colors.purple,
+                          iconColor: CupertinoColors.systemPurple,
                         ),
                         const SizedBox(height: 16),
                         _buildReviewSection(
-                          icon: Icons.edit_note,
+                          icon: CupertinoIcons.pencil,
                           title: '編集者視点',
                           content: _reviewData['editor'] ?? '',
-                          iconColor: Colors.blue,
+                          iconColor: CupertinoColors.systemBlue,
                         ),
                         const SizedBox(height: 16),
                         _buildReviewSection(
-                          icon: Icons.emoji_events,
+                          icon: CupertinoIcons.star,
                           title: '審査員視点',
                           content: _reviewData['jury'] ?? '',
-                          iconColor: Colors.amber,
+                          iconColor: CupertinoColors.systemYellow,
                         ),
                       ],
                     ),
@@ -727,6 +789,8 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
     required String content,
     required Color iconColor,
   }) {
+    final isDark = CupertinoTheme.of(context).brightness == Brightness.dark;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -748,9 +812,9 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
           content.isEmpty ? '分析中...' : content,
           style: TextStyle(
             fontSize: 12,
-            color: Theme.of(context).brightness == Brightness.dark
-                ? Colors.grey[300]
-                : Colors.grey[700],
+            color: isDark
+                ? CupertinoColors.systemGrey
+                : CupertinoColors.systemGrey2,
           ),
         ),
       ],
@@ -759,15 +823,16 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
 
   // 設定情報パネルを構築
   Widget _buildSettingsPanel() {
-    return Card(
-      elevation: 0,
-      margin: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(
+    final isDark = CupertinoTheme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
         borderRadius: BorderRadius.circular(8),
-        side: BorderSide(
-          color: Theme.of(context).brightness == Brightness.dark
-              ? Colors.grey.shade700
-              : Colors.grey.shade300,
+        border: Border.all(
+          color: isDark
+              ? CupertinoColors.systemGrey.darkColor
+              : CupertinoColors.systemGrey4,
         ),
       ),
       child: Column(
@@ -782,9 +847,9 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
                 Row(
                   children: [
                     Icon(
-                      Icons.settings,
+                      CupertinoIcons.gear,
                       size: 18,
-                      color: Theme.of(context).colorScheme.primary,
+                      color: CupertinoColors.activeBlue,
                     ),
                     const SizedBox(width: 8),
                     const Text(
@@ -796,21 +861,31 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
                     ),
                   ],
                 ),
-                IconButton(
-                  icon: const Icon(Icons.refresh, size: 18),
-                  tooltip: '設定情報を更新',
+                CupertinoButton(
+                  padding: EdgeInsets.zero,
+                  child: Icon(
+                    CupertinoIcons.refresh,
+                    size: 18,
+                    color:
+                        isDark ? CupertinoColors.white : CupertinoColors.black,
+                  ),
                   onPressed: _analyzeSettings,
                 ),
               ],
             ),
           ),
 
-          const Divider(height: 1),
+          Container(
+            height: 0.5,
+            color: isDark
+                ? CupertinoColors.systemGrey.darkColor
+                : CupertinoColors.systemGrey4,
+          ),
 
           // 設定内容
           Expanded(
             child: _isAnalyzingSettings
-                ? const Center(child: CircularProgressIndicator())
+                ? const Center(child: CupertinoActivityIndicator())
                 : SingleChildScrollView(
                     padding: const EdgeInsets.all(12),
                     child: Column(
@@ -860,6 +935,8 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
     required dynamic content,
     required SettingType type,
   }) {
+    final isDark = CupertinoTheme.of(context).brightness == Brightness.dark;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -867,9 +944,9 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
           title,
           style: TextStyle(
             fontSize: 12,
-            color: Theme.of(context).brightness == Brightness.dark
-                ? Colors.grey[400]
-                : Colors.grey[600],
+            color: isDark
+                ? CupertinoColors.systemGrey
+                : CupertinoColors.systemGrey2,
           ),
         ),
         const SizedBox(height: 4),
@@ -886,78 +963,94 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
     );
   }
 
-  // 折りたたみ可能なリスト
-  Widget _buildCollapsibleList(List items, SettingType type) {
-    if (items.isEmpty) {
+  // 折りたたみ可能なリストを構築
+  Widget _buildCollapsibleList(dynamic items, SettingType type) {
+    if (items is! List || items.isEmpty) {
       return const Text('-', style: TextStyle(fontSize: 13));
     }
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: items.map<Widget>((item) {
-        // アイテムが文字列かオブジェクトか判定
-        String name = '';
-        String description = '';
+        if (type == SettingType.character || type == SettingType.organization) {
+          final name = item['name'] ?? '';
+          final description = item['description'] ?? '';
 
-        if (item is String) {
-          name = item;
-          description = '';
-        } else if (item is Map) {
-          if (type == SettingType.character ||
-              type == SettingType.organization) {
-            name = item['name'] ?? '';
-            description = item['description'] ?? '';
-          } else if (type == SettingType.terminology) {
-            name = item['term'] ?? '';
-            description = item['definition'] ?? '';
-          }
-        }
-
-        if (name.isEmpty) return const SizedBox.shrink();
-
-        return Container(
-          margin: const EdgeInsets.only(bottom: 4),
-          decoration: BoxDecoration(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? Colors.grey.shade800
-                : Colors.grey.shade100,
-            borderRadius: BorderRadius.circular(4),
-          ),
-          child: ExpansionTile(
-            tilePadding: const EdgeInsets.symmetric(horizontal: 8),
-            childrenPadding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-            title: Text(
-              name,
-              style: const TextStyle(fontSize: 13),
-            ),
-            children: [
-              if (description.isNotEmpty)
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Text(
-                  description,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? Colors.grey[300]
-                        : Colors.grey[700],
+                  '• $name',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-            ],
-          ),
-        );
+                if (description.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 10, top: 2, bottom: 4),
+                    child: Text(
+                      description,
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                  ),
+              ],
+            ),
+          );
+        } else if (type == SettingType.terminology) {
+          final term = item['term'] ?? '';
+          final definition = item['definition'] ?? '';
+
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '• $term',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                if (definition.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 10, top: 2, bottom: 4),
+                    child: Text(
+                      definition,
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                  ),
+              ],
+            ),
+          );
+        } else {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Text(
+              '• ${item.toString()}',
+              style: const TextStyle(fontSize: 13),
+            ),
+          );
+        }
       }).toList(),
     );
   }
 
   // プロットパネルを構築
   Widget _buildPlotPanel() {
-    return Card(
-      elevation: 0,
-      margin: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(
+    final isDark = CupertinoTheme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
         borderRadius: BorderRadius.circular(8),
-        side: BorderSide(
-          color: Theme.of(context).brightness == Brightness.dark
-              ? Colors.grey.shade700
-              : Colors.grey.shade300,
+        border: Border.all(
+          color: isDark
+              ? CupertinoColors.systemGrey.darkColor
+              : CupertinoColors.systemGrey4,
         ),
       ),
       child: Column(
@@ -972,13 +1065,13 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
                 Row(
                   children: [
                     Icon(
-                      Icons.map,
+                      CupertinoIcons.chart_bar,
                       size: 18,
-                      color: Theme.of(context).colorScheme.primary,
+                      color: CupertinoColors.activeBlue,
                     ),
                     const SizedBox(width: 8),
                     const Text(
-                      'プロット',
+                      'プロット分析',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
@@ -986,53 +1079,54 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
                     ),
                   ],
                 ),
-                IconButton(
-                  icon: const Icon(Icons.refresh, size: 18),
-                  tooltip: 'プロットを更新',
+                CupertinoButton(
+                  padding: EdgeInsets.zero,
+                  child: Icon(
+                    CupertinoIcons.refresh,
+                    size: 18,
+                    color:
+                        isDark ? CupertinoColors.white : CupertinoColors.black,
+                  ),
                   onPressed: _analyzePlot,
                 ),
               ],
             ),
           ),
 
-          const Divider(height: 1),
+          Container(
+            height: 0.5,
+            color: isDark
+                ? CupertinoColors.systemGrey.darkColor
+                : CupertinoColors.systemGrey4,
+          ),
 
           // プロット内容
           Expanded(
             child: _isAnalyzingPlot
-                ? const Center(child: CircularProgressIndicator())
+                ? const Center(child: CupertinoActivityIndicator())
                 : SingleChildScrollView(
                     padding: const EdgeInsets.all(12),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildPlotSection(
-                          title: '導入部',
-                          content: _plotData['introduction'] ?? '',
+                          title: '現在の段階',
+                          content: _plotData['currentStage'] ?? '',
                         ),
                         const SizedBox(height: 8),
                         _buildPlotSection(
-                          title: '主な出来事',
+                          title: '主要イベント',
                           content: _plotData['mainEvents'] ?? [],
-                          isList: true,
                         ),
                         const SizedBox(height: 8),
                         _buildPlotSection(
                           title: '転換点',
                           content: _plotData['turningPoints'] ?? [],
-                          isList: true,
-                        ),
-                        const SizedBox(height: 8),
-                        _buildPlotSection(
-                          title: '現在の展開段階',
-                          content: _plotData['currentStage'] ?? '',
-                          isHighlighted: true,
                         ),
                         const SizedBox(height: 8),
                         _buildPlotSection(
                           title: '未解決の問題',
                           content: _plotData['unresolvedIssues'] ?? [],
-                          isList: true,
                         ),
                       ],
                     ),
@@ -1047,9 +1141,9 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
   Widget _buildPlotSection({
     required String title,
     required dynamic content,
-    bool isList = false,
-    bool isHighlighted = false,
   }) {
+    final isDark = CupertinoTheme.of(context).brightness == Brightness.dark;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1057,70 +1151,54 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
           title,
           style: TextStyle(
             fontSize: 12,
-            color: Theme.of(context).brightness == Brightness.dark
-                ? Theme.of(context).colorScheme.primary.withOpacity(0.7)
-                : Theme.of(context).colorScheme.primary,
-            fontWeight: FontWeight.w500,
+            color: isDark
+                ? CupertinoColors.systemGrey
+                : CupertinoColors.systemGrey2,
           ),
         ),
-        const SizedBox(height: 2),
-        if (!isList)
-          Container(
-            padding: isHighlighted ? const EdgeInsets.all(4) : null,
-            decoration: isHighlighted
-                ? BoxDecoration(
-                    color:
-                        Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(4),
-                  )
-                : null,
-            child: Text(
-              content.toString(),
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: isHighlighted ? FontWeight.w500 : FontWeight.normal,
-              ),
-            ),
+        const SizedBox(height: 4),
+        if (content is String)
+          Text(
+            content.isEmpty ? '-' : content,
+            style: const TextStyle(fontSize: 13),
           )
-        else if (content is List && content.isNotEmpty)
+        else if (content is List)
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: content.map<Widget>((item) {
               return Padding(
-                padding: const EdgeInsets.only(bottom: 2),
+                padding: const EdgeInsets.only(bottom: 4),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('・', style: TextStyle(fontSize: 12)),
-                    const SizedBox(width: 2),
+                    const Text('• ', style: TextStyle(fontSize: 13)),
                     Expanded(
                       child: Text(
                         item.toString(),
-                        style: const TextStyle(fontSize: 12),
+                        style: const TextStyle(fontSize: 13),
                       ),
                     ),
                   ],
                 ),
               );
             }).toList(),
-          )
-        else
-          const Text('-', style: TextStyle(fontSize: 12)),
+          ),
       ],
     );
   }
 
   // 次の展開候補パネルを構築
   Widget _buildSuggestionsPanel() {
-    return Card(
-      elevation: 0,
-      margin: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(
+    final isDark = CupertinoTheme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
         borderRadius: BorderRadius.circular(8),
-        side: BorderSide(
-          color: Theme.of(context).brightness == Brightness.dark
-              ? Colors.grey.shade700
-              : Colors.grey.shade300,
+        border: Border.all(
+          color: isDark
+              ? CupertinoColors.systemGrey.darkColor
+              : CupertinoColors.systemGrey4,
         ),
       ),
       child: Column(
@@ -1135,13 +1213,13 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
                 Row(
                   children: [
                     Icon(
-                      Icons.lightbulb,
+                      CupertinoIcons.lightbulb,
                       size: 18,
-                      color: Theme.of(context).colorScheme.primary,
+                      color: CupertinoColors.activeBlue,
                     ),
                     const SizedBox(width: 8),
                     const Text(
-                      '次の展開候補',
+                      '展開候補',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
@@ -1149,85 +1227,76 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
                     ),
                   ],
                 ),
-                IconButton(
-                  icon: const Icon(Icons.refresh, size: 18),
-                  tooltip: '展開候補を更新',
-                  onPressed: _getAISuggestions,
-                ),
               ],
             ),
           ),
 
-          const Divider(height: 1),
+          Container(
+            height: 0.5,
+            color: isDark
+                ? CupertinoColors.systemGrey.darkColor
+                : CupertinoColors.systemGrey4,
+          ),
 
           // 展開候補内容
           Expanded(
-            child: FutureBuilder<List<String>>(
-              future: _aiService.generateContinuations(_contentController.text),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  return Center(child: Text('エラーが発生しました: ${snapshot.error}'));
-                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Center(child: Text('展開候補はありません'));
-                }
-
-                final suggestions = snapshot.data!;
-
-                return SingleChildScrollView(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: suggestions.asMap().entries.map((entry) {
-                      final index = entry.key;
-                      final suggestion = entry.value;
-
-                      return InkWell(
-                        onTap: () => _applySuggestion(suggestion),
-                        borderRadius: BorderRadius.circular(4),
-                        child: Container(
-                          width: double.infinity,
-                          margin: const EdgeInsets.only(bottom: 8),
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color:
-                                Theme.of(context).brightness == Brightness.dark
-                                    ? Colors.grey.shade800
-                                    : Colors.grey.shade100,
-                            borderRadius: BorderRadius.circular(4),
-                            border: Border.all(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .primary
-                                  .withOpacity(0.2),
-                              width: 1,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '可能性のある展開',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark
+                          ? CupertinoColors.systemGrey
+                          : CupertinoColors.systemGrey2,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  if (_plotData.containsKey('possibleDevelopments') &&
+                      _plotData['possibleDevelopments'] is List &&
+                      (_plotData['possibleDevelopments'] as List).isNotEmpty)
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: (_plotData['possibleDevelopments'] as List)
+                          .map<Widget>((item) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? const Color(0xFF2C2C2E)
+                                  : CupertinoColors.systemGrey6,
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color:
+                                    CupertinoColors.activeBlue.withOpacity(0.3),
+                              ),
+                            ),
+                            child: Text(
+                              item.toString(),
+                              style: const TextStyle(fontSize: 13),
                             ),
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                '提案 ${index + 1}',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                suggestion,
-                                style: const TextStyle(fontSize: 12),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                );
-              },
+                        );
+                      }).toList(),
+                    )
+                  else
+                    Text(
+                      'AIに続きを提案してもらうボタンを押すと、ここに展開候補が表示されます。',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: isDark
+                            ? CupertinoColors.systemGrey
+                            : CupertinoColors.systemGrey2,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
         ],

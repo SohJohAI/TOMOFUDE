@@ -1,32 +1,96 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+
+// Cupertinoスタイルの折りたたみセクション
+class _CupertinoExpandableSection extends StatefulWidget {
+  final Widget header;
+  final Widget content;
+
+  const _CupertinoExpandableSection({
+    Key? key,
+    required this.header,
+    required this.content,
+  }) : super(key: key);
+
+  @override
+  _CupertinoExpandableSectionState createState() =>
+      _CupertinoExpandableSectionState();
+}
+
+class _CupertinoExpandableSectionState
+    extends State<_CupertinoExpandableSection> {
+  bool _isExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = CupertinoTheme.of(context).brightness == Brightness.dark;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ヘッダー部分（タップ可能）
+        CupertinoButton(
+          padding: EdgeInsets.zero,
+          onPressed: () {
+            setState(() {
+              _isExpanded = !_isExpanded;
+            });
+          },
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(child: widget.header),
+              Icon(
+                _isExpanded
+                    ? CupertinoIcons.chevron_up
+                    : CupertinoIcons.chevron_down,
+                size: 18,
+                color: isDark
+                    ? CupertinoColors.systemGrey
+                    : CupertinoColors.systemGrey2,
+              ),
+            ],
+          ),
+        ),
+
+        // コンテンツ部分（展開時のみ表示）
+        if (_isExpanded) widget.content,
+      ],
+    );
+  }
+}
 
 class FAQScreen extends StatelessWidget {
   const FAQScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('よくある質問'),
-        elevation: 0,
+    final isDark = CupertinoTheme.of(context).brightness == Brightness.dark;
+
+    return CupertinoPageScaffold(
+      navigationBar: const CupertinoNavigationBar(
+        middle: Text('よくある質問'),
+        border: null,
       ),
-      body: ListView(
+      child: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
           // タイトルと説明
-          const Text(
-            'よくある質問 (FAQ)',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
+          const Padding(
+            padding: EdgeInsets.only(top: 16),
+            child: Text(
+              'よくある質問 (FAQ)',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             '「共筆。」アプリについてよくある質問と回答をまとめました。',
             style: TextStyle(
               fontSize: 16,
-              color: Colors.grey,
+              color: isDark
+                  ? CupertinoColors.systemGrey
+                  : CupertinoColors.systemGrey2,
             ),
           ),
           const SizedBox(height: 24),
@@ -79,51 +143,53 @@ class FAQScreen extends StatelessWidget {
 
           // 必要に応じて追加のFAQ項目
           // ...
-
           const SizedBox(height: 32),
 
           // 問い合わせ案内
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? Colors.grey.shade800
-                  : Colors.grey.shade100,
+              color: isDark
+                  ? const Color(0xFF252525)
+                  : CupertinoColors.systemGrey6,
               borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: isDark
+                    ? CupertinoColors.systemGrey.darkColor
+                    : CupertinoColors.systemGrey4,
+                width: 0.5,
+              ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
                   'お問い合わせ',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'ご質問やご意見がありましたら、下記のメールアドレスまでご連絡ください。',
                   style: TextStyle(
                     fontSize: 14,
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? Colors.grey.shade300
-                        : Colors.grey.shade700,
+                    color: isDark
+                        ? CupertinoColors.systemGrey
+                        : CupertinoColors.systemGrey2,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Row(
                   children: [
                     Icon(
-                      Icons.email,
+                      CupertinoIcons.mail,
                       size: 16,
-                      color: Theme.of(context).colorScheme.primary,
+                      color: CupertinoTheme.of(context).primaryColor,
                     ),
                     const SizedBox(width: 8),
-                    SelectableText(
+                    Text(
                       'sohjohai@gmail.com',
                       style: TextStyle(
-                        color: Theme.of(context).colorScheme.primary,
+                        color: CupertinoTheme.of(context).primaryColor,
                       ),
                     ),
                   ],
@@ -139,9 +205,9 @@ class FAQScreen extends StatelessWidget {
               'ver 1.0.0',
               style: TextStyle(
                 fontSize: 12,
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? Colors.white70
-                    : Colors.black54,
+                color: isDark
+                    ? CupertinoColors.systemGrey
+                    : CupertinoColors.systemGrey2,
               ),
             ),
           ),
@@ -150,45 +216,54 @@ class FAQScreen extends StatelessWidget {
     );
   }
 
-  // FAQ項目ウィジェット
+  // FAQ項目ウィジェット（Cupertinoスタイル）
   Widget _buildFAQItem(
     BuildContext context, {
     required String question,
     required String answer,
   }) {
-    return Card(
+    final isDark = CupertinoTheme.of(context).brightness == Brightness.dark;
+
+    // Cupertinoスタイルの折りたたみパネル
+    return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      elevation: 0,
-      shape: RoundedRectangleBorder(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF252525) : CupertinoColors.white,
         borderRadius: BorderRadius.circular(8),
-        side: BorderSide(
-          color: Theme.of(context).brightness == Brightness.dark
-              ? Colors.grey.shade700
-              : Colors.grey.shade300,
+        border: Border.all(
+          color: isDark
+              ? CupertinoColors.systemGrey.darkColor
+              : CupertinoColors.systemGrey4,
+          width: 0.5,
         ),
       ),
-      child: ExpansionTile(
-        title: Text(
-          question,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: _CupertinoExpandableSection(
+          header: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Text(
+              question,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: isDark ? CupertinoColors.white : CupertinoColors.black,
+              ),
+            ),
           ),
-        ),
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          content: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
             child: Text(
               answer,
               style: TextStyle(
                 fontSize: 14,
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? Colors.grey.shade300
-                    : Colors.grey.shade700,
+                color: isDark
+                    ? CupertinoColors.systemGrey
+                    : CupertinoColors.systemGrey2,
               ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }
