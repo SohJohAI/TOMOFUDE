@@ -50,7 +50,6 @@ class _NovelEditorState extends State<NovelEditor>
   int _frameCount = 0;
   double _currentFps = 60.0;
   bool _showPerformanceStats = false;
-  bool _lowPowerMode = true; // 省電力モードをデフォルトで有効化
 
   // アニメーション
   late AnimationController _animationController;
@@ -565,61 +564,6 @@ class _NovelEditorState extends State<NovelEditor>
               onPressed: () {
                 setState(() {
                   _showPerformanceStats = !_showPerformanceStats;
-                });
-              },
-            ),
-          ),
-
-          // 省電力モード切替ボタン
-          Positioned(
-            top: 8,
-            left: _drawMode && _isDrawing
-                ? 164
-                : (_showPerformanceStats ? 52 : 8),
-            child: CupertinoButton(
-              padding: EdgeInsets.zero,
-              child: Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? CupertinoColors.darkBackgroundGray.withOpacity(0.8)
-                      : CupertinoColors.white.withOpacity(0.8),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  _lowPowerMode
-                      ? CupertinoIcons.battery_25
-                      : CupertinoIcons.battery_100,
-                  color: _lowPowerMode
-                      ? CupertinoColors.systemGreen
-                      : (isDark
-                          ? CupertinoColors.white
-                          : CupertinoColors.black),
-                  size: 18,
-                ),
-              ),
-              onPressed: () {
-                setState(() {
-                  _lowPowerMode = !_lowPowerMode;
-                  // 省電力モードの切り替え
-                  if (_lowPowerMode) {
-                    // アニメーションの無効化や更新頻度の低減などの処理
-                    _frameRateTimer?.cancel();
-                    _frameRateTimer =
-                        Timer.periodic(const Duration(seconds: 2), (timer) {
-                      if (mounted) {
-                        setState(() {
-                          _currentFps = _frameCount.toDouble() / 2;
-                          _frameCount = 0;
-                        });
-                      }
-                    });
-                  } else {
-                    // 通常モードに戻す
-                    _frameRateTimer?.cancel();
-                    _startPerformanceMonitoring();
-                  }
                 });
               },
             ),

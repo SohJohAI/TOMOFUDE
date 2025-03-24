@@ -492,6 +492,8 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
   Widget build(BuildContext context) {
     final appState = Provider.of<NovelAppState>(context);
     final isDark = CupertinoTheme.of(context).brightness == Brightness.dark;
+    final screenSize = MediaQuery.of(context).size;
+    final isSmallScreen = screenSize.width < 600;
 
     // ローディング中の表示
     if (_isLoading) {
@@ -562,120 +564,218 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
           ],
         ),
       ),
-      child: Column(
-        children: [
-          // メインエディタ部分（エディタと設定パネル）
-          Expanded(
-            flex: 3,
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // エディタ部分
-                  Expanded(
-                    flex: 3,
-                    child: NovelEditor(
-                      contentController: _contentController,
-                      onContentChanged: (content) {
-                        _updateNovel();
-                      },
-                    ),
-                  ),
+      child: isSmallScreen
+          ? _buildMobileLayout(isDark)
+          : _buildDesktopLayout(isDark),
+    );
+  }
 
-                  // レビューパネル
-                  const SizedBox(width: 16),
-                  Expanded(
-                    flex: 1,
-                    child: _buildReviewPanel(),
-                  ),
+  // モバイル向けレイアウト（縦画面最適化）
+  Widget _buildMobileLayout(bool isDark) {
+    return Column(
+      children: [
+        // エディタ部分（拡大）
+        Expanded(
+          flex: 3,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
+            child: NovelEditor(
+              contentController: _contentController,
+              onContentChanged: (content) {
+                _updateNovel();
+              },
+            ),
+          ),
+        ),
+
+        // ボタンエリア（アイコンのみ）
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CupertinoButton(
+                padding: const EdgeInsets.all(12),
+                child: Icon(
+                  CupertinoIcons.floppy_disk,
+                  size: 24,
+                  color: isDark ? CupertinoColors.white : CupertinoColors.black,
+                ),
+                onPressed: () async {
+                  final bool success = await _saveNovel();
+                  if (success) {
+                    Navigator.pop(context);
+                  }
+                },
+              ),
+              const SizedBox(width: 32),
+              CupertinoButton(
+                padding: const EdgeInsets.all(12),
+                child: Icon(
+                  CupertinoIcons.sparkles,
+                  size: 24,
+                  color: CupertinoColors.activeBlue,
+                ),
+                onPressed: _getAISuggestions,
+              ),
+            ],
+          ),
+        ),
+
+        // 機能パネル（スクロール可能な領域に縦に配置）
+        Expanded(
+          flex: 2,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 16.0),
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  _buildCollapsiblePanel("AIレビュー", _buildReviewPanel()),
+                  const SizedBox(height: 8),
+                  _buildCollapsiblePanel("設定情報", _buildSettingsPanel()),
+                  const SizedBox(height: 8),
+                  _buildCollapsiblePanel("プロット分析", _buildPlotPanel()),
+                  const SizedBox(height: 8),
+                  _buildCollapsiblePanel("展開候補", _buildSuggestionsPanel()),
                 ],
               ),
             ),
           ),
+        ),
+      ],
+    );
+  }
 
-          // 下部ボタンエリア
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+  // デスクトップ向けレイアウト（現在のレイアウトを最適化）
+  Widget _buildDesktopLayout(bool isDark) {
+    return Column(
+      children: [
+        // メインエディタ部分（エディタと設定パネル）
+        Expanded(
+          flex: 3,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                CupertinoButton(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  color: CupertinoColors.systemGrey5,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        CupertinoIcons.floppy_disk,
-                        size: 18,
-                        color: isDark
-                            ? CupertinoColors.white
-                            : CupertinoColors.black,
-                      ),
-                      const SizedBox(width: 8),
-                      const Text('保存して戻る'),
-                    ],
+                // エディタ部分
+                Expanded(
+                  flex: 3,
+                  child: NovelEditor(
+                    contentController: _contentController,
+                    onContentChanged: (content) {
+                      _updateNovel();
+                    },
                   ),
-                  onPressed: () async {
-                    final bool success = await _saveNovel();
-                    if (success) {
-                      Navigator.pop(context);
-                    }
-                  },
                 ),
-                CupertinoButton(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  color: CupertinoColors.activeBlue,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        CupertinoIcons.sparkles,
-                        size: 18,
-                        color: CupertinoColors.white,
-                      ),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'AIに続きを提案してもらう',
-                        style: TextStyle(color: CupertinoColors.white),
-                      ),
-                    ],
-                  ),
-                  onPressed: _getAISuggestions,
+
+                // レビューパネル
+                const SizedBox(width: 16),
+                Expanded(
+                  flex: 1,
+                  child: _buildReviewPanel(),
                 ),
               ],
             ),
           ),
+        ),
 
-          // 下部のパネル（設定・プロット・次の展開候補）
-          SizedBox(
-            height: 220,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // 設定情報パネル
-                  Expanded(
-                    child: _buildSettingsPanel(),
-                  ),
-                  const SizedBox(width: 16),
-
-                  // プロットパネル
-                  Expanded(
-                    child: _buildPlotPanel(),
-                  ),
-                  const SizedBox(width: 16),
-
-                  // 次の展開候補パネル
-                  Expanded(
-                    child: _buildSuggestionsPanel(),
-                  ),
-                ],
+        // 下部ボタンエリア（アイコンのみ）
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CupertinoButton(
+                padding: const EdgeInsets.all(12),
+                child: Icon(
+                  CupertinoIcons.floppy_disk,
+                  size: 24,
+                  color: isDark ? CupertinoColors.white : CupertinoColors.black,
+                ),
+                onPressed: () async {
+                  final bool success = await _saveNovel();
+                  if (success) {
+                    Navigator.pop(context);
+                  }
+                },
               ),
+              const SizedBox(width: 32),
+              CupertinoButton(
+                padding: const EdgeInsets.all(12),
+                child: Icon(
+                  CupertinoIcons.sparkles,
+                  size: 24,
+                  color: CupertinoColors.activeBlue,
+                ),
+                onPressed: _getAISuggestions,
+              ),
+            ],
+          ),
+        ),
+
+        // 下部のパネル（設定・プロット・次の展開候補）
+        SizedBox(
+          height: 220,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // 設定情報パネル
+                Expanded(
+                  child: _buildSettingsPanel(),
+                ),
+                const SizedBox(width: 16),
+
+                // プロットパネル
+                Expanded(
+                  child: _buildPlotPanel(),
+                ),
+                const SizedBox(width: 16),
+
+                // 次の展開候補パネル
+                Expanded(
+                  child: _buildSuggestionsPanel(),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // 折りたたみ可能なパネルを構築
+  Widget _buildCollapsiblePanel(String title, Widget content) {
+    final isDark = CupertinoTheme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1C1C1E) : CupertinoColors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: isDark
+              ? CupertinoColors.systemGrey.darkColor
+              : CupertinoColors.systemGrey4,
+        ),
+      ),
+      child: ExpansionTile(
+        title: Text(
+          title,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
+        ),
+        backgroundColor: Colors.transparent,
+        collapsedBackgroundColor: Colors.transparent,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: SizedBox(
+              height: 200,
+              child: content,
             ),
           ),
         ],
