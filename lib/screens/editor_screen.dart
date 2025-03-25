@@ -4,9 +4,11 @@ import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
 import '../providers/novel_list_provider.dart';
 import '../models/novel.dart';
+import '../models/emotion.dart';
 import '../services/export_service.dart';
 import '../services/ai_service.dart';
 import '../widgets/novel_editor.dart';
+import '../widgets/emotion_panel.dart';
 
 enum SettingType { text, character, organization, terminology }
 
@@ -32,10 +34,13 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
   Map<String, dynamic> _settingsData = {};
   Map<String, dynamic> _plotData = {};
   Map<String, String> _reviewData = {"reader": "", "editor": "", "jury": ""};
+  EmotionAnalysis? _emotionAnalysis;
   bool _isAnalyzingSettings = false;
   bool _isAnalyzingPlot = false;
   bool _isGeneratingReview = false;
+  bool _isAnalyzingEmotion = false;
   String _lastAnalyzedContent = '';
+  String? _aiDocsContent;
 
   @override
   void initState() {
@@ -64,6 +69,7 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
       _isAnalyzingSettings = true;
       _isAnalyzingPlot = true;
       _isGeneratingReview = true;
+      _isAnalyzingEmotion = true;
     });
 
     // 並列で各種データを生成
@@ -89,9 +95,192 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
           _isGeneratingReview = false;
         });
       }),
+      Future(() async {
+        await Future.delayed(const Duration(milliseconds: 1200));
+        final result = await _aiService.analyzeEmotion(_contentController.text);
+        _emotionAnalysis = EmotionAnalysis.fromJson(result);
+        setState(() {
+          _isAnalyzingEmotion = false;
+        });
+      }),
     ]);
 
     _lastAnalyzedContent = _contentController.text;
+  }
+
+  // 感情分析を実行
+  Future<void> _analyzeEmotion() async {
+    setState(() {
+      _isAnalyzingEmotion = true;
+    });
+
+    try {
+      // 感情分析処理
+      final result = await _aiService.analyzeEmotion(_contentController.text,
+          aiDocs: _aiDocsContent);
+
+      _emotionAnalysis = EmotionAnalysis.fromJson(result);
+
+      setState(() {
+        _isAnalyzingEmotion = false;
+      });
+
+      // 更新を通知
+      _showExportSuccessAlert('感情分析を更新しました');
+    } catch (e) {
+      setState(() {
+        _isAnalyzingEmotion = false;
+      });
+
+      _showExportSuccessAlert('エラーが発生しました: $e');
+    }
+  }
+
+  // AI資料を生成
+  Future<void> _generateAIDocs() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // 設定情報とプロット情報を文字列に変換
+      String? settingInfo;
+      if (_settingsData.isNotEmpty) {
+        settingInfo = "登場人物: ${_settingsData['characters']?.length ?? 0}人\n"
+            "組織: ${_settingsData['organizations']?.length ?? 0}個\n"
+            "専門用語: ${_settingsData['terminology']?.length ?? 0}個\n"
+            "舞台: ${_settingsData['setting'] ?? '未設定'}\n"
+            "ジャンル: ${_settingsData['genre'] ?? '未設定'}";
+      }
+
+      String? plotInfo;
+      if (_plotData.isNotEmpty) {
+        plotInfo = "現在の段階: ${_plotData['currentStage'] ?? '不明'}\n"
+            "主要イベント: ${(_plotData['mainEvents'] as List?)?.length ?? 0}個\n"
+            "転換点: ${(_plotData['turningPoints'] as List?)?.length ?? 0}個\n"
+            "未解決の問題: ${(_plotData['unresolvedIssues'] as List?)?.length ?? 0}個";
+      }
+
+      String? emotionInfo;
+      if (_emotionAnalysis != null) {
+        emotionInfo = "感情セグメント: ${_emotionAnalysis!.segments.length}個\n"
+            "感情の流れ: ${_emotionAnalysis!.summary}";
+      }
+
+      // AI資料生成
+      _aiDocsContent = await _aiService.generateAIDocs(_contentController.text,
+          settingInfo: settingInfo,
+          plotInfo: plotInfo,
+          emotionInfo: emotionInfo);
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      // 生成された資料を表示
+      _showAIDocsPreview(context);
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+
+      _showExportSuccessAlert('エラーが発生しました: $e');
+    }
+  }
+
+  // AI資料プレビューを表示
+  void _showAIDocsPreview(BuildContext context) {
+    if (_aiDocsContent == null) return;
+
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(CupertinoIcons.doc_text, color: CupertinoColors.activeBlue),
+            const SizedBox(width: 8),
+            const Text('AI資料'),
+          ],
+        ),
+        content: SizedBox(
+          height: 300,
+          child: CupertinoScrollbar(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 16),
+                child: Text(_aiDocsContent!),
+              ),
+            ),
+          ),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('閉じる'),
+          ),
+          CupertinoDialogAction(
+            onPressed: () {
+              Navigator.pop(context);
+              _showAIDocsEditor(context);
+            },
+            child: const Text('編集'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // AI資料エディタを表示
+  void _showAIDocsEditor(BuildContext context) {
+    final textController = TextEditingController(text: _aiDocsContent ?? '');
+
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(CupertinoIcons.pencil, color: CupertinoColors.activeBlue),
+            const SizedBox(width: 8),
+            const Text('AI資料を編集'),
+          ],
+        ),
+        content: SizedBox(
+          height: 300,
+          child: Padding(
+            padding: const EdgeInsets.only(top: 16),
+            child: CupertinoTextField(
+              controller: textController,
+              maxLines: null,
+              expands: true,
+              placeholder: 'AI資料を入力...',
+              decoration: BoxDecoration(
+                border: Border.all(color: CupertinoColors.systemGrey4),
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: () => Navigator.pop(context),
+            child: const Text('キャンセル'),
+          ),
+          CupertinoDialogAction(
+            onPressed: () {
+              setState(() {
+                _aiDocsContent = textController.text;
+              });
+              Navigator.pop(context);
+              _showExportSuccessAlert('AI資料を更新しました');
+            },
+            child: const Text('保存'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -637,6 +826,24 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
                   _buildCollapsiblePanel("プロット分析", _buildPlotPanel()),
                   const SizedBox(height: 8),
                   _buildCollapsiblePanel("展開候補", _buildSuggestionsPanel()),
+                  const SizedBox(height: 8),
+                  _buildCollapsiblePanel(
+                      "感情分析",
+                      EmotionPanel(
+                        emotionAnalysis: _emotionAnalysis,
+                        isLoading: _isAnalyzingEmotion,
+                        onRefresh: () {
+                          if (_contentController.text.length >= 50 ||
+                              _aiDocsContent != null) {
+                            _analyzeEmotion();
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                  content: Text('感情分析を実行するには、もう少し文章を書いてください。')),
+                            );
+                          }
+                        },
+                      )),
                 ],
               ),
             ),
@@ -680,7 +887,7 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
           ),
         ),
 
-        // 下部ボタンエリア（アイコンのみ）
+        // 下部ボタンエリア
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
           child: Row(
@@ -700,7 +907,7 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
                   }
                 },
               ),
-              const SizedBox(width: 32),
+              const SizedBox(width: 24),
               CupertinoButton(
                 padding: const EdgeInsets.all(12),
                 child: Icon(
@@ -710,11 +917,21 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
                 ),
                 onPressed: _getAISuggestions,
               ),
+              const SizedBox(width: 24),
+              CupertinoButton(
+                padding: const EdgeInsets.all(12),
+                child: Icon(
+                  CupertinoIcons.doc_text,
+                  size: 24,
+                  color: CupertinoColors.systemGreen,
+                ),
+                onPressed: _generateAIDocs,
+              ),
             ],
           ),
         ),
 
-        // 下部のパネル（設定・プロット・次の展開候補）
+        // 下部のパネル（設定・プロット・次の展開候補・感情分析）
         SizedBox(
           height: 220,
           child: Padding(
@@ -737,6 +954,26 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
                 // 次の展開候補パネル
                 Expanded(
                   child: _buildSuggestionsPanel(),
+                ),
+                const SizedBox(width: 16),
+
+                // 感情分析パネル
+                Expanded(
+                  child: EmotionPanel(
+                    emotionAnalysis: _emotionAnalysis,
+                    isLoading: _isAnalyzingEmotion,
+                    onRefresh: () {
+                      if (_contentController.text.length >= 50 ||
+                          _aiDocsContent != null) {
+                        _analyzeEmotion();
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                              content: Text('感情分析を実行するには、もう少し文章を書いてください。')),
+                        );
+                      }
+                    },
+                  ),
                 ),
               ],
             ),

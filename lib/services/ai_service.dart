@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'ai_service_interface.dart';
+import '../models/emotion.dart';
 
 class DummyAIService implements AIService {
   final Random _random = Random();
@@ -144,6 +145,18 @@ class DummyAIService implements AIService {
           "伏線の回収が巧みで、読者を裏切らない展開が秀逸です。ただ、一部の説明的な文章は会話やアクションに置き換えるとより没入感が増すでしょう。",
       "jury": "精神的な成長や人間関係の機微を繊細に描き出しており、普遍的なテーマを持ちながらも新鮮さを感じさせる作品です。"
     },
+  ];
+
+  // 感情の種類
+  final List<Map<String, dynamic>> _emotions = [
+    {"name": "喜び", "code": "#FFD700", "baseValue": 70},
+    {"name": "悲しみ", "code": "#4169E1", "baseValue": 60},
+    {"name": "怒り", "code": "#FF4500", "baseValue": 65},
+    {"name": "恐怖", "code": "#800080", "baseValue": 55},
+    {"name": "驚き", "code": "#32CD32", "baseValue": 75},
+    {"name": "期待", "code": "#FF69B4", "baseValue": 65},
+    {"name": "不安", "code": "#708090", "baseValue": 60},
+    {"name": "安心", "code": "#20B2AA", "baseValue": 70}
   ];
 
   // 設定情報の例
@@ -351,6 +364,220 @@ class DummyAIService implements AIService {
     }
 
     return sentences.join(' ');
+  }
+
+  // 感情分析メソッド
+  @override
+  Future<Map<String, dynamic>> analyzeEmotion(String content,
+      {String? aiDocs}) async {
+    // 分析処理をシミュレート
+    await Future.delayed(const Duration(milliseconds: 1200));
+
+    // モックデータ生成
+    final segments = _generateMockEmotionSegments(content);
+
+    return {
+      "segments": segments,
+      "summary": "物語全体を通して${_getRandomElement([
+            '希望',
+            '不安',
+            '緊張',
+            '喜び',
+            '悲しみ'
+          ])}の感情が主流となっており、${_getRandomElement([
+            '中盤',
+            '終盤',
+            '序盤'
+          ])}で感情の高まりが見られます。"
+    };
+  }
+
+  // モック感情セグメントの生成
+  List<Map<String, dynamic>> _generateMockEmotionSegments(String content) {
+    // テキストの長さに基づいてセグメント数を決定
+    final segmentCount = min(max(content.length ~/ 200, 3), 8);
+
+    List<Map<String, dynamic>> segments = [];
+
+    // 物語の流れを模したデータ生成（起承転結のような感情の流れ）
+    for (int i = 0; i < segmentCount; i++) {
+      final emotion = _emotions[_random.nextInt(_emotions.length)];
+      final segmentPosition = i / (segmentCount - 1); // 0.0 から 1.0 の値
+
+      // 物語の位置に応じた感情値と盛り上がり度の調整
+      int emotionValue = _adjustValueBasedOnPosition(
+          emotion["baseValue"] as int, segmentPosition);
+
+      // 盛り上がり度は物語の中盤から終盤にかけて上昇するパターン
+      int excitement = _generateExcitementValue(segmentPosition);
+
+      segments.add({
+        "name": "セグメント ${i + 1}",
+        "dominantEmotion": emotion["name"],
+        "emotionCode": emotion["code"],
+        "emotionValue": emotionValue,
+        "excitement": excitement,
+        "description":
+            _generateEmotionDescription(emotion["name"] as String, emotionValue)
+      });
+    }
+
+    return segments;
+  }
+
+  // 物語の位置に基づいて感情値を調整
+  int _adjustValueBasedOnPosition(int baseValue, double position) {
+    // 物語の中盤で感情が高まり、終盤で解決に向かうようなパターン
+    if (position < 0.3) {
+      // 序盤: 基準値からやや低め
+      return (baseValue - 10 + _random.nextInt(20)).clamp(40, 90);
+    } else if (position < 0.7) {
+      // 中盤: 基準値から高め
+      return (baseValue + 5 + _random.nextInt(25)).clamp(50, 95);
+    } else {
+      // 終盤: 基準値に収束
+      return (baseValue + _random.nextInt(20)).clamp(45, 90);
+    }
+  }
+
+  // 盛り上がり度の生成
+  int _generateExcitementValue(double position) {
+    // 物語の進行に合わせて盛り上がりが変化するパターン
+    if (position < 0.2) {
+      // 序盤: 低め
+      return 30 + _random.nextInt(20);
+    } else if (position < 0.4) {
+      // 序盤から中盤: 徐々に上昇
+      return 40 + _random.nextInt(25);
+    } else if (position < 0.7) {
+      // 中盤: 高め
+      return 60 + _random.nextInt(30);
+    } else if (position < 0.9) {
+      // クライマックス: 最高潮
+      return 75 + _random.nextInt(25);
+    } else {
+      // 終盤: 収束
+      return 50 + _random.nextInt(30);
+    }
+  }
+
+  // 感情の説明文生成
+  String _generateEmotionDescription(String emotion, int value) {
+    final intensity = value > 80
+        ? "強い"
+        : value > 60
+            ? "中程度の"
+            : "弱い";
+
+    final descriptions = {
+      "喜び": [
+        "$intensity喜びが表現されています。登場人物の幸福感が読者に伝わります。",
+        "明るい雰囲気の中で$intensity喜びが描かれています。",
+        "達成感や満足感による$intensity喜びが中心となっています。"
+      ],
+      "悲しみ": [
+        "$intensity悲しみが漂っています。喪失感や別れの感情が表現されています。",
+        "物悲しい雰囲気の中で$intensity悲しみが描かれています。",
+        "内省的な$intensity悲しみが読者の共感を誘います。"
+      ],
+      "怒り": [
+        "$intensity怒りや憤りが表現されています。対立や葛藤が描かれています。",
+        "不満や不公平に対する$intensity怒りが中心となっています。",
+        "抑制された$intensity怒りが緊張感を生み出しています。"
+      ],
+      "恐怖": [
+        "$intensity恐怖や不安が描かれています。未知のものへの恐れが表現されています。",
+        "差し迫った危険による$intensity恐怖感が中心です。",
+        "漠然とした$intensity恐怖が雰囲気を支配しています。"
+      ],
+      "驚き": [
+        "$intensity驚きや衝撃が表現されています。予想外の展開が描かれています。",
+        "新たな発見による$intensity驚きが中心となっています。",
+        "登場人物の$intensity驚きが読者の興味を引きます。"
+      ],
+      "期待": [
+        "$intensity期待や希望が描かれています。未来への展望が表現されています。",
+        "新たな可能性への$intensity期待感が中心です。",
+        "変化を求める$intensity期待が物語を動かしています。"
+      ],
+      "不安": [
+        "$intensity不安や懸念が表現されています。不確かな状況が描かれています。",
+        "将来への$intensity不安感が中心となっています。",
+        "内面的な$intensity不安が繊細に描写されています。"
+      ],
+      "安心": [
+        "$intensity安心感や安堵が描かれています。危機からの解放が表現されています。",
+        "信頼関係による$intensity安心感が中心です。",
+        "平穏な状況での$intensity安心感が雰囲気を作り出しています。"
+      ]
+    };
+
+    final descList = descriptions[emotion] ?? ["$emotion の感情が表現されています。"];
+    return _getRandomElement(descList);
+  }
+
+  // AI資料生成メソッド
+  @override
+  Future<String> generateAIDocs(String content,
+      {String? settingInfo, String? plotInfo, String? emotionInfo}) async {
+    // 処理をシミュレート
+    await Future.delayed(const Duration(milliseconds: 1500));
+
+    // 基本情報
+    String docs = "【AI資料】\n\n";
+
+    // 設定情報があれば追加
+    if (settingInfo != null && settingInfo.isNotEmpty) {
+      docs += "■ 設定情報\n$settingInfo\n\n";
+    }
+
+    // プロット情報があれば追加
+    if (plotInfo != null && plotInfo.isNotEmpty) {
+      docs += "■ プロット情報\n$plotInfo\n\n";
+    }
+
+    // 感情情報があれば追加
+    if (emotionInfo != null && emotionInfo.isNotEmpty) {
+      docs += "■ 感情分析\n$emotionInfo\n\n";
+    }
+
+    // 内容から抽出した情報（モック）
+    docs += "■ 内容分析\n";
+    docs +=
+        "・文体: ${_getRandomElement(['叙述的', '会話中心', '心理描写が多い', '情景描写が豊か'])}\n";
+    docs += "・テーマ: ${_getRandomElement([
+          '成長',
+          '葛藤',
+          '愛',
+          '冒険',
+          '喪失',
+          '再生',
+          '対立'
+        ])}\n";
+    docs += "・特徴: ${_getRandomElement([
+          '伏線が効果的',
+          '心理描写が繊細',
+          'テンポが良い',
+          '比喩表現が豊か',
+          '対比が効果的'
+        ])}\n\n";
+
+    // アドバイス（モック）
+    docs += "■ 執筆アドバイス\n";
+    docs += "・${_getRandomElement([
+          '登場人物の動機をより明確にすると良いでしょう',
+          '感情描写をさらに深めると良いでしょう',
+          '場面転換のテンポを工夫すると良いでしょう',
+          '伏線の回収を意識すると良いでしょう'
+        ])}\n";
+    docs += "・${_getRandomElement([
+          '読者の期待を裏切る展開を検討してみてください',
+          '五感を使った描写を増やすと臨場感が増します',
+          '登場人物の内面と外面のギャップを表現すると立体的になります',
+          'サブプロットを追加すると物語に厚みが出ます'
+        ])}\n";
+
+    return docs;
   }
 
   // 提案文を詳細に展開
