@@ -3,12 +3,14 @@ import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
 import '../providers/novel_list_provider.dart';
+import '../providers/work_list_provider.dart';
 import '../models/novel.dart';
 import '../models/emotion.dart';
 import '../services/export_service.dart';
 import '../services/ai_service.dart';
 import '../widgets/novel_editor.dart';
 import '../widgets/emotion_panel.dart';
+import 'work_list_screen.dart';
 
 enum SettingType { text, character, organization, terminology }
 
@@ -541,9 +543,17 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
         _aiSuggestions = suggestions;
         _showingSuggestions = true;
         _isLoading = false;
+
+        // 展開候補をプロットデータに追加
+        if (_plotData.containsKey('possibleDevelopments')) {
+          _plotData['possibleDevelopments'] = suggestions;
+        } else {
+          _plotData['possibleDevelopments'] = suggestions;
+        }
       });
 
-      _showAISuggestionsDialog();
+      // 更新を通知
+      _showExportSuccessAlert('展開候補を更新しました');
     } catch (e) {
       setState(() {
         _isLoading = false;
@@ -641,8 +651,6 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
 
   // 選択した提案を適用するが、拡張版
   Future<void> _applySuggestion(String suggestion) async {
-    Navigator.pop(context); // ダイアログを閉じる
-
     setState(() {
       _isLoading = true;
     });
@@ -675,6 +683,54 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
 
       _showExportSuccessAlert('エラーが発生しました: $e');
     }
+  }
+
+  // 小説を作品に変換
+  void _convertToWork(BuildContext context) {
+    // 確認ダイアログを表示
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text('作品に変換'),
+        content: const Text(
+          '現在の小説を作品に変換しますか？\n\n作品は章ごとに管理でき、より長い文章の執筆に適しています。',
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('キャンセル'),
+          ),
+          CupertinoDialogAction(
+            onPressed: () {
+              Navigator.pop(context);
+              _performConversion(context);
+            },
+            child: const Text('変換'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 実際の変換処理
+  void _performConversion(BuildContext context) {
+    final workListProvider =
+        Provider.of<WorkListProvider>(context, listen: false);
+
+    // 現在の小説を保存
+    _updateNovel();
+
+    // 小説から作品を作成
+    workListProvider.convertNovelToWork(widget.novel);
+
+    // 成功メッセージを表示
+    _showExportSuccessAlert('小説を作品に変換しました');
+
+    // 作品一覧画面に遷移
+    Navigator.push(
+      context,
+      CupertinoPageRoute(builder: (context) => const WorkListScreen()),
+    );
   }
 
   @override
@@ -732,6 +788,14 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              child: Icon(
+                CupertinoIcons.folder,
+                color: isDark ? CupertinoColors.white : CupertinoColors.black,
+              ),
+              onPressed: () => _convertToWork(context),
+            ),
             CupertinoButton(
               padding: EdgeInsets.zero,
               child: Icon(
@@ -1640,6 +1704,16 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
                     ),
                   ],
                 ),
+                CupertinoButton(
+                  padding: EdgeInsets.zero,
+                  child: Icon(
+                    CupertinoIcons.refresh,
+                    size: 18,
+                    color:
+                        isDark ? CupertinoColors.white : CupertinoColors.black,
+                  ),
+                  onPressed: _getAISuggestions,
+                ),
               ],
             ),
           ),
@@ -1677,21 +1751,24 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
                           .map<Widget>((item) {
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 8),
-                          child: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: isDark
-                                  ? const Color(0xFF2C2C2E)
-                                  : CupertinoColors.systemGrey6,
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(
-                                color:
-                                    CupertinoColors.activeBlue.withOpacity(0.3),
+                          child: GestureDetector(
+                            onTap: () => _applySuggestion(item.toString()),
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? const Color(0xFF2C2C2E)
+                                    : CupertinoColors.systemGrey6,
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(
+                                  color: CupertinoColors.activeBlue
+                                      .withOpacity(0.3),
+                                ),
                               ),
-                            ),
-                            child: Text(
-                              item.toString(),
-                              style: const TextStyle(fontSize: 13),
+                              child: Text(
+                                item.toString(),
+                                style: const TextStyle(fontSize: 13),
+                              ),
                             ),
                           ),
                         );
