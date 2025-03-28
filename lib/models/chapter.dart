@@ -8,6 +8,7 @@ class Chapter {
   int wordCount;
   final DateTime createdAt;
   DateTime updatedAt;
+  String? filePath; // 章のファイルパス
 
   Chapter({
     String? id,
@@ -16,6 +17,7 @@ class Chapter {
     int? wordCount,
     DateTime? createdAt,
     DateTime? updatedAt,
+    this.filePath,
   })  : this.id = id ?? const Uuid().v4(),
         this.wordCount = wordCount ?? _calculateWordCount(content),
         this.createdAt = createdAt ?? DateTime.now(),
@@ -40,6 +42,7 @@ class Chapter {
       'wordCount': wordCount,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
+      'filePath': filePath,
     };
   }
 
@@ -51,6 +54,7 @@ class Chapter {
       wordCount: json['wordCount'] ?? 0,
       createdAt: DateTime.parse(json['createdAt']),
       updatedAt: DateTime.parse(json['updatedAt']),
+      filePath: json['filePath'],
     );
   }
 

@@ -10,6 +10,8 @@ class Work {
   final DateTime createdAt;
   DateTime updatedAt;
   List<Chapter> chapters;
+  String? folderPath; // 作品のフォルダパス
+  String? githubRepoUrl; // GitHubリポジトリURL
 
   Work({
     String? id,
@@ -19,6 +21,8 @@ class Work {
     List<Chapter>? chapters,
     DateTime? createdAt,
     DateTime? updatedAt,
+    this.folderPath,
+    this.githubRepoUrl,
   })  : this.id = id ?? const Uuid().v4(),
         this.chapters = chapters ?? [],
         this.createdAt = createdAt ?? DateTime.now(),
@@ -43,6 +47,8 @@ class Work {
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
       'chapters': chapters.map((chapter) => chapter.toJson()).toList(),
+      'folderPath': folderPath,
+      'githubRepoUrl': githubRepoUrl,
     };
   }
 
@@ -58,6 +64,8 @@ class Work {
               ?.map((chapterJson) => Chapter.fromJson(chapterJson))
               .toList() ??
           [],
+      folderPath: json['folderPath'],
+      githubRepoUrl: json['githubRepoUrl'],
     );
   }
 

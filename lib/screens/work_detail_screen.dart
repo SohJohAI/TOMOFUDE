@@ -68,10 +68,20 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
         middle: const Text('作品詳細'),
-        trailing: CupertinoButton(
-          padding: EdgeInsets.zero,
-          child: const Icon(CupertinoIcons.cloud_download),
-          onPressed: () => _showExportMenu(context),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              child: const Icon(CupertinoIcons.folder),
+              onPressed: () => _showFolderMenu(context),
+            ),
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              child: const Icon(CupertinoIcons.cloud_download),
+              onPressed: () => _showExportMenu(context),
+            ),
+          ],
         ),
       ),
       child: SafeArea(
@@ -486,6 +496,141 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
       builder: (context) => CupertinoAlertDialog(
         title: const Text('エクスポート完了'),
         content: Text(message),
+        actions: [
+          CupertinoDialogAction(
+            child: const Text('OK'),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showFolderMenu(BuildContext context) {
+    final workListProvider =
+        Provider.of<WorkListProvider>(context, listen: false);
+
+    showCupertinoModalPopup(
+      context: context,
+      builder: (context) => CupertinoActionSheet(
+        title: const Text('フォルダ操作'),
+        message: const Text('作品のフォルダ操作を選択してください'),
+        actions: [
+          // フォルダにエクスポート
+          CupertinoActionSheetAction(
+            onPressed: () async {
+              Navigator.pop(context);
+              try {
+                final folderPath =
+                    await workListProvider.saveWorkToFolder(widget.work.id);
+                _showFolderOperationSuccessAlert(
+                  '作品をフォルダにエクスポートしました',
+                  '保存先: $folderPath',
+                );
+              } catch (e) {
+                _showFolderOperationErrorAlert(
+                    'フォルダへのエクスポートに失敗しました', e.toString());
+              }
+            },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(CupertinoIcons.folder_badge_plus,
+                    color: CupertinoColors.activeBlue),
+                const SizedBox(width: 10),
+                const Text('フォルダにエクスポート'),
+              ],
+            ),
+          ),
+
+          // 保存先を指定してエクスポート
+          CupertinoActionSheetAction(
+            onPressed: () async {
+              Navigator.pop(context);
+              try {
+                final customPath =
+                    await workListProvider.fileSystemService.pickSaveFolder();
+                if (customPath != null) {
+                  final folderPath = await workListProvider.saveWorkToFolder(
+                    widget.work.id,
+                    customPath: customPath,
+                  );
+                  _showFolderOperationSuccessAlert(
+                    '作品をフォルダにエクスポートしました',
+                    '保存先: $folderPath',
+                  );
+                }
+              } catch (e) {
+                _showFolderOperationErrorAlert(
+                    'フォルダへのエクスポートに失敗しました', e.toString());
+              }
+            },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(CupertinoIcons.folder_open,
+                    color: CupertinoColors.activeBlue),
+                const SizedBox(width: 10),
+                const Text('保存先を指定してエクスポート'),
+              ],
+            ),
+          ),
+
+          // GitHubにエクスポート
+          CupertinoActionSheetAction(
+            onPressed: () async {
+              Navigator.pop(context);
+              try {
+                final result =
+                    await workListProvider.exportWorkToGitHub(widget.work.id);
+                _showFolderOperationSuccessAlert('GitHub連携', result);
+              } catch (e) {
+                _showFolderOperationErrorAlert(
+                    'GitHubエクスポートに失敗しました', e.toString());
+              }
+            },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(CupertinoIcons.cloud_upload,
+                    color: CupertinoColors.activeBlue),
+                const SizedBox(width: 10),
+                const Text('GitHubにエクスポート'),
+              ],
+            ),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          isDestructiveAction: true,
+          onPressed: () => Navigator.pop(context),
+          child: const Text('キャンセル'),
+        ),
+      ),
+    );
+  }
+
+  void _showFolderOperationSuccessAlert(String title, String message) {
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          CupertinoDialogAction(
+            child: const Text('OK'),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showFolderOperationErrorAlert(String title, String errorMessage) {
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: Text(title),
+        content: Text(errorMessage),
         actions: [
           CupertinoDialogAction(
             child: const Text('OK'),

@@ -77,15 +77,34 @@ class WorkListScreen extends StatelessWidget {
           Positioned(
             right: 16,
             bottom: 16,
-            child: CupertinoButton(
-              padding: const EdgeInsets.all(16),
-              color: CupertinoTheme.of(context).primaryColor,
-              borderRadius: BorderRadius.circular(30),
-              child: const Icon(
-                CupertinoIcons.add,
-                color: CupertinoColors.white,
-              ),
-              onPressed: () => _createNewWork(context),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // フォルダからインポートボタン
+                CupertinoButton(
+                  padding: const EdgeInsets.all(16),
+                  color:
+                      CupertinoTheme.of(context).primaryColor.withOpacity(0.8),
+                  borderRadius: BorderRadius.circular(30),
+                  child: const Icon(
+                    CupertinoIcons.folder_badge_plus,
+                    color: CupertinoColors.white,
+                  ),
+                  onPressed: () => _importWorkFromFolder(context),
+                ),
+                const SizedBox(height: 8),
+                // 新規作品作成ボタン
+                CupertinoButton(
+                  padding: const EdgeInsets.all(16),
+                  color: CupertinoTheme.of(context).primaryColor,
+                  borderRadius: BorderRadius.circular(30),
+                  child: const Icon(
+                    CupertinoIcons.add,
+                    color: CupertinoColors.white,
+                  ),
+                  onPressed: () => _createNewWork(context),
+                ),
+              ],
             ),
           ),
         ],
@@ -305,6 +324,80 @@ class WorkListScreen extends StatelessWidget {
               Navigator.pop(context);
             },
             child: const Text('削除'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// フォルダから作品をインポート
+  void _importWorkFromFolder(BuildContext context) async {
+    final workListProvider =
+        Provider.of<WorkListProvider>(context, listen: false);
+
+    try {
+      final work = await workListProvider.pickAndLoadWorkFolder();
+
+      if (work != null) {
+        _showImportSuccessAlert(
+          context,
+          '作品のインポートが完了しました',
+          '「${work.title.isEmpty ? "無題の作品" : work.title}」を正常にインポートしました。',
+          () {
+            // インポート成功後に作品詳細画面に遷移
+            _openWork(context, work);
+          },
+        );
+      }
+    } catch (e) {
+      _showImportErrorAlert(
+        context,
+        'インポートエラー',
+        'フォルダからの作品インポートに失敗しました: ${e.toString()}',
+      );
+    }
+  }
+
+  /// インポート成功アラート
+  void _showImportSuccessAlert(
+    BuildContext context,
+    String title,
+    String message,
+    VoidCallback onOk,
+  ) {
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          CupertinoDialogAction(
+            child: const Text('OK'),
+            onPressed: () {
+              Navigator.pop(context);
+              onOk();
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// インポートエラーアラート
+  void _showImportErrorAlert(
+    BuildContext context,
+    String title,
+    String message,
+  ) {
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          CupertinoDialogAction(
+            child: const Text('OK'),
+            onPressed: () => Navigator.pop(context),
           ),
         ],
       ),

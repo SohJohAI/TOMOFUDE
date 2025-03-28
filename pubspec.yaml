@@ -36,6 +36,13 @@ dependencies:
   cupertino_icons: ^1.0.6
   shared_preferences: ^2.5.2
   uuid: ^4.3.3
+  # File system related packages
+  path_provider: ^2.1.2
+  file_picker: ^6.1.1
+  # GitHub integration
+  github: ^9.24.0
+  # UI components
+  flutter_treeview: ^1.0.7+1
 
 dev_dependencies:
   flutter_test:
