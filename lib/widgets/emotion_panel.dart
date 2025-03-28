@@ -311,27 +311,32 @@ class EmotionPanel extends StatelessWidget {
       );
     }
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 感情グラフ
-          RepaintBoundary(
-            child: SizedBox(
-              height: 150,
-              child: _buildEmotionGraph(),
+    return CupertinoScrollbar(
+      thickness: 6.0,
+      radius: const Radius.circular(10.0),
+      thumbVisibility: true,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 感情グラフ
+            RepaintBoundary(
+              child: SizedBox(
+                height: 150,
+                child: _buildEmotionGraph(),
+              ),
             ),
-          ),
-          const SizedBox(height: 16),
+            const SizedBox(height: 16),
 
-          // 感情サマリー
-          _buildSummarySection(isDark),
-          const SizedBox(height: 16),
+            // 感情サマリー
+            _buildSummarySection(isDark),
+            const SizedBox(height: 16),
 
-          // 感情セグメント詳細
-          _buildSegmentsSection(isDark),
-        ],
+            // 感情セグメント詳細
+            _buildSegmentsSection(isDark),
+          ],
+        ),
       ),
     );
   }

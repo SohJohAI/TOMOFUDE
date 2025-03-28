@@ -932,51 +932,63 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
         ),
 
         // 下部のパネル（設定・プロット・次の展開候補・感情分析）
-        SizedBox(
+        Container(
           height: 220,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // 設定情報パネル
-                Expanded(
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // 設定情報パネル
+              Expanded(
+                child: CupertinoScrollbar(
+                  thickness: 6.0,
+                  radius: const Radius.circular(10.0),
+                  thumbVisibility: true,
                   child: _buildSettingsPanel(),
                 ),
-                const SizedBox(width: 16),
+              ),
+              const SizedBox(width: 16),
 
-                // プロットパネル
-                Expanded(
+              // プロットパネル
+              Expanded(
+                child: CupertinoScrollbar(
+                  thickness: 6.0,
+                  radius: const Radius.circular(10.0),
+                  thumbVisibility: true,
                   child: _buildPlotPanel(),
                 ),
-                const SizedBox(width: 16),
+              ),
+              const SizedBox(width: 16),
 
-                // 次の展開候補パネル
-                Expanded(
+              // 次の展開候補パネル
+              Expanded(
+                child: CupertinoScrollbar(
+                  thickness: 6.0,
+                  radius: const Radius.circular(10.0),
+                  thumbVisibility: true,
                   child: _buildSuggestionsPanel(),
                 ),
-                const SizedBox(width: 16),
+              ),
+              const SizedBox(width: 16),
 
-                // 感情分析パネル
-                Expanded(
-                  child: EmotionPanel(
-                    emotionAnalysis: _emotionAnalysis,
-                    isLoading: _isAnalyzingEmotion,
-                    onRefresh: () {
-                      if (_contentController.text.length >= 50 ||
-                          _aiDocsContent != null) {
-                        _analyzeEmotion();
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                              content: Text('感情分析を実行するには、もう少し文章を書いてください。')),
-                        );
-                      }
-                    },
-                  ),
+              // 感情分析パネル
+              Expanded(
+                child: EmotionPanel(
+                  emotionAnalysis: _emotionAnalysis,
+                  isLoading: _isAnalyzingEmotion,
+                  onRefresh: () {
+                    if (_contentController.text.length >= 50 ||
+                        _aiDocsContent != null) {
+                      _analyzeEmotion();
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('感情分析を実行するには、もう少し文章を書いてください。')),
+                      );
+                    }
+                  },
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ],
@@ -997,26 +1009,90 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
               : CupertinoColors.systemGrey4,
         ),
       ),
-      child: ExpansionTile(
-        title: Text(
-          title,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
-        ),
-        backgroundColor: Colors.transparent,
-        collapsedBackgroundColor: Colors.transparent,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: SizedBox(
-              height: 200,
-              child: content,
+      child: CupertinoCollapsiblePanel(
+        title: title,
+        content: content,
+        isDark: isDark,
+      ),
+    );
+  }
+
+  // iOSで適切に動作する折りたたみパネル
+  Widget CupertinoCollapsiblePanel({
+    required String title,
+    required Widget content,
+    required bool isDark,
+  }) {
+    // 最初のパネル（AIレビュー）は初期状態で開いておく
+    final ValueNotifier<bool> isExpanded =
+        ValueNotifier<bool>(title == "AIレビュー");
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // ヘッダー部分（タップで展開/折りたたみ）
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () {
+            isExpanded.value = !isExpanded.value;
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                ValueListenableBuilder<bool>(
+                  valueListenable: isExpanded,
+                  builder: (context, expanded, child) {
+                    return Icon(
+                      expanded
+                          ? CupertinoIcons.chevron_up
+                          : CupertinoIcons.chevron_down,
+                      size: 18,
+                      color: isDark
+                          ? CupertinoColors.white
+                          : CupertinoColors.black,
+                    );
+                  },
+                ),
+              ],
             ),
           ),
-        ],
-      ),
+        ),
+
+        // 展開時のコンテンツ
+        ValueListenableBuilder<bool>(
+          valueListenable: isExpanded,
+          builder: (context, expanded, child) {
+            return AnimatedCrossFade(
+              firstChild: const SizedBox(height: 0),
+              secondChild: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                child: SizedBox(
+                  height: 200,
+                  child: CupertinoScrollbar(
+                    thickness: 6.0,
+                    radius: const Radius.circular(10.0),
+                    thumbVisibility: true,
+                    child: content,
+                  ),
+                ),
+              ),
+              crossFadeState: expanded
+                  ? CrossFadeState.showSecond
+                  : CrossFadeState.showFirst,
+              duration: const Duration(milliseconds: 300),
+            );
+          },
+        ),
+      ],
     );
   }
 
