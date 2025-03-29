@@ -344,14 +344,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.1.2"
-  ruby_text:
-    dependency: "direct main"
-    description:
-      name: ruby_text
-      sha256: "5e7543bcffa8c79687d240f014cb9f66269c50d6e3b374c00bb2bc8fe2841616"
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.0.2"
   shared_preferences:
     dependency: "direct main"
     description:

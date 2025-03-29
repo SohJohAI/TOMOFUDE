@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:ruby_text/ruby_text.dart';
+import '../widgets/ruby_text_widget.dart';
 
 class PreviewService {
   // 特殊文字をプレビュー用のウィジェットに変換
@@ -50,14 +50,10 @@ class PreviewService {
 
       // ルビテキストを追加
       spans.add(WidgetSpan(
-        child: RubyText(
-          [
-            RubyTextData(
-              baseText,
-              ruby: rubyText,
-            ),
-          ],
-          style: TextStyle(
+        child: RubyTextWidget(
+          text: baseText,
+          ruby: rubyText,
+          textStyle: TextStyle(
             color: isDark ? Colors.white : Colors.black,
             fontSize: 16.0,
           ),
