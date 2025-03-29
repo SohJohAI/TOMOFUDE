@@ -43,6 +43,9 @@ dependencies:
   github: ^9.24.0
   # UI components
   flutter_treeview: ^1.0.7+1
+  # Special character formatting
+  ruby_text: ^2.0.0
+  flutter_html: ^3.0.0-beta.2
 
 dev_dependencies:
   flutter_test:

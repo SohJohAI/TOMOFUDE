@@ -861,16 +861,6 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
                   }
                 },
               ),
-              const SizedBox(width: 32),
-              CupertinoButton(
-                padding: const EdgeInsets.all(12),
-                child: Icon(
-                  CupertinoIcons.sparkles,
-                  size: 24,
-                  color: CupertinoColors.activeBlue,
-                ),
-                onPressed: _getAISuggestions,
-              ),
             ],
           ),
         ),
@@ -970,16 +960,6 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
                     Navigator.pop(context);
                   }
                 },
-              ),
-              const SizedBox(width: 24),
-              CupertinoButton(
-                padding: const EdgeInsets.all(12),
-                child: Icon(
-                  CupertinoIcons.sparkles,
-                  size: 24,
-                  color: CupertinoColors.activeBlue,
-                ),
-                onPressed: _getAISuggestions,
               ),
               const SizedBox(width: 24),
               CupertinoButton(
