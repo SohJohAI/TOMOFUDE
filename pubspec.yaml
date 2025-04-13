@@ -45,6 +45,8 @@ dependencies:
   flutter_treeview: ^1.0.7+1
   # Special character formatting
   flutter_html: ^3.0.0-beta.2
+  # Markdown support
+  flutter_markdown: ^0.6.18
 
 dev_dependencies:
   flutter_test:

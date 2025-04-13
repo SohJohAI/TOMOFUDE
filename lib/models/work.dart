@@ -79,4 +79,14 @@ class Work {
       updatedAt: novel.updatedAt,
     );
   }
+
+  // 章を追加するメソッド
+  void addChapter({String title = '', String content = ''}) {
+    final chapter = Chapter(
+      title: title,
+      content: content,
+    );
+    chapters.add(chapter);
+    updatedAt = DateTime.now();
+  }
 }

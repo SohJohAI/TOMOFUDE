@@ -6,6 +6,7 @@ import '../models/work.dart';
 import '../providers/work_list_provider.dart';
 import 'work_detail_screen.dart';
 import 'faq_screen.dart';
+import 'plot_booster_screen.dart';
 
 class WorkListScreen extends StatelessWidget {
   const WorkListScreen({Key? key}) : super(key: key);
@@ -80,6 +81,19 @@ class WorkListScreen extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // プロットブースターボタン
+                CupertinoButton(
+                  padding: const EdgeInsets.all(16),
+                  color:
+                      CupertinoTheme.of(context).primaryColor.withOpacity(0.6),
+                  borderRadius: BorderRadius.circular(30),
+                  child: const Icon(
+                    CupertinoIcons.lightbulb,
+                    color: CupertinoColors.white,
+                  ),
+                  onPressed: () => _openPlotBooster(context),
+                ),
+                const SizedBox(height: 8),
                 // フォルダからインポートボタン
                 CupertinoButton(
                   padding: const EdgeInsets.all(16),
@@ -402,5 +416,22 @@ class WorkListScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  /// プロットブースターを開く
+  void _openPlotBooster(BuildContext context) {
+    Navigator.push(
+      context,
+      CupertinoPageRoute(
+        builder: (context) => PlotBoosterScreen(),
+        fullscreenDialog: true,
+      ),
+    ).then((result) {
+      // プロットブースターから作品が生成された場合
+      if (result != null && result is Work) {
+        // 作品詳細画面に遷移
+        _openWork(context, result);
+      }
+    });
   }
 }
