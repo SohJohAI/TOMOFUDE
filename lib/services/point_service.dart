@@ -18,20 +18,38 @@ class PointService {
   /// Factory constructor to return the same instance
   factory PointService() => _instance;
 
-  /// Private constructor
-  PointService._internal();
-
   /// Firebase Auth instance
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  late final FirebaseAuth _auth;
 
   /// Firestore instance
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  late final FirebaseFirestore _firestore;
 
   /// Cloud Functions instance
-  final FirebaseFunctions _functions = FirebaseFunctions.instance;
+  late final FirebaseFunctions _functions;
+
+  /// Flag indicating whether Firebase is initialized
+  bool _isFirebaseInitialized = false;
+
+  /// Private constructor
+  PointService._internal() {
+    try {
+      _auth = FirebaseAuth.instance;
+      _firestore = FirebaseFirestore.instance;
+      _functions = FirebaseFunctions.instance;
+      _isFirebaseInitialized = true;
+    } catch (e) {
+      print('Firebase not initialized in PointService: $e');
+      _isFirebaseInitialized = false;
+    }
+  }
 
   /// Get current user's point information
   Future<UserPoint?> getUserPoint() async {
+    if (!_isFirebaseInitialized) {
+      print('Firebase not initialized, returning mock data');
+      return _getMockUserPoint();
+    }
+
     try {
       // Check if the user is authenticated
       final user = _auth.currentUser;
@@ -57,12 +75,34 @@ class PointService {
       return UserPoint.fromMap(userDoc.data()!);
     } catch (e) {
       print('Error getting user point: $e');
-      rethrow;
+      return _getMockUserPoint();
     }
+  }
+
+  /// Get mock user point data for development
+  UserPoint _getMockUserPoint() {
+    return UserPoint(
+      uid: 'mock-user-id',
+      email: 'mock@example.com',
+      displayName: 'Mock User',
+      point: 1500,
+      freePoint: 1000,
+      paidPoint: 500,
+      referralCode: 'MOCK1234',
+      createdAt: DateTime.now().subtract(const Duration(days: 30)),
+      lastResetDate: DateTime.now().subtract(const Duration(days: 15)),
+      referralCount: 2,
+      referralExpiry: DateTime.now().add(const Duration(days: 60)),
+    );
   }
 
   /// Get user's point history
   Future<List<PointHistory>> getPointHistory({int limit = 50}) async {
+    if (!_isFirebaseInitialized) {
+      print('Firebase not initialized, returning mock data');
+      return _getMockPointHistory();
+    }
+
     try {
       // Check if the user is authenticated
       final user = _auth.currentUser;
@@ -96,12 +136,51 @@ class PointService {
           .toList();
     } catch (e) {
       print('Error getting point history: $e');
-      return [];
+      return _getMockPointHistory();
     }
+  }
+
+  /// Get mock point history data for development
+  List<PointHistory> _getMockPointHistory() {
+    final now = DateTime.now();
+    return [
+      PointHistory(
+        id: 'mock-history-1',
+        userId: 'mock-user-id',
+        type: PointHistory.registerBonus,
+        amount: 1000,
+        timestamp: now.subtract(const Duration(days: 30)),
+        description: '初回登録ボーナス',
+        expiryDate: now.add(const Duration(days: 60)),
+      ),
+      PointHistory(
+        id: 'mock-history-2',
+        userId: 'mock-user-id',
+        type: PointHistory.referralBonus,
+        amount: 1500,
+        timestamp: now.subtract(const Duration(days: 15)),
+        description: '紹介ボーナス',
+        expiryDate: now.add(const Duration(days: 75)),
+      ),
+      PointHistory(
+        id: 'mock-history-3',
+        userId: 'mock-user-id',
+        type: PointHistory.pointConsumption,
+        amount: -500,
+        timestamp: now.subtract(const Duration(days: 5)),
+        description: 'AI執筆支援',
+        expiryDate: null,
+      ),
+    ];
   }
 
   /// Consume points for a specific purpose
   Future<bool> consumePoints(int amount, String purpose) async {
+    if (!_isFirebaseInitialized) {
+      print('Firebase not initialized, simulating point consumption');
+      return true; // Simulate successful consumption in development
+    }
+
     try {
       // Check if the user is authenticated
       final user = _auth.currentUser;
@@ -123,12 +202,17 @@ class PointService {
       return result.data['success'] ?? false;
     } catch (e) {
       print('Error consuming points: $e');
-      rethrow;
+      return false;
     }
   }
 
   /// Apply a referral code to get bonus points
   Future<bool> applyReferralCode(String code) async {
+    if (!_isFirebaseInitialized) {
+      print('Firebase not initialized, simulating referral code application');
+      return true; // Simulate successful referral in development
+    }
+
     try {
       // Check if the user is authenticated
       final user = _auth.currentUser;
@@ -149,12 +233,16 @@ class PointService {
       return result.data['success'] ?? false;
     } catch (e) {
       print('Error applying referral code: $e');
-      rethrow;
+      return false;
     }
   }
 
   /// Get the user's referral code
   Future<String?> getReferralCode() async {
+    if (!_isFirebaseInitialized) {
+      return 'MOCK1234'; // Return mock referral code in development
+    }
+
     try {
       final userPoint = await getUserPoint();
       return userPoint?.referralCode;
@@ -166,6 +254,10 @@ class PointService {
 
   /// Check if the user has enough points for a purchase
   Future<bool> hasEnoughPoints(int amount) async {
+    if (!_isFirebaseInitialized) {
+      return true; // Assume user has enough points in development
+    }
+
     try {
       final userPoint = await getUserPoint();
       return userPoint != null && userPoint.point >= amount;

@@ -15,10 +15,20 @@ void main() async {
   // Ensure Flutter is initialized
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Firebase
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  // Initialize Firebase if enabled
+  bool firebaseEnabled =
+      false; // Set to true when Firebase is properly configured
+  if (firebaseEnabled) {
+    try {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+      print('Firebase initialized successfully');
+    } catch (e) {
+      print('Failed to initialize Firebase: $e');
+      // Continue without Firebase
+    }
+  }
   runApp(
     MultiProvider(
       providers: [

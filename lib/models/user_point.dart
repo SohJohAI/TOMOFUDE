@@ -1,21 +1,42 @@
-/// UserPoint model represents a user's point information in the system.
+/// A model class representing a user's point information.
 ///
-/// This model includes details about the user's points, referral code, and other
-/// related information for the payment system.
+/// This class contains information about a user's points, including
+/// free points, paid points, and referral code.
 class UserPoint {
+  /// The user's ID.
   final String uid;
-  final String email;
-  final String? displayName;
-  final int point;
-  final int freePoint;
-  final int paidPoint;
-  final String referralCode;
-  final String? referredBy;
-  final DateTime createdAt;
-  final DateTime lastResetDate;
-  final int referralCount;
-  final DateTime referralExpiry;
 
+  /// The user's email.
+  final String email;
+
+  /// The user's display name.
+  final String? displayName;
+
+  /// The total number of points the user has.
+  final int point;
+
+  /// The number of free points the user has.
+  final int freePoint;
+
+  /// The number of paid points the user has.
+  final int paidPoint;
+
+  /// The user's referral code.
+  final String referralCode;
+
+  /// The date the user was created.
+  final DateTime createdAt;
+
+  /// The date the user's points were last reset.
+  final DateTime lastResetDate;
+
+  /// The number of users this user has referred.
+  final int referralCount;
+
+  /// The date the user's referral bonus expires.
+  final DateTime? referralExpiry;
+
+  /// Creates a new user point.
   UserPoint({
     required this.uid,
     required this.email,
@@ -24,39 +45,42 @@ class UserPoint {
     required this.freePoint,
     required this.paidPoint,
     required this.referralCode,
-    this.referredBy,
     required this.createdAt,
     required this.lastResetDate,
     required this.referralCount,
-    required this.referralExpiry,
+    this.referralExpiry,
   });
 
-  /// Creates a UserPoint instance from a Firestore document map.
-  ///
-  /// Note: This requires the cloud_firestore package to be installed.
-  /// Run 'flutter pub get' after adding Firebase dependencies to pubspec.yaml.
+  /// Creates a user point from a map.
   factory UserPoint.fromMap(Map<String, dynamic> map) {
     return UserPoint(
-      uid: map['uid'] ?? '',
-      email: map['email'] ?? '',
-      displayName: map['displayName'],
-      point: map['point'] ?? 0,
-      freePoint: map['freePoint'] ?? 0,
-      paidPoint: map['paidPoint'] ?? 0,
-      referralCode: map['referralCode'] ?? '',
-      referredBy: map['referredBy'],
-      createdAt: map['createdAt']?.toDate() ?? DateTime.now(),
-      lastResetDate: map['lastResetDate']?.toDate() ?? DateTime.now(),
-      referralCount: map['referralCount'] ?? 0,
-      referralExpiry: map['referralExpiry']?.toDate() ??
-          DateTime.now().add(const Duration(days: 90)),
+      uid: map['uid'] as String,
+      email: map['email'] as String,
+      displayName: map['displayName'] as String?,
+      point: map['point'] as int,
+      freePoint: map['freePoint'] as int,
+      paidPoint: map['paidPoint'] as int,
+      referralCode: map['referralCode'] as String,
+      createdAt: map['createdAt'] != null
+          ? (map['createdAt'] is DateTime
+              ? map['createdAt'] as DateTime
+              : DateTime.parse(map['createdAt'].toString()))
+          : DateTime.now(),
+      lastResetDate: map['lastResetDate'] != null
+          ? (map['lastResetDate'] is DateTime
+              ? map['lastResetDate'] as DateTime
+              : DateTime.parse(map['lastResetDate'].toString()))
+          : DateTime.now(),
+      referralCount: map['referralCount'] as int? ?? 0,
+      referralExpiry: map['referralExpiry'] != null
+          ? (map['referralExpiry'] is DateTime
+              ? map['referralExpiry'] as DateTime
+              : DateTime.parse(map['referralExpiry'].toString()))
+          : null,
     );
   }
 
-  /// Converts this UserPoint instance to a map for Firestore storage.
-  ///
-  /// Note: This requires the cloud_firestore package to be installed.
-  /// Run 'flutter pub get' after adding Firebase dependencies to pubspec.yaml.
+  /// Converts this user point to a map.
   Map<String, dynamic> toMap() {
     return {
       'uid': uid,
@@ -66,14 +90,14 @@ class UserPoint {
       'freePoint': freePoint,
       'paidPoint': paidPoint,
       'referralCode': referralCode,
-      'referredBy': referredBy,
-      'createdAt': createdAt,
-      'lastResetDate': lastResetDate,
+      'createdAt': createdAt.toIso8601String(),
+      'lastResetDate': lastResetDate.toIso8601String(),
       'referralCount': referralCount,
-      'referralExpiry': referralExpiry,
+      'referralExpiry': referralExpiry?.toIso8601String(),
     };
   }
 
+  /// Creates a copy of this user point with the given fields replaced with the new values.
   UserPoint copyWith({
     String? uid,
     String? email,
@@ -82,7 +106,6 @@ class UserPoint {
     int? freePoint,
     int? paidPoint,
     String? referralCode,
-    String? referredBy,
     DateTime? createdAt,
     DateTime? lastResetDate,
     int? referralCount,
@@ -96,7 +119,6 @@ class UserPoint {
       freePoint: freePoint ?? this.freePoint,
       paidPoint: paidPoint ?? this.paidPoint,
       referralCode: referralCode ?? this.referralCode,
-      referredBy: referredBy ?? this.referredBy,
       createdAt: createdAt ?? this.createdAt,
       lastResetDate: lastResetDate ?? this.lastResetDate,
       referralCount: referralCount ?? this.referralCount,

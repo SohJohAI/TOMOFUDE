@@ -18,26 +18,63 @@ class AuthService {
   /// Factory constructor to return the same instance
   factory AuthService() => _instance;
 
-  /// Private constructor
-  AuthService._internal();
-
   /// Firebase Auth instance
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  late final FirebaseAuth _auth;
 
   /// Google Sign In instance
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  late final GoogleSignIn _googleSignIn;
 
   /// Firestore instance
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  late final FirebaseFirestore _firestore;
+
+  /// Flag indicating whether Firebase is initialized
+  bool _isFirebaseInitialized = false;
+
+  /// Private constructor
+  AuthService._internal() {
+    try {
+      _auth = FirebaseAuth.instance;
+      _googleSignIn = GoogleSignIn();
+      _firestore = FirebaseFirestore.instance;
+      _isFirebaseInitialized = true;
+    } catch (e) {
+      print('Firebase not initialized in AuthService: $e');
+      _isFirebaseInitialized = false;
+    }
+  }
 
   /// Get current user
-  User? get currentUser => _auth.currentUser;
+  User? get currentUser {
+    if (!_isFirebaseInitialized) return null;
+    try {
+      return _auth.currentUser;
+    } catch (e) {
+      print('Error getting current user: $e');
+      return null;
+    }
+  }
 
   /// Stream of auth state changes
-  Stream<User?> get authStateChanges => _auth.authStateChanges();
+  Stream<User?> get authStateChanges {
+    if (!_isFirebaseInitialized) {
+      // Return an empty stream if Firebase is not initialized
+      return Stream.value(null);
+    }
+    try {
+      return _auth.authStateChanges();
+    } catch (e) {
+      print('Error getting auth state changes: $e');
+      return Stream.value(null);
+    }
+  }
 
   /// Sign up with email and password
-  Future<UserCredential> signUpWithEmail(String email, String password) async {
+  Future<UserCredential?> signUpWithEmail(String email, String password) async {
+    if (!_isFirebaseInitialized) {
+      print('Firebase not initialized, cannot sign up');
+      return null;
+    }
+
     try {
       final credential = await _auth.createUserWithEmailAndPassword(
         email: email,
@@ -50,12 +87,17 @@ class AuthService {
       return credential;
     } catch (e) {
       print('Error signing up with email: $e');
-      rethrow;
+      return null;
     }
   }
 
   /// Sign in with email and password
-  Future<UserCredential> signInWithEmail(String email, String password) async {
+  Future<UserCredential?> signInWithEmail(String email, String password) async {
+    if (!_isFirebaseInitialized) {
+      print('Firebase not initialized, cannot sign in');
+      return null;
+    }
+
     try {
       return await _auth.signInWithEmailAndPassword(
         email: email,
@@ -63,18 +105,24 @@ class AuthService {
       );
     } catch (e) {
       print('Error signing in with email: $e');
-      rethrow;
+      return null;
     }
   }
 
   /// Sign in with Google
-  Future<UserCredential> signInWithGoogle() async {
+  Future<UserCredential?> signInWithGoogle() async {
+    if (!_isFirebaseInitialized) {
+      print('Firebase not initialized, cannot sign in with Google');
+      return null;
+    }
+
     try {
       // Trigger the authentication flow
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
 
       if (googleUser == null) {
-        throw Exception('Google sign in was canceled');
+        print('Google sign in was canceled');
+        return null;
       }
 
       // Obtain the auth details from the request
@@ -91,29 +139,39 @@ class AuthService {
       return await _auth.signInWithCredential(credential);
     } catch (e) {
       print('Error signing in with Google: $e');
-      rethrow;
+      return null;
     }
   }
 
   /// Sign out
   Future<void> signOut() async {
+    if (!_isFirebaseInitialized) {
+      print('Firebase not initialized, cannot sign out');
+      return;
+    }
+
     try {
       await _googleSignIn.signOut();
       await _auth.signOut();
     } catch (e) {
       print('Error signing out: $e');
-      rethrow;
     }
   }
 
   /// Apply referral code during registration
   /// This should be called after successful registration
-  Future<void> applyReferralCode(String referralCode) async {
+  Future<bool> applyReferralCode(String referralCode) async {
+    if (!_isFirebaseInitialized) {
+      print('Firebase not initialized, cannot apply referral code');
+      return false;
+    }
+
     try {
       // Check if the user is authenticated
       final user = _auth.currentUser;
       if (user == null) {
-        throw Exception('User not authenticated');
+        print('User not authenticated');
+        return false;
       }
 
       // Check if the referral code exists
@@ -121,20 +179,23 @@ class AuthService {
           await _firestore.collection('referralCodes').doc(referralCode).get();
 
       if (!codeDoc.exists) {
-        throw Exception('Invalid referral code');
+        print('Invalid referral code');
+        return false;
       }
 
       final codeData = codeDoc.data() as Map<String, dynamic>;
 
       // Check if the code is active
       if (!(codeData['isActive'] ?? true)) {
-        throw Exception('Referral code is inactive');
+        print('Referral code is inactive');
+        return false;
       }
 
       // Check if the code has expired
       final expiryDate = (codeData['expiryDate'] as Timestamp).toDate();
       if (expiryDate.isBefore(DateTime.now())) {
-        throw Exception('Referral code has expired');
+        print('Referral code has expired');
+        return false;
       }
 
       // Update the user document with the referral code
@@ -143,9 +204,10 @@ class AuthService {
       });
 
       // Note: The actual point bonuses will be handled by Cloud Functions
+      return true;
     } catch (e) {
       print('Error applying referral code: $e');
-      rethrow;
+      return false;
     }
   }
 }

@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import '../services/point_service.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:provider/provider.dart';
+import '../providers/payment_provider.dart';
 
-/// A screen for entering and applying referral codes.
+/// A screen that allows users to enter a referral code.
 ///
-/// This screen allows users to enter a referral code and apply it
-/// to receive bonus points.
+/// This screen provides a form for entering a referral code and
+/// a button to apply the code.
 class ReferralCodeScreen extends StatefulWidget {
   /// Creates a referral code screen.
   const ReferralCodeScreen({Key? key}) : super(key: key);
@@ -17,11 +18,8 @@ class ReferralCodeScreen extends StatefulWidget {
 class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
   final _formKey = GlobalKey<FormState>();
   final _codeController = TextEditingController();
-  final _pointService = PointService();
-
-  bool _isLoading = false;
+  bool _isSubmitting = false;
   String? _errorMessage;
-  bool _isSuccess = false;
 
   @override
   void dispose() {
@@ -31,11 +29,13 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('紹介コード入力'),
+    final isDark = CupertinoTheme.of(context).brightness == Brightness.dark;
+
+    return CupertinoPageScaffold(
+      navigationBar: const CupertinoNavigationBar(
+        middle: Text('紹介コード入力'),
       ),
-      body: SingleChildScrollView(
+      child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Form(
@@ -43,19 +43,49 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _buildInfoCard(),
+                // Information card
+                _buildInfoCard(isDark),
                 const SizedBox(height: 24),
-                _buildCodeInputField(),
+
+                // Code input field
+                CupertinoTextField(
+                  controller: _codeController,
+                  placeholder: '紹介コードを入力（例：ABCD1234）',
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: isDark
+                          ? CupertinoColors.systemGrey.darkColor
+                          : CupertinoColors.systemGrey4,
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  style: TextStyle(
+                    color:
+                        isDark ? CupertinoColors.white : CupertinoColors.black,
+                  ),
+                  autocorrect: false,
+                  textCapitalization: TextCapitalization.characters,
+                ),
                 if (_errorMessage != null) ...[
-                  const SizedBox(height: 16),
-                  _buildErrorMessage(),
-                ],
-                if (_isSuccess) ...[
-                  const SizedBox(height: 16),
-                  _buildSuccessMessage(),
+                  const SizedBox(height: 8),
+                  Text(
+                    _errorMessage!,
+                    style: const TextStyle(
+                      color: CupertinoColors.systemRed,
+                      fontSize: 14,
+                    ),
+                  ),
                 ],
                 const SizedBox(height: 24),
-                _buildSubmitButton(),
+
+                // Apply button
+                _isSubmitting
+                    ? const Center(child: CupertinoActivityIndicator())
+                    : CupertinoButton.filled(
+                        onPressed: _applyReferralCode,
+                        child: const Text('紹介コードを適用'),
+                      ),
               ],
             ),
           ),
@@ -64,111 +94,51 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
     );
   }
 
-  /// Builds the information card explaining the referral code system.
-  Widget _buildInfoCard() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.info_outline,
-                  color: Theme.of(context).primaryColor,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  '紹介コードについて',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              '友達から紹介コードを受け取った場合は、こちらから入力してください。'
-              '紹介コードを使用すると、あなたに500ポイント、紹介した友達に1500ポイントが付与されます。',
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              '※紹介コードは1アカウントにつき1回のみ使用できます。',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Builds the referral code input field.
-  Widget _buildCodeInputField() {
-    return TextFormField(
-      controller: _codeController,
-      decoration: InputDecoration(
-        labelText: '紹介コード',
-        hintText: '8桁の英数字（例: ABC12345）',
-        prefixIcon: const Icon(Icons.code),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
-        suffixIcon: IconButton(
-          icon: const Icon(Icons.clear),
-          onPressed: () => _codeController.clear(),
-          tooltip: 'クリア',
-        ),
-      ),
-      textCapitalization: TextCapitalization.characters,
-      inputFormatters: [
-        FilteringTextInputFormatter.allow(RegExp(r'[A-Z0-9]')),
-        LengthLimitingTextInputFormatter(8),
-      ],
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return '紹介コードを入力してください';
-        }
-        if (value.length != 8) {
-          return '紹介コードは8桁です';
-        }
-        if (!RegExp(r'^[A-Z0-9]{8}$').hasMatch(value)) {
-          return '無効な紹介コードです';
-        }
-        return null;
-      },
-      onChanged: (_) {
-        // Clear error and success messages when the input changes
-        if (_errorMessage != null || _isSuccess) {
-          setState(() {
-            _errorMessage = null;
-            _isSuccess = false;
-          });
-        }
-      },
-      enabled: !_isLoading,
-      autovalidateMode: AutovalidateMode.onUserInteraction,
-    );
-  }
-
-  /// Builds the error message display.
-  Widget _buildErrorMessage() {
+  /// Builds the information card.
+  Widget _buildInfoCard(bool isDark) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.red.shade50,
+        color: isDark ? const Color(0xFF252525) : const Color(0xFFF5F5F5),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.red.shade200),
+        border: Border.all(
+          color: isDark
+              ? CupertinoColors.systemGrey.darkColor
+              : CupertinoColors.systemGrey4,
+          width: 0.5,
+        ),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.error_outline, color: Colors.red.shade700),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              _errorMessage!,
-              style: TextStyle(color: Colors.red.shade700),
+          Row(
+            children: [
+              Icon(
+                CupertinoIcons.info_circle,
+                color: CupertinoTheme.of(context).primaryColor,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '紹介コードについて',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? CupertinoColors.white : CupertinoColors.black,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            '友達から紹介コードを受け取った場合は、こちらから入力してください。'
+            '紹介コードを適用すると、あなたに500ポイントが付与されます。',
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            '※紹介コードは1回のみ使用できます。',
+            style: TextStyle(
+              fontSize: 12,
+              fontStyle: FontStyle.italic,
             ),
           ),
         ],
@@ -176,127 +146,47 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
     );
   }
 
-  /// Builds the success message display.
-  Widget _buildSuccessMessage() {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.green.shade50,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.green.shade200),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.check_circle_outline, color: Colors.green.shade700),
-          const SizedBox(width: 12),
-          const Expanded(
-            child: Text(
-              '紹介コードが適用されました！500ポイントが付与されました。',
-              style: TextStyle(color: Colors.green),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Builds the submit button.
-  Widget _buildSubmitButton() {
-    return ElevatedButton(
-      onPressed: _isLoading ? null : _applyReferralCode,
-      style: ElevatedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
-      ),
-      child: _isLoading
-          ? const SizedBox(
-              height: 20,
-              width: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-              ),
-            )
-          : const Text('コードを適用'),
-    );
-  }
-
-  /// Applies the entered referral code.
+  /// Applies the referral code.
   Future<void> _applyReferralCode() async {
-    if (!_formKey.currentState!.validate()) {
+    // Validate the code format
+    final code = _codeController.text.trim().toUpperCase();
+    if (code.isEmpty) {
+      setState(() {
+        _errorMessage = '紹介コードを入力してください。';
+      });
+      return;
+    }
+
+    if (!RegExp(r'^[A-Z0-9]{8}$').hasMatch(code)) {
+      setState(() {
+        _errorMessage = '紹介コードは8桁の英数字で入力してください。';
+      });
       return;
     }
 
     setState(() {
-      _isLoading = true;
+      _isSubmitting = true;
       _errorMessage = null;
-      _isSuccess = false;
     });
 
     try {
-      final code = _codeController.text.trim().toUpperCase();
-      final success = await _pointService.applyReferralCode(code);
-
-      setState(() {
-        _isLoading = false;
-        _isSuccess = success;
-        if (!success) {
-          _errorMessage = '紹介コードの適用に失敗しました。';
-        }
-      });
+      final provider = Provider.of<PaymentProvider>(context, listen: false);
+      final success = await provider.applyReferralCode(code);
 
       if (success) {
-        // Show a snackbar
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('紹介ボーナスが適用されました！'),
-              backgroundColor: Colors.green,
-            ),
-          );
-
-          // Wait a moment before popping the screen
-          Future.delayed(const Duration(seconds: 2), () {
-            if (mounted) {
-              Navigator.pop(context, true);
-            }
-          });
-        }
+        // Return to the previous screen with success result
+        Navigator.pop(context, true);
+      } else {
+        setState(() {
+          _errorMessage = '紹介コードの適用に失敗しました。無効なコードか、すでに使用されています。';
+          _isSubmitting = false;
+        });
       }
     } catch (e) {
       setState(() {
-        _isLoading = false;
-        _errorMessage = _getErrorMessage(e);
+        _errorMessage = 'エラーが発生しました: ${e.toString()}';
+        _isSubmitting = false;
       });
     }
-  }
-
-  /// Gets a user-friendly error message from an exception.
-  String _getErrorMessage(dynamic error) {
-    final message = error.toString();
-
-    if (message.contains('User not authenticated')) {
-      return 'ログインが必要です。';
-    }
-
-    if (message.contains('Invalid referral code')) {
-      return '無効な紹介コードです。';
-    }
-
-    if (message.contains('Referral code is inactive')) {
-      return 'この紹介コードは無効になっています。';
-    }
-
-    if (message.contains('Referral code has expired')) {
-      return 'この紹介コードは有効期限が切れています。';
-    }
-
-    if (message.contains('already used')) {
-      return '紹介コードは既に使用されています。';
-    }
-
-    return 'エラーが発生しました: $message';
   }
 }

@@ -30,19 +30,33 @@ class PaymentProvider with ChangeNotifier {
   String? get errorMessage => _errorMessage;
 
   /// Gets whether the user is authenticated.
-  bool get isAuthenticated => _authService.currentUser != null;
+  bool get isAuthenticated {
+    try {
+      return _authService.currentUser != null;
+    } catch (e) {
+      // Handle the case when Firebase Auth is not initialized
+      print('Error checking authentication: $e');
+      return false;
+    }
+  }
 
   /// Initializes the provider.
   ///
   /// This method is called when the provider is first created.
   /// It loads the user's point information and point history.
   Future<void> initialize() async {
-    if (!isAuthenticated) return;
+    try {
+      if (!isAuthenticated) return;
 
-    await Future.wait([
-      loadUserPoint(),
-      loadPointHistory(),
-    ]);
+      await Future.wait([
+        loadUserPoint(),
+        loadPointHistory(),
+      ]);
+    } catch (e) {
+      // Handle initialization errors
+      print('Error initializing PaymentProvider: $e');
+      _setError('Firebase may not be properly initialized: $e');
+    }
   }
 
   /// Loads the user's point information.
