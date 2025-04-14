@@ -47,6 +47,18 @@ dependencies:
   flutter_html: ^3.0.0-beta.2
   # Markdown support
   flutter_markdown: ^0.6.18
+  
+  # Firebase dependencies
+  firebase_core: ^2.15.0
+  firebase_auth: ^4.7.2
+  cloud_firestore: ^4.8.4
+  cloud_functions: ^4.3.4
+  firebase_messaging: ^14.6.5
+  google_sign_in: ^6.1.4
+  
+  # Utility packages
+  share_plus: ^7.1.0
+  intl: ^0.18.1
 
 dev_dependencies:
   flutter_test:

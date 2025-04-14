@@ -73,6 +73,14 @@ class NovelListScreen extends StatelessWidget {
                 );
               },
             ),
+            // ポイントボタン
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              child: const Icon(CupertinoIcons.money_yen_circle),
+              onPressed: () {
+                Navigator.pushNamed(context, '/payment');
+              },
+            ),
             // テーマ切り替えボタン
             CupertinoButton(
               padding: EdgeInsets.zero,

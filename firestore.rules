@@ -1,0 +1,52 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Common functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // User profiles
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if false; // Prevent user deletion
+      
+      // User's point history
+      match /history/{historyId} {
+        allow read: if isOwner(userId);
+        allow write: if false; // Only Cloud Functions can write history
+      }
+    }
+    
+    // Referral codes
+    match /referralCodes/{code} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Only Cloud Functions can write referral codes
+    }
+    
+    // Works (novels)
+    match /works/{workId} {
+      // Allow read if the work is public or the user is the owner
+      allow read: if resource.data.isPublic == true || 
+                    (isAuthenticated() && resource.data.userId == request.auth.uid);
+      
+      // Allow create if authenticated
+      allow create: if isAuthenticated() && 
+                      request.resource.data.userId == request.auth.uid;
+      
+      // Allow update if the user is the owner
+      allow update: if isAuthenticated() && 
+                      resource.data.userId == request.auth.uid;
+      
+      // Allow delete if the user is the owner
+      allow delete: if isAuthenticated() && 
+                      resource.data.userId == request.auth.uid;
+    }
+  }
+}
