@@ -1,6 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_functions/cloud_functions.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../models/user_point.dart';
 import '../models/point_history.dart';
 
@@ -8,9 +5,7 @@ import '../models/point_history.dart';
 ///
 /// This service provides methods for getting user points, consuming points,
 /// and retrieving point history.
-///
-/// Note: This requires Firebase packages to be installed.
-/// Run 'flutter pub get' after adding Firebase dependencies to pubspec.yaml.
+/// It uses a mock implementation when Firebase is not available.
 class PointService {
   /// Singleton instance
   static final PointService _instance = PointService._internal();
@@ -18,65 +13,20 @@ class PointService {
   /// Factory constructor to return the same instance
   factory PointService() => _instance;
 
-  /// Firebase Auth instance
-  late final FirebaseAuth _auth;
-
-  /// Firestore instance
-  late final FirebaseFirestore _firestore;
-
-  /// Cloud Functions instance
-  late final FirebaseFunctions _functions;
-
   /// Flag indicating whether Firebase is initialized
   bool _isFirebaseInitialized = false;
 
   /// Private constructor
   PointService._internal() {
-    try {
-      _auth = FirebaseAuth.instance;
-      _firestore = FirebaseFirestore.instance;
-      _functions = FirebaseFunctions.instance;
-      _isFirebaseInitialized = true;
-    } catch (e) {
-      print('Firebase not initialized in PointService: $e');
-      _isFirebaseInitialized = false;
-    }
+    // Firebase initialization is disabled for now
+    _isFirebaseInitialized = false;
+    print('Using mock PointService implementation');
   }
 
   /// Get current user's point information
   Future<UserPoint?> getUserPoint() async {
-    if (!_isFirebaseInitialized) {
-      print('Firebase not initialized, returning mock data');
-      return _getMockUserPoint();
-    }
-
-    try {
-      // Check if the user is authenticated
-      final user = _auth.currentUser;
-      if (user == null) {
-        throw Exception('User not authenticated');
-      }
-
-      // Call the Cloud Function to get user point
-      final result = await _functions.httpsCallable('getUserPoint').call();
-
-      // If the function returns data directly
-      if (result.data != null) {
-        return UserPoint.fromMap(result.data);
-      }
-
-      // Alternatively, get the data from Firestore
-      final userDoc = await _firestore.collection('users').doc(user.uid).get();
-
-      if (!userDoc.exists) {
-        return null;
-      }
-
-      return UserPoint.fromMap(userDoc.data()!);
-    } catch (e) {
-      print('Error getting user point: $e');
-      return _getMockUserPoint();
-    }
+    print('Getting mock user point data');
+    return _getMockUserPoint();
   }
 
   /// Get mock user point data for development
@@ -98,46 +48,8 @@ class PointService {
 
   /// Get user's point history
   Future<List<PointHistory>> getPointHistory({int limit = 50}) async {
-    if (!_isFirebaseInitialized) {
-      print('Firebase not initialized, returning mock data');
-      return _getMockPointHistory();
-    }
-
-    try {
-      // Check if the user is authenticated
-      final user = _auth.currentUser;
-      if (user == null) {
-        throw Exception('User not authenticated');
-      }
-
-      // Call the Cloud Function to get point history
-      final result = await _functions.httpsCallable('getPointHistory').call({
-        'limit': limit,
-      });
-
-      // If the function returns data directly
-      if (result.data != null && result.data['history'] != null) {
-        return (result.data['history'] as List)
-            .map((item) => PointHistory.fromMap(item))
-            .toList();
-      }
-
-      // Alternatively, get the data from Firestore
-      final historySnapshot = await _firestore
-          .collection('users')
-          .doc(user.uid)
-          .collection('history')
-          .orderBy('timestamp', descending: true)
-          .limit(limit)
-          .get();
-
-      return historySnapshot.docs
-          .map((doc) => PointHistory.fromMap(doc.data()))
-          .toList();
-    } catch (e) {
-      print('Error getting point history: $e');
-      return _getMockPointHistory();
-    }
+    print('Getting mock point history data');
+    return _getMockPointHistory();
   }
 
   /// Get mock point history data for development
@@ -157,7 +69,7 @@ class PointService {
         id: 'mock-history-2',
         userId: 'mock-user-id',
         type: PointHistory.referralBonus,
-        amount: 1500,
+        amount: 500,
         timestamp: now.subtract(const Duration(days: 15)),
         description: '紹介ボーナス',
         expiryDate: now.add(const Duration(days: 75)),
@@ -176,94 +88,40 @@ class PointService {
 
   /// Consume points for a specific purpose
   Future<bool> consumePoints(int amount, String purpose) async {
-    if (!_isFirebaseInitialized) {
-      print('Firebase not initialized, simulating point consumption');
-      return true; // Simulate successful consumption in development
-    }
+    print('Mock consuming $amount points for $purpose');
 
-    try {
-      // Check if the user is authenticated
-      final user = _auth.currentUser;
-      if (user == null) {
-        throw Exception('User not authenticated');
-      }
-
-      // Validate amount
-      if (amount <= 0) {
-        throw Exception('Amount must be greater than 0');
-      }
-
-      // Call the Cloud Function to consume points
-      final result = await _functions.httpsCallable('consumePoints').call({
-        'amount': amount,
-        'purpose': purpose,
-      });
-
-      return result.data['success'] ?? false;
-    } catch (e) {
-      print('Error consuming points: $e');
+    // Validate amount
+    if (amount <= 0) {
+      print('Amount must be greater than 0');
       return false;
     }
+
+    // Simulate successful consumption in development
+    return true;
   }
 
   /// Apply a referral code to get bonus points
   Future<bool> applyReferralCode(String code) async {
-    if (!_isFirebaseInitialized) {
-      print('Firebase not initialized, simulating referral code application');
-      return true; // Simulate successful referral in development
-    }
+    print('Mock applying referral code: $code');
 
-    try {
-      // Check if the user is authenticated
-      final user = _auth.currentUser;
-      if (user == null) {
-        throw Exception('User not authenticated');
-      }
-
-      // Validate code format
-      if (code.isEmpty || !RegExp(r'^[A-Z0-9]{8}$').hasMatch(code)) {
-        throw Exception('Invalid referral code format');
-      }
-
-      // Call the Cloud Function to apply the referral code
-      final result = await _functions.httpsCallable('applyReferralBonus').call({
-        'referralCode': code,
-      });
-
-      return result.data['success'] ?? false;
-    } catch (e) {
-      print('Error applying referral code: $e');
+    // Validate code format
+    if (code.isEmpty || !RegExp(r'^[A-Z0-9]{8}$').hasMatch(code)) {
+      print('Invalid referral code format');
       return false;
     }
+
+    // Simulate successful referral in development
+    return true;
   }
 
   /// Get the user's referral code
   Future<String?> getReferralCode() async {
-    if (!_isFirebaseInitialized) {
-      return 'MOCK1234'; // Return mock referral code in development
-    }
-
-    try {
-      final userPoint = await getUserPoint();
-      return userPoint?.referralCode;
-    } catch (e) {
-      print('Error getting referral code: $e');
-      return null;
-    }
+    return 'MOCK1234'; // Return mock referral code in development
   }
 
   /// Check if the user has enough points for a purchase
   Future<bool> hasEnoughPoints(int amount) async {
-    if (!_isFirebaseInitialized) {
-      return true; // Assume user has enough points in development
-    }
-
-    try {
-      final userPoint = await getUserPoint();
-      return userPoint != null && userPoint.point >= amount;
-    } catch (e) {
-      print('Error checking points: $e');
-      return false;
-    }
+    // Assume user has enough points in development
+    return true;
   }
 }

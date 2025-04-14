@@ -1,213 +1,80 @@
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:async';
 
 /// Service for handling user authentication.
 ///
-/// This service provides methods for user registration, login, and logout
-/// using Firebase Authentication.
-///
-/// Note: This requires Firebase packages to be installed.
-/// Run 'flutter pub get' after adding Firebase dependencies to pubspec.yaml.
+/// This service provides methods for user registration, login, and logout.
+/// It uses a mock implementation when Firebase is not available.
 class AuthService {
-  // This class will be implemented after Firebase setup
-
   /// Singleton instance
   static final AuthService _instance = AuthService._internal();
 
   /// Factory constructor to return the same instance
   factory AuthService() => _instance;
 
-  /// Firebase Auth instance
-  late final FirebaseAuth _auth;
-
-  /// Google Sign In instance
-  late final GoogleSignIn _googleSignIn;
-
-  /// Firestore instance
-  late final FirebaseFirestore _firestore;
-
   /// Flag indicating whether Firebase is initialized
   bool _isFirebaseInitialized = false;
 
+  /// Mock user data
+  final Map<String, dynamic>? _mockUser = {
+    'uid': 'mock-user-id',
+    'email': 'user@example.com',
+    'displayName': 'Mock User',
+  };
+
   /// Private constructor
   AuthService._internal() {
-    try {
-      _auth = FirebaseAuth.instance;
-      _googleSignIn = GoogleSignIn();
-      _firestore = FirebaseFirestore.instance;
-      _isFirebaseInitialized = true;
-    } catch (e) {
-      print('Firebase not initialized in AuthService: $e');
-      _isFirebaseInitialized = false;
-    }
+    // Firebase initialization is disabled for now
+    _isFirebaseInitialized = false;
+    print('Using mock AuthService implementation');
   }
 
   /// Get current user
-  User? get currentUser {
-    if (!_isFirebaseInitialized) return null;
-    try {
-      return _auth.currentUser;
-    } catch (e) {
-      print('Error getting current user: $e');
-      return null;
-    }
+  Map<String, dynamic>? get currentUser {
+    // Return mock user data
+    return _mockUser;
   }
 
   /// Stream of auth state changes
-  Stream<User?> get authStateChanges {
-    if (!_isFirebaseInitialized) {
-      // Return an empty stream if Firebase is not initialized
-      return Stream.value(null);
-    }
-    try {
-      return _auth.authStateChanges();
-    } catch (e) {
-      print('Error getting auth state changes: $e');
-      return Stream.value(null);
-    }
+  Stream<Map<String, dynamic>?> get authStateChanges {
+    // Return a stream with mock user data
+    return Stream.value(_mockUser);
   }
 
   /// Sign up with email and password
-  Future<UserCredential?> signUpWithEmail(String email, String password) async {
-    if (!_isFirebaseInitialized) {
-      print('Firebase not initialized, cannot sign up');
-      return null;
-    }
-
-    try {
-      final credential = await _auth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-
-      // User creation in Firestore will be handled by Cloud Functions
-      // through the onUserCreate trigger
-
-      return credential;
-    } catch (e) {
-      print('Error signing up with email: $e');
-      return null;
-    }
+  Future<Map<String, dynamic>?> signUpWithEmail(
+      String email, String password) async {
+    print('Mock sign up with email: $email');
+    return _mockUser;
   }
 
   /// Sign in with email and password
-  Future<UserCredential?> signInWithEmail(String email, String password) async {
-    if (!_isFirebaseInitialized) {
-      print('Firebase not initialized, cannot sign in');
-      return null;
-    }
-
-    try {
-      return await _auth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-    } catch (e) {
-      print('Error signing in with email: $e');
-      return null;
-    }
+  Future<Map<String, dynamic>?> signInWithEmail(
+      String email, String password) async {
+    print('Mock sign in with email: $email');
+    return _mockUser;
   }
 
   /// Sign in with Google
-  Future<UserCredential?> signInWithGoogle() async {
-    if (!_isFirebaseInitialized) {
-      print('Firebase not initialized, cannot sign in with Google');
-      return null;
-    }
-
-    try {
-      // Trigger the authentication flow
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-
-      if (googleUser == null) {
-        print('Google sign in was canceled');
-        return null;
-      }
-
-      // Obtain the auth details from the request
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
-
-      // Create a new credential
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-
-      // Sign in to Firebase with the Google credential
-      return await _auth.signInWithCredential(credential);
-    } catch (e) {
-      print('Error signing in with Google: $e');
-      return null;
-    }
+  Future<Map<String, dynamic>?> signInWithGoogle() async {
+    print('Mock sign in with Google');
+    return _mockUser;
   }
 
   /// Sign out
   Future<void> signOut() async {
-    if (!_isFirebaseInitialized) {
-      print('Firebase not initialized, cannot sign out');
-      return;
-    }
-
-    try {
-      await _googleSignIn.signOut();
-      await _auth.signOut();
-    } catch (e) {
-      print('Error signing out: $e');
-    }
+    print('Mock sign out');
   }
 
   /// Apply referral code during registration
-  /// This should be called after successful registration
   Future<bool> applyReferralCode(String referralCode) async {
-    if (!_isFirebaseInitialized) {
-      print('Firebase not initialized, cannot apply referral code');
+    print('Mock apply referral code: $referralCode');
+
+    // Validate code format
+    if (!RegExp(r'^[A-Z0-9]{8}$').hasMatch(referralCode)) {
       return false;
     }
 
-    try {
-      // Check if the user is authenticated
-      final user = _auth.currentUser;
-      if (user == null) {
-        print('User not authenticated');
-        return false;
-      }
-
-      // Check if the referral code exists
-      final codeDoc =
-          await _firestore.collection('referralCodes').doc(referralCode).get();
-
-      if (!codeDoc.exists) {
-        print('Invalid referral code');
-        return false;
-      }
-
-      final codeData = codeDoc.data() as Map<String, dynamic>;
-
-      // Check if the code is active
-      if (!(codeData['isActive'] ?? true)) {
-        print('Referral code is inactive');
-        return false;
-      }
-
-      // Check if the code has expired
-      final expiryDate = (codeData['expiryDate'] as Timestamp).toDate();
-      if (expiryDate.isBefore(DateTime.now())) {
-        print('Referral code has expired');
-        return false;
-      }
-
-      // Update the user document with the referral code
-      await _firestore.collection('users').doc(user.uid).update({
-        'referredBy': referralCode,
-      });
-
-      // Note: The actual point bonuses will be handled by Cloud Functions
-      return true;
-    } catch (e) {
-      print('Error applying referral code: $e');
-      return false;
-    }
+    // Simulate success for valid format
+    return true;
   }
 }

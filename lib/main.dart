@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
 import 'providers/app_state.dart';
 import 'providers/novel_list_provider.dart';
 import 'providers/work_list_provider.dart';
@@ -15,9 +13,16 @@ void main() async {
   // Ensure Flutter is initialized
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Firebase initialization is disabled for now
+  // To enable Firebase:
+  // 1. Uncomment Firebase dependencies in pubspec.yaml
+  // 2. Run 'flutter pub get'
+  // 3. Uncomment the Firebase initialization code in this file
+  // 4. Set firebaseEnabled to true
+
+  /*
   // Initialize Firebase if enabled
-  bool firebaseEnabled =
-      false; // Set to true when Firebase is properly configured
+  bool firebaseEnabled = true;
   if (firebaseEnabled) {
     try {
       await Firebase.initializeApp(
@@ -29,6 +34,7 @@ void main() async {
       // Continue without Firebase
     }
   }
+  */
   runApp(
     MultiProvider(
       providers: [

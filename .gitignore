@@ -12,6 +12,15 @@
 .swiftpm/
 migrate_working_dir/
 
+# Firebase related
+lib/firebase_options.dart
+firebase.json
+firestore.indexes.json
+firestore.rules
+.firebase/
+**/google-services.json
+**/GoogleService-Info.plist
+
 # IntelliJ related
 *.iml
 *.ipr
@@ -43,3 +52,12 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Large files
+*.mp4
+*.mov
+*.avi
+*.zip
+*.rar
+*.7z
+*.tar.gz
