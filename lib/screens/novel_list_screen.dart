@@ -7,6 +7,7 @@ import '../providers/novel_list_provider.dart';
 import 'editor_screen.dart';
 import 'faq_screen.dart'; // FAQページのインポートを追加
 import 'work_list_screen.dart'; // 作品一覧画面のインポートを追加
+import 'plot_booster_screen.dart'; // プロットブースター画面のインポートを追加
 
 class NovelListScreen extends StatelessWidget {
   const NovelListScreen({Key? key}) : super(key: key);
@@ -47,6 +48,17 @@ class NovelListScreen extends StatelessWidget {
                   context,
                   CupertinoPageRoute(
                       builder: (context) => const WorkListScreen()),
+                );
+              },
+            ),
+            // プロットブースターボタン
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              child: const Icon(CupertinoIcons.lightbulb),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  CupertinoPageRoute(builder: (context) => PlotBoosterScreen()),
                 );
               },
             ),

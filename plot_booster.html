@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>プロットブースター</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="plot_booster.js" defer></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE',
+                        'primary-dark': '#4D4CBE',
+                        'primary-light': '#7D7CEE',
+                    }
+                }
+            }
+        }
+
+        // ダークモード検出
+        if (localStorage.getItem('darkMode') === 'true' ||
+            (localStorage.getItem('darkMode') === null &&
+                window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        }
+
+        // ダークモード切り替え監視
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (localStorage.getItem('darkMode') === null) {
+                if (event.matches) {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            }
+        });
+    </script>
+    <style>
+        /* スクロールバーのスタイル */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .dark ::-webkit-scrollbar-track {
+            background: #2d2d2d;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        .step-indicator {
+            transition: all 0.3s ease;
+        }
+
+        .step-content {
+            transition: all 0.3s ease;
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+        }
+
+        .step-content.active {
+            max-height: 2000px;
+            opacity: 1;
+            padding: 1rem 0;
+        }
+
+        .ai-response {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease, opacity 0.3s ease;
+            opacity: 0;
+        }
+
+        .ai-response.show {
+            max-height: 400px;
+            overflow-y: auto;
+            opacity: 1;
+        }
+
+        .plot-card {
+            transition: transform 0.6s, opacity 0.5s;
+            position: relative;
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .plot-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+        }
+
+        .plot-card-content {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        /* モバイル対応の強化 */
+        @media (max-width: 640px) {
+            .step-indicator {
+                font-size: 0.875rem;
+                padding: 0.5rem 0.75rem;
+            }
+
+            h1 {
+                font-size: 1.75rem !important;
+            }
+
+            h2 {
+                font-size: 1.5rem !important;
+            }
+        }
+
+        /* トースト通知 */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 4px;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        /* ツールチップ */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 120px;
+            background-color: #555;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -60px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* ダークモードトグル */
+        .dark-mode-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            cursor: pointer;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            padding: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .dark-mode-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        /* 選択されたテーマボタン */
+        .theme-btn.selected {
+            background-color: #5D5CDE;
+            color: white;
+        }
+
+        .dark .theme-btn.selected {
+            background-color: #7D7CEE;
+            color: white;
+        }
+
+        /* 章の削除ボタン */
+        .delete-chapter-btn {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .chapter-item:hover .delete-chapter-btn {
+            opacity: 1;
+        }
+    </style>
+</head>
+
+<body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+    <!-- ダークモードトグル -->
+    <div class="dark-mode-toggle" id="darkModeToggle">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="dark:hidden">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            class="hidden dark:block">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+    </div>
+
+    <!-- トースト通知 -->
+    <div id="toast" class="toast"></div>
+
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <header class="text-center mb-10">
+            <h1 class="text-4xl font-bold mb-2 text-primary dark:text-primary-light">プロットブースター</h1>
+            <p class="text-lg text-gray-600 dark:text-gray-300">物語の骨子を対話的に作り上げる支援ツール</p>
+        </header>
+
+        <div class="mb-8">
+            <div class="flex space-x-2 mb-6 overflow-x-auto pb-2 scrollbar-thin">
+                <button class="step-indicator flex-shrink-0 px-3 py-2 bg-primary text-white rounded-lg shadow-md"
+                    onclick="showStep(0)">STEP 0</button>
+                <button
+                    class="step-indicator flex-shrink-0 px-3 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg"
+                    onclick="showStep(1)">STEP 1</button>
+                <button
+                    class="step-indicator flex-shrink-0 px-3 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg"
+                    onclick="showStep(2)">STEP 2</button>
+                <button
+                    class="step-indicator flex-shrink-0 px-3 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg"
+                    onclick="showStep(3)">STEP 3</button>
+                <button
+                    class="step-indicator flex-shrink-0 px-3 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg"
+                    onclick="showStep(4)">STEP 4</button>
+                <button
+                    class="step-indicator flex-shrink-0 px-3 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg"
+                    onclick="showStep(5)">STEP 5</button>
+                <button
+                    class="step-indicator flex-shrink-0 px-3 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg"
+                    onclick="showStep(6)">STEP 6</button>
+                <button
+                    class="step-indicator flex-shrink-0 px-3 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg"
+                    onclick="showStep(7)">STEP 7</button>
+            </div>
+
+            <!-- STEP 0 -->
+            <div class="step-content active" id="step0">
+                <h2 class="text-2xl font-semibold mb-4">STEP 0：ジャンルと作風の決定</h2>
+                <p class="mb-6">小説のジャンルと雰囲気を選んで、物語の方向性を決めましょう。</p>
+
+                <div class="grid md:grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <label class="block text-gray-700 dark:text-gray-300 mb-2" for="genre">ジャンル</label>
+                        <div class="flex space-x-2">
+                            <select id="genre"
+                                class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-base">
+                                <option value="">選択してください</option>
+                                <option value="ファンタジー">ファンタジー</option>
+                                <option value="SF">SF</option>
+                                <option value="現代ドラマ">現代ドラマ</option>
+                                <option value="ミステリー">ミステリー</option>
+                                <option value="ホラー">ホラー</option>
+                                <option value="恋愛">恋愛</option>
+                                <option value="歴史">歴史</option>
+                                <option value="アクション・冒険">アクション・冒険</option>
+                                <option value="青春">青春</option>
+                                <option value="その他">その他</option>
+                                <option value="フリー入力">フリー入力</option>
+                            </select>
+                        </div>
+                        <input type="text" id="customGenre"
+                            class="w-full mt-2 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-base hidden"
+                            placeholder="ジャンルを自由に入力">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 dark:text-gray-300 mb-2" for="style">作風・雰囲気</label>
+                        <div class="flex space-x-2">
+                            <select id="style"
+                                class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-base">
+                                <option value="">選択してください</option>
+                                <option value="ダーク">ダーク</option>
+                                <option value="コメディ">コメディ</option>
+                                <option value="シリアス">シリアス</option>
+                                <option value="青春">青春</option>
+                                <option value="メルヘン">メルヘン</option>
+                                <option value="バトル">バトル</option>
+                                <option value="哲学的">哲学的</option>
+                                <option value="叙情的">叙情的</option>
+                                <option value="サスペンス">サスペンス</option>
+                                <option value="アクション">アクション</option>
+                                <option value="その他">その他</option>
+                                <option value="フリー入力">フリー入力</option>
+                            </select>
+                        </div>
+                        <input type="text" id="customStyle"
+                            class="w-full mt-2 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-base hidden"
+                            placeholder="作風・雰囲気を自由に入力">
+                    </div>
+                </div>
+
+                <div id="other-genre-style" class="mb-6 hidden">
+                    <label class="block text-gray-700 dark:text-gray-300 mb-2"
+                        for="otherGenreStyle">その他のジャンル・作風を入力</label>
+                    <input type="text" id="otherGenreStyle"
+                        class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-base"
+                        placeholder="例：異世界転生ファンタジー、アンティーク要素のある日常系ミステリーなど">
+                </div>
+
+                <div class="mb-6">
+                    <button id="aiHelpBtn0"
+                        class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                        AIに助けを求める
+                    </button>
+                    <div id="aiResponse0"
+                        class="ai-response mt-4 p-4 bg-amber-50 dark:bg-amber-900/30 rounded-lg border border-amber-200 dark:border-amber-800">
+                    </div>
+                </div>
+
+                <div class="flex justify-between">
+                    <div></div>
+                    <button onclick="nextStep()"
+                        class="px-6 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg shadow-md flex items-center">
+                        次へ
+                        <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 5l7 7-7 7M5 5l7 7-7 7"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- STEP 1 -->
+            <div class="step-content" id="step1">
+                <h2 class="text-2xl font-semibold mb-4">STEP 1：ログライン（物語の要約）の作成</h2>
+                <p class="mb-6">主人公の目的と、それを阻む障害を簡潔に一文で表現します。<br>
+                    例：「復讐のために帝国を滅ぼそうとする少女が、仲間との絆に揺れる。」</p>
+
+                <div class="mb-6">
+                    <label class="block text-gray-700 dark:text-gray-300 mb-2" for="logline">ログライン</label>
+                    <textarea id="logline"
+                        class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-base"
+                        rows="2" placeholder="例：復讐のために帝国を滅ぼそうとする少女が、仲間との絆に揺れる。"></textarea>
+                </div>
+
+                <div class="mb-6">
+                    <button id="aiHelpBtn1"
+                        class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                        AIに助けを求める
+                    </button>
+                    <div id="aiResponse1"
+                        class="ai-response mt-4 p-4 bg-amber-50 dark:bg-amber-900/30 rounded-lg border border-amber-200 dark:border-amber-800">
+                    </div>
+                </div>
+
+                <div class="flex justify-between">
+                    <button onclick="prevStep()"
+                        class="px-6 py-2 bg-gray-300 dark:bg-gray-700 hover:bg-gray-400 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg shadow-md flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path>
+                        </svg>
+                        戻る
+                    </button>
+                    <button onclick="nextStep()"
+                        class="px-6 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg shadow-md flex items-center">
+                        次へ
+                        <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 5l7 7-7 7M5 5l7 7-7 7"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- STEP 2 -->
+            <div class="step-content" id="step2">
+                <h2 class="text-2xl font-semibold mb-4">STEP 2：テーマやモチーフの選定</h2>
+                <p class="mb-6">「愛」「自由」「運命」「裏切り」など、物語の根底に流れる思想や感情の軸を選びます。</p>
+
+                <div class="mb-6">
+                    <label class="block text-gray-700 dark:text-gray-300 mb-2" for="theme">テーマ・モチーフ</label>
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        <button
+                            class="theme-btn px-3 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg">愛</button>
+                        <button
+                            class="theme-btn px-3 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg">自由</button>
+                        <button
+                            class="theme-btn px-3 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg">運命</button>
+                        <button
+                            class="theme-btn px-3 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg">裏切り</button>
+                        <button
+                            class="theme-btn px-3 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg">成長</button>
+                        <button
+                            class="theme-btn px-3 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg">喪失</button>
+                        <button
+                            class="theme-btn px-3 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg">正義</button>
+                        <button
+                            class="theme-btn px-3 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg">抵抗</button>
+                        <button
+                            class="theme-btn px-3 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg">復讐</button>
+                        <button
+                            class="theme-btn px-3 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg">希望</button>
+                        <button
+                            class="theme-btn px-3 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg">絶望</button>
+                        <button
+                            class="theme-btn px-3 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg">友情</button>
+                    </div>
+                    <textarea id="themes"
+                        class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-base"
+                        rows="2" placeholder="上のボタンをクリックするか、自由に入力してください（複数可）"></textarea>
+                </div>
+
+                <div class="mb-6">
+                    <button id="aiHelpBtn2"
+                        class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                        AIに助けを求める
+                    </button>
+                    <div id="aiResponse2"
+                        class="ai-response mt-4 p-4 bg-amber-50 dark:bg-amber-900/30 rounded-lg border border-amber-200 dark:border-amber-800">
+                    </div>
+                </div>
+
+                <div class="flex justify-between">
+                    <button onclick="prevStep()"
+                        class="px-6 py-2 bg-gray-300 dark:bg-gray-700 hover:bg-gray-400 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg shadow-md flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path>
+                        </svg>
+                        戻る
+                    </button>
+                    <button onclick="nextStep()"
+                        class="px-6 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg shadow-md flex items-center">
+                        次へ
+                        <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 5l7 7-7 7M5 5l7 7-7 7"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- STEP 3 -->
+            <div class="step-content" id="step3">
+                <h2 class="text-2xl font-semibold mb-4">STEP 3：世界観の設定</h2>
+                <p class="mb-6">舞台となる時代や場所、独自のルール（魔法、科学、社会制度など）を考えます。</p>
+
+                <div class="mb-6">
+                    <label class="block text-gray-700 dark:text-gray-300 mb-2" for="worldSetting">世界観設定</label>
+                    <textarea id="worldSetting"
+                        class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-base"
+                        rows="5" placeholder="例：
+- 時代背景：魔術と科学が共存する中世風ファンタジー世界
+- 舞台：東西に分かれた大陸と、中央に浮かぶ神秘の島
+- 社会制度：魔術の才能によって階級が決まる貴族制度
+- 独自ルール：魔術は「契約」を結ぶことで使用できるが、その代償は高い"></textarea>
+                </div>
+
+                <div class="mb-6">
+                    <button id="aiHelpBtn3"
+                        class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http
