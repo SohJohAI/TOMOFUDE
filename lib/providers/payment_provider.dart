@@ -32,7 +32,8 @@ class PaymentProvider with ChangeNotifier {
   /// Gets whether the user is authenticated.
   bool get isAuthenticated {
     try {
-      return _authService.currentUser != null;
+      final user = _authService.currentUser;
+      return user != null;
     } catch (e) {
       // Handle the case when Firebase Auth is not initialized
       print('Error checking authentication: $e');

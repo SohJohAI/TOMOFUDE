@@ -28,7 +28,7 @@ class UserPoint {
   final DateTime createdAt;
 
   /// The date the user's points were last reset.
-  final DateTime lastResetDate;
+  final DateTime? lastResetDate;
 
   /// The number of users this user has referred.
   final int referralCount;
@@ -91,7 +91,7 @@ class UserPoint {
       'paidPoint': paidPoint,
       'referralCode': referralCode,
       'createdAt': createdAt.toIso8601String(),
-      'lastResetDate': lastResetDate.toIso8601String(),
+      'lastResetDate': lastResetDate?.toIso8601String(),
       'referralCount': referralCount,
       'referralExpiry': referralExpiry?.toIso8601String(),
     };
