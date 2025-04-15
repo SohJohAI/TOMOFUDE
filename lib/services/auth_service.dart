@@ -1,14 +1,53 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
-
-// Import Firebase packages conditionally
-import '../auth_imports.dart' if (dart.library.html) '../auth_imports_web.dart';
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uuid/uuid.dart';
 import '../utils/error_handler.dart';
 import 'auth_service_interface.dart';
+
+/// A simple user class to replace Firebase User
+class User {
+  final String uid;
+  final String email;
+  final String? displayName;
+
+  User({
+    required this.uid,
+    required this.email,
+    this.displayName,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'uid': uid,
+      'email': email,
+      'displayName': displayName,
+    };
+  }
+
+  factory User.fromJson(Map<String, dynamic> json) {
+    return User(
+      uid: json['uid'],
+      email: json['email'],
+      displayName: json['displayName'],
+    );
+  }
+}
+
+/// A simple user credential class to replace Firebase UserCredential
+class UserCredential {
+  final User? user;
+  final bool isNewUser;
+
+  UserCredential({
+    this.user,
+    this.isNewUser = false,
+  });
+}
 
 /// Service for handling user authentication.
 ///
 /// This service provides methods for user registration, login, and logout
-/// using Firebase Authentication.
+/// using local storage instead of Firebase Authentication.
 class AuthService implements AuthServiceInterface {
   /// Singleton instance
   static final AuthService _instance = AuthService._internal();
@@ -16,17 +55,17 @@ class AuthService implements AuthServiceInterface {
   /// Factory constructor to return the same instance
   factory AuthService() => _instance;
 
-  /// Firebase Auth instance
-  late final FirebaseAuth _auth;
+  /// Current user
+  User? _currentUser;
 
-  /// Google Sign In instance
-  late final GoogleSignIn _googleSignIn;
+  /// Auth state controller
+  final _authStateController = Stream<User?>.empty().asBroadcastStream();
 
-  /// Firestore instance
-  late final FirebaseFirestore _firestore;
+  /// Key for storing users in SharedPreferences
+  static const String _usersKey = 'auth_users';
 
-  /// Flag indicating whether Firebase is initialized
-  bool _isFirebaseInitialized = false;
+  /// Key for storing current user in SharedPreferences
+  static const String _currentUserKey = 'auth_current_user';
 
   /// Private constructor
   AuthService._internal() {
@@ -38,101 +77,73 @@ class AuthService implements AuthServiceInterface {
   Future<void> initialize() async {
     return errorHandler.handleAsync(
       () async {
-        // Skip Firebase initialization on web platform
-        if (kIsWeb) {
-          print(
-              'Running on web platform, skipping Firebase Auth initialization');
-          _isFirebaseInitialized = false;
-          return;
-        }
+        print('Local AuthService initialized');
 
-        _auth = FirebaseAuth.instance;
-        _googleSignIn = GoogleSignIn();
-        _firestore = FirebaseFirestore.instance;
-        _isFirebaseInitialized = true;
-        print('Firebase Auth initialized successfully');
+        // Load current user from SharedPreferences
+        final prefs = await SharedPreferences.getInstance();
+        final currentUserJson = prefs.getString(_currentUserKey);
+
+        if (currentUserJson != null) {
+          final Map<String, dynamic> json = jsonDecode(currentUserJson);
+          _currentUser = User.fromJson(json);
+          print('Loaded current user: ${_currentUser?.email}');
+        }
       },
       'AuthService.initialize',
       '認証サービスの初期化中にエラーが発生しました',
       onError: (errorMessage) {
-        _isFirebaseInitialized = false;
         print(errorMessage);
       },
     );
   }
 
   /// Get current user
-  User? get currentUser {
-    if (!_isFirebaseInitialized) {
-      errorHandler.logError(
-        'Firebase not initialized',
-        'AuthService.currentUser',
-      );
-      return null;
-    }
-
-    try {
-      return _auth.currentUser;
-    } catch (e) {
-      errorHandler.logError(
-        e,
-        'AuthService.currentUser',
-      );
-      return null;
-    }
-  }
+  @override
+  User? get currentUser => _currentUser;
 
   /// Stream of auth state changes
-  Stream<User?> get authStateChanges {
-    if (!_isFirebaseInitialized) {
-      errorHandler.logError(
-        'Firebase not initialized',
-        'AuthService.authStateChanges',
-      );
-      // Return an empty stream if Firebase is not initialized
-      return Stream.value(null);
-    }
-
-    try {
-      return _auth.authStateChanges();
-    } catch (e) {
-      errorHandler.logError(
-        e,
-        'AuthService.authStateChanges',
-      );
-      return Stream.value(null);
-    }
-  }
+  @override
+  Stream<User?> get authStateChanges => _authStateController;
 
   /// Sign up with email and password
+  @override
   Future<UserCredential?> signUpWithEmail(String email, String password) async {
-    if (!_isFirebaseInitialized) {
-      errorHandler.logError(
-        'Firebase not initialized',
-        'AuthService.signUpWithEmail',
-      );
-      return null;
-    }
-
     return errorHandler.handleAsync<UserCredential?>(
       () async {
-        final credential = await _auth.createUserWithEmailAndPassword(
+        // Check if user already exists
+        final users = await _getUsers();
+        final existingUser = users.where((u) => u['email'] == email).toList();
+
+        if (existingUser.isNotEmpty) {
+          throw Exception('User with this email already exists');
+        }
+
+        // Create new user
+        final uid = const Uuid().v4();
+        final user = User(
+          uid: uid,
           email: email,
-          password: password,
+          displayName: email.split('@')[0],
         );
 
-        // Create user document in Firestore
-        await _firestore.collection('users').doc(credential.user!.uid).set({
+        // Add user to users list
+        users.add({
+          'uid': uid,
           'email': email,
-          'displayName': email.split('@')[0],
-          'createdAt': FieldValue.serverTimestamp(),
-          'point': 1000, // Initial free points
-          'freePoint': 1000,
-          'paidPoint': 0,
+          'password': password, // In a real app, this should be hashed
+          'displayName': user.displayName,
+          'createdAt': DateTime.now().toIso8601String(),
           'referralCode': _generateReferralCode(),
         });
 
-        return credential;
+        // Save users
+        await _saveUsers(users);
+
+        // Set as current user
+        _currentUser = user;
+        await _saveCurrentUser(user);
+
+        return UserCredential(user: user, isNewUser: true);
       },
       'AuthService.signUpWithEmail',
       'アカウント登録中にエラーが発生しました',
@@ -140,21 +151,31 @@ class AuthService implements AuthServiceInterface {
   }
 
   /// Sign in with email and password
+  @override
   Future<UserCredential?> signInWithEmail(String email, String password) async {
-    if (!_isFirebaseInitialized) {
-      errorHandler.logError(
-        'Firebase not initialized',
-        'AuthService.signInWithEmail',
-      );
-      return null;
-    }
-
     return errorHandler.handleAsync<UserCredential?>(
       () async {
-        return await _auth.signInWithEmailAndPassword(
-          email: email,
-          password: password,
+        // Get users
+        final users = await _getUsers();
+
+        // Find user with matching email and password
+        final userJson = users.firstWhere(
+          (u) => u['email'] == email && u['password'] == password,
+          orElse: () => throw Exception('Invalid email or password'),
         );
+
+        // Create user object
+        final user = User(
+          uid: userJson['uid'],
+          email: userJson['email'],
+          displayName: userJson['displayName'],
+        );
+
+        // Set as current user
+        _currentUser = user;
+        await _saveCurrentUser(user);
+
+        return UserCredential(user: user, isNewUser: false);
       },
       'AuthService.signInWithEmail',
       'ログイン中にエラーが発生しました',
@@ -162,59 +183,49 @@ class AuthService implements AuthServiceInterface {
   }
 
   /// Sign in with Google
+  @override
   Future<UserCredential?> signInWithGoogle() async {
-    if (!_isFirebaseInitialized) {
-      errorHandler.logError(
-        'Firebase not initialized',
-        'AuthService.signInWithGoogle',
-      );
-      return null;
-    }
-
     return errorHandler.handleAsync<UserCredential?>(
       () async {
-        // Trigger the authentication flow
-        final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+        // This is a mock implementation
+        print('Mock Google sign in');
 
-        if (googleUser == null) {
-          errorHandler.logError(
-            'Google sign in was canceled',
-            'AuthService.signInWithGoogle',
-          );
-          return null;
-        }
-
-        // Obtain the auth details from the request
-        final GoogleSignInAuthentication googleAuth =
-            await googleUser.authentication;
-
-        // Create a new credential
-        final credential = GoogleAuthProvider.credential(
-          accessToken: googleAuth.accessToken,
-          idToken: googleAuth.idToken,
+        // Create a mock user
+        final uid = const Uuid().v4();
+        final user = User(
+          uid: uid,
+          email: 'google_user@example.com',
+          displayName: 'Google User',
         );
 
-        // Sign in to Firebase with the Google credential
-        final userCredential = await _auth.signInWithCredential(credential);
+        // Check if user already exists
+        final users = await _getUsers();
+        final existingUser =
+            users.where((u) => u['email'] == user.email).toList();
 
-        // Check if this is a new user
-        if (userCredential.additionalUserInfo?.isNewUser ?? false) {
-          // Create user document in Firestore
-          await _firestore
-              .collection('users')
-              .doc(userCredential.user!.uid)
-              .set({
-            'email': userCredential.user!.email,
-            'displayName': userCredential.user!.displayName,
-            'createdAt': FieldValue.serverTimestamp(),
-            'point': 1000, // Initial free points
-            'freePoint': 1000,
-            'paidPoint': 0,
+        bool isNewUser = false;
+
+        if (existingUser.isEmpty) {
+          // Add user to users list
+          users.add({
+            'uid': uid,
+            'email': user.email,
+            'password': '', // No password for Google sign in
+            'displayName': user.displayName,
+            'createdAt': DateTime.now().toIso8601String(),
             'referralCode': _generateReferralCode(),
           });
+
+          // Save users
+          await _saveUsers(users);
+          isNewUser = true;
         }
 
-        return userCredential;
+        // Set as current user
+        _currentUser = user;
+        await _saveCurrentUser(user);
+
+        return UserCredential(user: user, isNewUser: isNewUser);
       },
       'AuthService.signInWithGoogle',
       'Googleログイン中にエラーが発生しました',
@@ -222,19 +233,15 @@ class AuthService implements AuthServiceInterface {
   }
 
   /// Sign out
+  @override
   Future<void> signOut() async {
-    if (!_isFirebaseInitialized) {
-      errorHandler.logError(
-        'Firebase not initialized',
-        'AuthService.signOut',
-      );
-      return;
-    }
-
     return errorHandler.handleAsync(
       () async {
-        await _googleSignIn.signOut();
-        await _auth.signOut();
+        _currentUser = null;
+
+        // Remove current user from SharedPreferences
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove(_currentUserKey);
       },
       'AuthService.signOut',
       'ログアウト中にエラーが発生しました',
@@ -242,20 +249,12 @@ class AuthService implements AuthServiceInterface {
   }
 
   /// Apply referral code during registration
+  @override
   Future<bool> applyReferralCode(String referralCode) async {
-    if (!_isFirebaseInitialized) {
-      errorHandler.logError(
-        'Firebase not initialized',
-        'AuthService.applyReferralCode',
-      );
-      return false;
-    }
-
     final result = await errorHandler.handleAsync<bool>(
       () async {
         // Check if the user is authenticated
-        final user = _auth.currentUser;
-        if (user == null) {
+        if (_currentUser == null) {
           errorHandler.logError(
             'User not authenticated',
             'AuthService.applyReferralCode',
@@ -272,14 +271,14 @@ class AuthService implements AuthServiceInterface {
           return false;
         }
 
-        // Check if the referral code exists
-        final codeQuery = await _firestore
-            .collection('users')
-            .where('referralCode', isEqualTo: referralCode)
-            .limit(1)
-            .get();
+        // Get users
+        final users = await _getUsers();
 
-        if (codeQuery.docs.isEmpty) {
+        // Find user with matching referral code
+        final referrerList =
+            users.where((u) => u['referralCode'] == referralCode).toList();
+
+        if (referrerList.isEmpty) {
           errorHandler.logError(
             'Invalid referral code',
             'AuthService.applyReferralCode',
@@ -287,11 +286,10 @@ class AuthService implements AuthServiceInterface {
           return false;
         }
 
-        final referrerDoc = codeQuery.docs.first;
-        final referrerId = referrerDoc.id;
+        final referrer = referrerList.first;
 
         // Check if the user is trying to use their own code
-        if (referrerId == user.uid) {
+        if (referrer['uid'] == _currentUser!.uid) {
           errorHandler.logError(
             'Cannot use own referral code',
             'AuthService.applyReferralCode',
@@ -299,61 +297,24 @@ class AuthService implements AuthServiceInterface {
           return false;
         }
 
-        // Update the user document with the referral code
-        await _firestore.collection('users').doc(user.uid).update({
-          'referredBy': referralCode,
-          'referredById': referrerId,
-        });
+        // Find current user in users list
+        final currentUserIndex =
+            users.indexWhere((u) => u['uid'] == _currentUser!.uid);
 
-        // Add points to the referrer
-        await _firestore.collection('users').doc(referrerId).update({
-          'point': FieldValue.increment(500),
-          'freePoint': FieldValue.increment(500),
-        });
+        if (currentUserIndex == -1) {
+          errorHandler.logError(
+            'Current user not found in users list',
+            'AuthService.applyReferralCode',
+          );
+          return false;
+        }
 
-        // Add points to the user
-        await _firestore.collection('users').doc(user.uid).update({
-          'point': FieldValue.increment(500),
-          'freePoint': FieldValue.increment(500),
-        });
+        // Update current user with referral code
+        users[currentUserIndex]['referredBy'] = referralCode;
+        users[currentUserIndex]['referredById'] = referrer['uid'];
 
-        // Add to referral history
-        await _firestore
-            .collection('users')
-            .doc(referrerId)
-            .collection('referrals')
-            .add({
-          'referredUserId': user.uid,
-          'referredUserEmail': user.email,
-          'timestamp': FieldValue.serverTimestamp(),
-          'points': 500,
-        });
-
-        // Add to point history for referrer
-        await _firestore
-            .collection('users')
-            .doc(referrerId)
-            .collection('history')
-            .add({
-          'type': 'referral_bonus',
-          'amount': 500,
-          'description': '紹介ボーナス',
-          'timestamp': FieldValue.serverTimestamp(),
-          'expiryDate': DateTime.now().add(const Duration(days: 90)),
-        });
-
-        // Add to point history for user
-        await _firestore
-            .collection('users')
-            .doc(user.uid)
-            .collection('history')
-            .add({
-          'type': 'referral_bonus',
-          'amount': 500,
-          'description': '紹介ボーナス',
-          'timestamp': FieldValue.serverTimestamp(),
-          'expiryDate': DateTime.now().add(const Duration(days: 90)),
-        });
+        // Save users
+        await _saveUsers(users);
 
         return true;
       },
@@ -366,6 +327,33 @@ class AuthService implements AuthServiceInterface {
     );
 
     return result ?? false;
+  }
+
+  /// Get users from SharedPreferences
+  Future<List<Map<String, dynamic>>> _getUsers() async {
+    final prefs = await SharedPreferences.getInstance();
+    final usersJson = prefs.getStringList(_usersKey);
+
+    if (usersJson == null) {
+      return [];
+    }
+
+    return usersJson
+        .map((json) => Map<String, dynamic>.from(jsonDecode(json)))
+        .toList();
+  }
+
+  /// Save users to SharedPreferences
+  Future<void> _saveUsers(List<Map<String, dynamic>> users) async {
+    final prefs = await SharedPreferences.getInstance();
+    final usersJson = users.map((user) => jsonEncode(user)).toList();
+    await prefs.setStringList(_usersKey, usersJson);
+  }
+
+  /// Save current user to SharedPreferences
+  Future<void> _saveCurrentUser(User user) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_currentUserKey, jsonEncode(user.toJson()));
   }
 
   /// Generate a random referral code

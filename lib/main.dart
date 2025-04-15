@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 
-// Only import Firebase on non-web platforms
-import 'firebase_imports.dart'
-    if (dart.library.html) 'firebase_imports_web.dart';
 import 'providers/app_state.dart';
 import 'providers/novel_list_provider.dart';
 import 'providers/work_list_provider.dart';
@@ -18,24 +14,6 @@ import 'services/service_locator.dart';
 void main() async {
   // Ensure Flutter is initialized
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Initialize Firebase (skip on web platform due to compatibility issues)
-  print('Initializing Firebase...');
-  try {
-    if (kIsWeb) {
-      print(
-          'Running on web platform, skipping Firebase initialization due to compatibility issues');
-      // Skip Firebase initialization on web
-    } else {
-      await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform,
-      );
-      print('Firebase initialized successfully');
-    }
-  } catch (e) {
-    print('Failed to initialize Firebase: $e');
-    // Continue without Firebase
-  }
 
   // Initialize service locator
   await setupServiceLocator();

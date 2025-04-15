@@ -1,11 +1,11 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
-
-// Import Firebase packages conditionally
-import '../auth_imports.dart' if (dart.library.html) '../auth_imports_web.dart';
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uuid/uuid.dart';
 import '../models/user_point.dart';
 import '../models/point_history.dart';
 import '../utils/error_handler.dart';
 import 'point_service_interface.dart';
+import 'auth_service.dart';
 
 /// Service for handling point-related operations.
 ///
@@ -18,17 +18,14 @@ class PointService implements PointServiceInterface {
   /// Factory constructor to return the same instance
   factory PointService() => _instance;
 
-  /// Firebase Auth instance
-  late final FirebaseAuth _auth;
+  /// Auth service
+  late final AuthService _authService;
 
-  /// Firestore instance
-  late final FirebaseFirestore _firestore;
+  /// Key for storing user points in SharedPreferences
+  static const String _userPointsKey = 'user_points';
 
-  /// Cloud Functions instance
-  late final FirebaseFunctions _functions;
-
-  /// Flag indicating whether Firebase is initialized
-  bool _isFirebaseInitialized = false;
+  /// Key for storing point history in SharedPreferences
+  static const String _pointHistoryKey = 'point_history';
 
   /// Private constructor
   PointService._internal() {
@@ -40,43 +37,24 @@ class PointService implements PointServiceInterface {
   Future<void> initialize() async {
     return errorHandler.handleAsync(
       () async {
-        // Skip Firebase initialization on web platform
-        if (kIsWeb) {
-          print(
-              'Running on web platform, skipping Firebase Point Service initialization');
-          _isFirebaseInitialized = false;
-          return;
-        }
-
-        _auth = FirebaseAuth.instance;
-        _firestore = FirebaseFirestore.instance;
-        _functions = FirebaseFunctions.instance;
-        _isFirebaseInitialized = true;
-        print('Firebase Point Service initialized successfully');
+        print('Local PointService initialized');
+        _authService = AuthService();
       },
       'PointService.initialize',
       'ポイントサービスの初期化中にエラーが発生しました',
       onError: (errorMessage) {
-        _isFirebaseInitialized = false;
         print(errorMessage);
       },
     );
   }
 
   /// Get current user's point information
+  @override
   Future<UserPoint?> getUserPoint() async {
-    if (!_isFirebaseInitialized) {
-      errorHandler.logError(
-        'Firebase not initialized',
-        'PointService.getUserPoint',
-      );
-      return _getMockUserPoint();
-    }
-
     return errorHandler.handleAsync<UserPoint?>(
       () async {
         // Check if the user is authenticated
-        final user = _auth.currentUser;
+        final user = _authService.currentUser;
         if (user == null) {
           errorHandler.logError(
             'User not authenticated',
@@ -85,53 +63,55 @@ class PointService implements PointServiceInterface {
           return _getMockUserPoint();
         }
 
-        // Get the user document from Firestore
-        final userDoc =
-            await _firestore.collection('users').doc(user.uid).get();
+        // Get user points from SharedPreferences
+        final userPoints = await _getUserPoints();
 
-        if (!userDoc.exists) {
-          errorHandler.logError(
-            'User document not found',
-            'PointService.getUserPoint',
-          );
-          return _getMockUserPoint();
-        }
+        // Find user point for current user
+        final userPointJson = userPoints[user.uid];
 
-        final userData = userDoc.data();
-        if (userData == null) {
-          errorHandler.logError(
-            'User data is null',
-            'PointService.getUserPoint',
+        if (userPointJson == null) {
+          // Create new user point
+          final userPoint = UserPoint(
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName ?? user.email.split('@')[0],
+            point: 1000,
+            freePoint: 1000,
+            paidPoint: 0,
+            referralCode: _generateReferralCode(),
+            createdAt: DateTime.now(),
+            lastResetDate: DateTime.now(),
+            referralCount: 0,
           );
-          return _getMockUserPoint();
+
+          // Save user point
+          await _saveUserPoint(userPoint);
+
+          return userPoint;
         }
 
         // Get referral count
         final referralCount = await _getReferralCount(user.uid);
 
         // Create UserPoint object
-        final DateTime? lastResetDate = userData['lastResetDate'] != null
-            ? (userData['lastResetDate'] as Timestamp).toDate()
-            : null;
-
-        final DateTime? referralExpiry = userData['referralExpiry'] != null
-            ? (userData['referralExpiry'] as Timestamp).toDate()
-            : null;
-
         return UserPoint(
           uid: user.uid,
-          email: user.email ?? userData['email'] ?? '',
-          displayName: user.displayName ?? userData['displayName'] ?? '',
-          point: userData['point'] ?? 0,
-          freePoint: userData['freePoint'] ?? 0,
-          paidPoint: userData['paidPoint'] ?? 0,
-          referralCode: userData['referralCode'] ?? '',
-          createdAt: userData['createdAt'] != null
-              ? (userData['createdAt'] as Timestamp).toDate()
+          email: user.email,
+          displayName: user.displayName,
+          point: userPointJson['point'] ?? 0,
+          freePoint: userPointJson['freePoint'] ?? 0,
+          paidPoint: userPointJson['paidPoint'] ?? 0,
+          referralCode: userPointJson['referralCode'] ?? '',
+          createdAt: userPointJson['createdAt'] != null
+              ? DateTime.parse(userPointJson['createdAt'])
               : DateTime.now(),
-          lastResetDate: lastResetDate,
+          lastResetDate: userPointJson['lastResetDate'] != null
+              ? DateTime.parse(userPointJson['lastResetDate'])
+              : null,
           referralCount: referralCount,
-          referralExpiry: referralExpiry,
+          referralExpiry: userPointJson['referralExpiry'] != null
+              ? DateTime.parse(userPointJson['referralExpiry'])
+              : null,
         );
       },
       'PointService.getUserPoint',
@@ -147,14 +127,15 @@ class PointService implements PointServiceInterface {
   Future<int> _getReferralCount(String userId) async {
     final result = await errorHandler.handleAsync<int>(
       () async {
-        final referralsSnapshot = await _firestore
-            .collection('users')
-            .doc(userId)
-            .collection('referrals')
-            .count()
-            .get();
+        // Get point history from SharedPreferences
+        final pointHistory = await _getPointHistory();
 
-        return referralsSnapshot.count ?? 0;
+        // Count referral bonus entries for this user
+        return pointHistory
+            .where((history) =>
+                history.userId == userId &&
+                history.type == PointHistory.referralBonus)
+            .length;
       },
       'PointService._getReferralCount',
       '紹介数の取得中にエラーが発生しました',
@@ -185,19 +166,12 @@ class PointService implements PointServiceInterface {
   }
 
   /// Get user's point history
+  @override
   Future<List<PointHistory>> getPointHistory({int limit = 50}) async {
-    if (!_isFirebaseInitialized) {
-      errorHandler.logError(
-        'Firebase not initialized',
-        'PointService.getPointHistory',
-      );
-      return _getMockPointHistory();
-    }
-
     final result = await errorHandler.handleAsync<List<PointHistory>>(
       () async {
         // Check if the user is authenticated
-        final user = _auth.currentUser;
+        final user = _authService.currentUser;
         if (user == null) {
           errorHandler.logError(
             'User not authenticated',
@@ -206,31 +180,21 @@ class PointService implements PointServiceInterface {
           return _getMockPointHistory();
         }
 
-        // Get the point history from Firestore
-        final historySnapshot = await _firestore
-            .collection('users')
-            .doc(user.uid)
-            .collection('history')
-            .orderBy('timestamp', descending: true)
-            .limit(limit)
-            .get();
+        // Get point history from SharedPreferences
+        final allHistory = await _getPointHistory();
 
-        return historySnapshot.docs.map((doc) {
-          final data = doc.data();
-          return PointHistory(
-            id: doc.id,
-            userId: user.uid,
-            type: data?['type'] ?? '',
-            amount: data?['amount'] ?? 0,
-            timestamp: data?['timestamp'] != null
-                ? (data!['timestamp'] as Timestamp).toDate()
-                : DateTime.now(),
-            description: data?['description'] ?? '',
-            expiryDate: data?['expiryDate'] != null
-                ? (data!['expiryDate'] as Timestamp).toDate()
-                : null,
-          );
-        }).toList();
+        // Filter history for current user and sort by timestamp (descending)
+        final userHistory = allHistory
+            .where((history) => history.userId == user.uid)
+            .toList()
+          ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+
+        // Limit the number of entries
+        if (userHistory.length > limit) {
+          return userHistory.sublist(0, limit);
+        }
+
+        return userHistory;
       },
       'PointService.getPointHistory',
       'ポイント履歴の取得中にエラーが発生しました',
@@ -278,19 +242,12 @@ class PointService implements PointServiceInterface {
   }
 
   /// Consume points for a specific purpose
+  @override
   Future<bool> consumePoints(int amount, String purpose) async {
-    if (!_isFirebaseInitialized) {
-      errorHandler.logError(
-        'Firebase not initialized',
-        'PointService.consumePoints',
-      );
-      return true; // Simulate successful consumption in development
-    }
-
     final result = await errorHandler.handleAsync<bool>(
       () async {
         // Check if the user is authenticated
-        final user = _auth.currentUser;
+        final user = _authService.currentUser;
         if (user == null) {
           errorHandler.logError(
             'User not authenticated',
@@ -329,25 +286,36 @@ class PointService implements PointServiceInterface {
           paidPointsToUse = amount - freePointsToUse;
         }
 
-        // Update the user's points in Firestore
-        await _firestore.collection('users').doc(user.uid).update({
-          'point': FieldValue.increment(-amount),
-          'freePoint': FieldValue.increment(-freePointsToUse),
-          'paidPoint': FieldValue.increment(-paidPointsToUse),
-        });
+        // Update user point
+        final updatedUserPoint = UserPoint(
+          uid: userPoint.uid,
+          email: userPoint.email,
+          displayName: userPoint.displayName,
+          point: userPoint.point - amount,
+          freePoint: userPoint.freePoint - freePointsToUse,
+          paidPoint: userPoint.paidPoint - paidPointsToUse,
+          referralCode: userPoint.referralCode,
+          createdAt: userPoint.createdAt,
+          lastResetDate: userPoint.lastResetDate,
+          referralCount: userPoint.referralCount,
+          referralExpiry: userPoint.referralExpiry,
+        );
+
+        // Save updated user point
+        await _saveUserPoint(updatedUserPoint);
 
         // Add to point history
-        await _firestore
-            .collection('users')
-            .doc(user.uid)
-            .collection('history')
-            .add({
-          'type': PointHistory.pointConsumption,
-          'amount': -amount,
-          'description': purpose,
-          'timestamp': FieldValue.serverTimestamp(),
-          'expiryDate': null,
-        });
+        final history = PointHistory(
+          id: const Uuid().v4(),
+          userId: user.uid,
+          type: PointHistory.pointConsumption,
+          amount: -amount,
+          timestamp: DateTime.now(),
+          description: purpose,
+          expiryDate: null,
+        );
+
+        await _addPointHistory(history);
 
         return true;
       },
@@ -363,19 +331,12 @@ class PointService implements PointServiceInterface {
   }
 
   /// Apply a referral code to get bonus points
+  @override
   Future<bool> applyReferralCode(String code) async {
-    if (!_isFirebaseInitialized) {
-      errorHandler.logError(
-        'Firebase not initialized',
-        'PointService.applyReferralCode',
-      );
-      return true; // Simulate successful referral in development
-    }
-
     final result = await errorHandler.handleAsync<bool>(
       () async {
         // Check if the user is authenticated
-        final user = _auth.currentUser;
+        final user = _authService.currentUser;
         if (user == null) {
           errorHandler.logError(
             'User not authenticated',
@@ -393,10 +354,20 @@ class PointService implements PointServiceInterface {
           return false;
         }
 
+        // Get user points
+        final userPoints = await _getUserPoints();
+        final userPointJson = userPoints[user.uid];
+
+        if (userPointJson == null) {
+          errorHandler.logError(
+            'User point not found',
+            'PointService.applyReferralCode',
+          );
+          return false;
+        }
+
         // Check if the user has already used a referral code
-        final userDoc =
-            await _firestore.collection('users').doc(user.uid).get();
-        if (userDoc.data()?['referredBy'] != null) {
+        if (userPointJson['referredBy'] != null) {
           errorHandler.logError(
             'User has already used a referral code',
             'PointService.applyReferralCode',
@@ -404,23 +375,22 @@ class PointService implements PointServiceInterface {
           return false;
         }
 
-        // Check if the referral code exists
-        final codeQuery = await _firestore
-            .collection('users')
-            .where('referralCode', isEqualTo: code)
-            .limit(1)
-            .get();
+        // Find referrer with matching referral code
+        String? referrerId;
+        for (final entry in userPoints.entries) {
+          if (entry.value['referralCode'] == code) {
+            referrerId = entry.key;
+            break;
+          }
+        }
 
-        if (codeQuery.docs.isEmpty) {
+        if (referrerId == null) {
           errorHandler.logError(
             'Invalid referral code',
             'PointService.applyReferralCode',
           );
           return false;
         }
-
-        final referrerDoc = codeQuery.docs.first;
-        final referrerId = referrerDoc.id;
 
         // Check if the user is trying to use their own code
         if (referrerId == user.uid) {
@@ -431,61 +401,54 @@ class PointService implements PointServiceInterface {
           return false;
         }
 
-        // Update the user document with the referral code
-        await _firestore.collection('users').doc(user.uid).update({
-          'referredBy': code,
-          'referredById': referrerId,
-          'point': FieldValue.increment(500),
-          'freePoint': FieldValue.increment(500),
-          'referralExpiry':
-              Timestamp.fromDate(DateTime.now().add(const Duration(days: 90))),
-        });
+        // Update user point
+        userPointJson['referredBy'] = code;
+        userPointJson['referredById'] = referrerId;
+        userPointJson['point'] = (userPointJson['point'] ?? 0) + 500;
+        userPointJson['freePoint'] = (userPointJson['freePoint'] ?? 0) + 500;
+        userPointJson['referralExpiry'] =
+            DateTime.now().add(const Duration(days: 90)).toIso8601String();
+        userPoints[user.uid] = userPointJson;
 
-        // Add points to the referrer
-        await _firestore.collection('users').doc(referrerId).update({
-          'point': FieldValue.increment(500),
-          'freePoint': FieldValue.increment(500),
-        });
+        // Update referrer point
+        final referrerPointJson = userPoints[referrerId];
+        if (referrerPointJson != null) {
+          referrerPointJson['point'] = (referrerPointJson['point'] ?? 0) + 500;
+          referrerPointJson['freePoint'] =
+              (referrerPointJson['freePoint'] ?? 0) + 500;
+          userPoints[referrerId] = referrerPointJson;
+        }
 
-        // Add to referral history
-        await _firestore
-            .collection('users')
-            .doc(referrerId)
-            .collection('referrals')
-            .add({
-          'referredUserId': user.uid,
-          'referredUserEmail': user.email,
-          'timestamp': FieldValue.serverTimestamp(),
-          'points': 500,
-        });
-
-        // Add to point history for referrer
-        await _firestore
-            .collection('users')
-            .doc(referrerId)
-            .collection('history')
-            .add({
-          'type': PointHistory.referralBonus,
-          'amount': 500,
-          'description': '紹介ボーナス',
-          'timestamp': FieldValue.serverTimestamp(),
-          'expiryDate':
-              Timestamp.fromDate(DateTime.now().add(const Duration(days: 90))),
-        });
+        // Save user points
+        await _saveUserPoints(userPoints);
 
         // Add to point history for user
-        await _firestore
-            .collection('users')
-            .doc(user.uid)
-            .collection('history')
-            .add({
-          'type': PointHistory.referralBonus,
-          'amount': 500,
-          'description': '紹介ボーナス',
-          'timestamp': FieldValue.serverTimestamp(),
-          'expiryDate':
-              Timestamp.fromDate(DateTime.now().add(const Duration(days: 90))),
-        });
+        final userHistory = PointHistory(
+          id: const Uuid().v4(),
+          userId: user.uid,
+          type: PointHistory.referralBonus,
+          amount: 500,
+          timestamp: DateTime.now(),
+          description: '紹介ボーナス',
+          expiryDate: DateTime.now().add(const Duration(days: 90)),
+        );
+
+        await _addPointHistory(userHistory);
+
+        // Add to point history for referrer
+        if (referrerPointJson != null) {
+          final referrerHistory = PointHistory(
+            id: const Uuid().v4(),
+            userId: referrerId,
+            type: PointHistory.referralBonus,
+            amount: 500,
+            timestamp: DateTime.now(),
+            description: '紹介ボーナス',
+            expiryDate: DateTime.now().add(const Duration(days: 90)),
+          );
+
+          await _addPointHistory(referrerHistory);
+        }
 
         return true;
       },
@@ -501,15 +464,8 @@ class PointService implements PointServiceInterface {
   }
 
   /// Get the user's referral code
+  @override
   Future<String?> getReferralCode() async {
-    if (!_isFirebaseInitialized) {
-      errorHandler.logError(
-        'Firebase not initialized',
-        'PointService.getReferralCode',
-      );
-      return 'MOCK1234'; // Return mock referral code in development
-    }
-
     return errorHandler.handleAsync<String?>(
       () async {
         final userPoint = await getUserPoint();
@@ -525,15 +481,8 @@ class PointService implements PointServiceInterface {
   }
 
   /// Check if the user has enough points for a purchase
+  @override
   Future<bool> hasEnoughPoints(int amount) async {
-    if (!_isFirebaseInitialized) {
-      errorHandler.logError(
-        'Firebase not initialized',
-        'PointService.hasEnoughPoints',
-      );
-      return true; // Assume user has enough points in development
-    }
-
     final result = await errorHandler.handleAsync<bool>(
       () async {
         final userPoint = await getUserPoint();
@@ -548,5 +497,98 @@ class PointService implements PointServiceInterface {
     );
 
     return result ?? false;
+  }
+
+  /// Get user points from SharedPreferences
+  Future<Map<String, Map<String, dynamic>>> _getUserPoints() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userPointsJson = prefs.getString(_userPointsKey);
+
+    if (userPointsJson == null) {
+      return {};
+    }
+
+    final Map<String, dynamic> userPointsMap = jsonDecode(userPointsJson);
+    final Map<String, Map<String, dynamic>> result = {};
+
+    userPointsMap.forEach((key, value) {
+      result[key] = Map<String, dynamic>.from(value);
+    });
+
+    return result;
+  }
+
+  /// Save user points to SharedPreferences
+  Future<void> _saveUserPoints(
+      Map<String, Map<String, dynamic>> userPoints) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_userPointsKey, jsonEncode(userPoints));
+  }
+
+  /// Save a single user point to SharedPreferences
+  Future<void> _saveUserPoint(UserPoint userPoint) async {
+    final userPoints = await _getUserPoints();
+
+    userPoints[userPoint.uid] = {
+      'uid': userPoint.uid,
+      'email': userPoint.email,
+      'displayName': userPoint.displayName,
+      'point': userPoint.point,
+      'freePoint': userPoint.freePoint,
+      'paidPoint': userPoint.paidPoint,
+      'referralCode': userPoint.referralCode,
+      'createdAt': userPoint.createdAt.toIso8601String(),
+      'lastResetDate': userPoint.lastResetDate?.toIso8601String(),
+      'referralExpiry': userPoint.referralExpiry?.toIso8601String(),
+    };
+
+    await _saveUserPoints(userPoints);
+  }
+
+  /// Get point history from SharedPreferences
+  Future<List<PointHistory>> _getPointHistory() async {
+    final prefs = await SharedPreferences.getInstance();
+    final historyJson = prefs.getStringList(_pointHistoryKey);
+
+    if (historyJson == null) {
+      return [];
+    }
+
+    return historyJson.map((json) {
+      final Map<String, dynamic> map = jsonDecode(json);
+      return PointHistory(
+        id: map['id'],
+        userId: map['userId'],
+        type: map['type'],
+        amount: map['amount'],
+        timestamp: DateTime.parse(map['timestamp']),
+        description: map['description'],
+        expiryDate: map['expiryDate'] != null
+            ? DateTime.parse(map['expiryDate'])
+            : null,
+      );
+    }).toList();
+  }
+
+  /// Add a point history entry to SharedPreferences
+  Future<void> _addPointHistory(PointHistory history) async {
+    final allHistory = await _getPointHistory();
+    allHistory.add(history);
+
+    final prefs = await SharedPreferences.getInstance();
+    final historyJson = allHistory.map((h) => jsonEncode(h.toMap())).toList();
+    await prefs.setStringList(_pointHistoryKey, historyJson);
+  }
+
+  /// Generate a random referral code
+  String _generateReferralCode() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    final random = DateTime.now().millisecondsSinceEpoch.toString();
+    final code = List.generate(8, (index) {
+      final randomIndex =
+          (random.codeUnitAt(index % random.length) + index) % chars.length;
+      return chars[randomIndex];
+    }).join();
+    return code;
   }
 }
