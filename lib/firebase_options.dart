@@ -29,10 +29,7 @@ class DefaultFirebaseOptions {
       case TargetPlatform.macOS:
         return macos;
       case TargetPlatform.windows:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for windows - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return windows;
       case TargetPlatform.linux:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for linux - '
@@ -46,40 +43,51 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'YOUR_API_KEY',
-    appId: 'YOUR_APP_ID',
-    messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
-    projectId: 'tomofude',
-    authDomain: 'tomofude.firebaseapp.com',
-    storageBucket: 'tomofude.appspot.com',
-    measurementId: 'YOUR_MEASUREMENT_ID',
+    apiKey: 'AIzaSyBk-Zer1LUCud3ZOY59DYOrZNX7KFgGgTk',
+    appId: '1:474299308134:web:fb4c71f111156a392375a7',
+    messagingSenderId: '474299308134',
+    projectId: 'tomofude-dev',
+    authDomain: 'tomofude-dev.firebaseapp.com',
+    storageBucket: 'tomofude-dev.firebasestorage.app',
+    measurementId: 'G-FJ51BP3GP1',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'YOUR_API_KEY',
-    appId: 'YOUR_APP_ID',
-    messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
-    projectId: 'tomofude',
-    storageBucket: 'tomofude.appspot.com',
+    apiKey: 'AIzaSyD-rYEkF2ELGO0IajRBI5zyBdptxJ-Bup4',
+    appId: '1:474299308134:android:3afd083292a660b32375a7',
+    messagingSenderId: '474299308134',
+    projectId: 'tomofude-dev',
+    storageBucket: 'tomofude-dev.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'YOUR_API_KEY',
-    appId: 'YOUR_APP_ID',
-    messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
-    projectId: 'tomofude',
-    storageBucket: 'tomofude.appspot.com',
-    iosClientId: 'YOUR_IOS_CLIENT_ID',
+    apiKey: 'AIzaSyAgMPDBaYXdlUBDIWTuVU-oI3xa8US1uxc',
+    appId: '1:474299308134:ios:d35a044dc60da1942375a7',
+    messagingSenderId: '474299308134',
+    projectId: 'tomofude-dev',
+    storageBucket: 'tomofude-dev.firebasestorage.app',
+    iosClientId: '474299308134-mmb5jt7achqt2cfh4eru143g9gookn5i.apps.googleusercontent.com',
     iosBundleId: 'com.example.tomofude',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'YOUR_API_KEY',
-    appId: 'YOUR_APP_ID',
-    messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
-    projectId: 'tomofude',
-    storageBucket: 'tomofude.appspot.com',
-    iosClientId: 'YOUR_IOS_CLIENT_ID',
+    apiKey: 'AIzaSyAgMPDBaYXdlUBDIWTuVU-oI3xa8US1uxc',
+    appId: '1:474299308134:ios:d35a044dc60da1942375a7',
+    messagingSenderId: '474299308134',
+    projectId: 'tomofude-dev',
+    storageBucket: 'tomofude-dev.firebasestorage.app',
+    iosClientId: '474299308134-mmb5jt7achqt2cfh4eru143g9gookn5i.apps.googleusercontent.com',
     iosBundleId: 'com.example.tomofude',
   );
+
+  static const FirebaseOptions windows = FirebaseOptions(
+    apiKey: 'AIzaSyBk-Zer1LUCud3ZOY59DYOrZNX7KFgGgTk',
+    appId: '1:474299308134:web:0b16bc4c57024f292375a7',
+    messagingSenderId: '474299308134',
+    projectId: 'tomofude-dev',
+    authDomain: 'tomofude-dev.firebaseapp.com',
+    storageBucket: 'tomofude-dev.firebasestorage.app',
+    measurementId: 'G-HZ6QRHN6EB',
+  );
+
 }
