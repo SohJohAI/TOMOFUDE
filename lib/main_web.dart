@@ -1,16 +1,9 @@
-// This is a web-specific version of main.dart that uses Firebase web packages
-// with the necessary fixes for compatibility
+// This is a web-specific version of main.dart that doesn't use Firebase
+// to avoid compatibility issues with Firebase web packages
 
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
-import 'package:firebase_core_web/firebase_core_web_interop.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-
-// Import Firebase for web
-import 'firebase_imports_web.dart';
-import 'firebase_web_fix.dart';
-
 import 'providers/app_state.dart';
 import 'providers/novel_list_provider.dart';
 import 'providers/work_list_provider.dart';
@@ -27,18 +20,7 @@ void main() async {
   // Ensure Flutter is initialized
   WidgetsFlutterBinding.ensureInitialized();
 
-  print('Running on web platform, initializing Firebase for web');
-
-  try {
-    // Initialize Firebase for web
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-    print('Firebase initialized successfully for web');
-  } catch (e) {
-    print('Failed to initialize Firebase for web: $e');
-    // Continue with mock implementations
-  }
+  print('Running on web platform, Firebase is disabled');
 
   // Initialize service locator
   await setupServiceLocator();
