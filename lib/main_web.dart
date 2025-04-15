@@ -1,11 +1,16 @@
+// This is a web-specific version of main.dart that uses Firebase web packages
+// with the necessary fixes for compatibility
+
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:firebase_core_web/firebase_core_web_interop.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-// Only import Firebase on non-web platforms
-import 'firebase_imports.dart'
-    if (dart.library.html) 'firebase_imports_web.dart';
+// Import Firebase for web
+import 'firebase_imports_web.dart';
+import 'firebase_web_fix.dart';
+
 import 'providers/app_state.dart';
 import 'providers/novel_list_provider.dart';
 import 'providers/work_list_provider.dart';
@@ -13,28 +18,26 @@ import 'providers/payment_provider.dart';
 import 'screens/novel_list_screen.dart';
 import 'screens/work_list_screen.dart';
 import 'screens/payment_screen.dart';
+// Import web-specific services
+import 'services/auth_service_web.dart';
+import 'services/point_service_web.dart';
 import 'services/service_locator.dart';
 
 void main() async {
   // Ensure Flutter is initialized
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Firebase (skip on web platform due to compatibility issues)
-  print('Initializing Firebase...');
+  print('Running on web platform, initializing Firebase for web');
+
   try {
-    if (kIsWeb) {
-      print(
-          'Running on web platform, skipping Firebase initialization due to compatibility issues');
-      // Skip Firebase initialization on web
-    } else {
-      await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform,
-      );
-      print('Firebase initialized successfully');
-    }
+    // Initialize Firebase for web
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    print('Firebase initialized successfully for web');
   } catch (e) {
-    print('Failed to initialize Firebase: $e');
-    // Continue without Firebase
+    print('Failed to initialize Firebase for web: $e');
+    // Continue with mock implementations
   }
 
   // Initialize service locator

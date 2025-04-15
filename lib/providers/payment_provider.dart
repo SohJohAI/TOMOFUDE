@@ -1,16 +1,19 @@
 import 'package:flutter/foundation.dart';
 import '../models/user_point.dart';
 import '../models/point_history.dart';
-import '../services/point_service.dart';
-import '../services/auth_service.dart';
+import '../services/point_service_interface.dart';
+import '../services/auth_service_interface.dart';
+import '../services/service_locator.dart';
 
 /// Provider for managing payment-related state.
 ///
 /// This provider manages the state of the user's points, referral code,
 /// and point history.
 class PaymentProvider with ChangeNotifier {
-  final PointService _pointService = PointService();
-  final AuthService _authService = AuthService();
+  final PointServiceInterface _pointService =
+      serviceLocator<PointServiceInterface>();
+  final AuthServiceInterface _authService =
+      serviceLocator<AuthServiceInterface>();
 
   UserPoint? _userPoint;
   List<PointHistory> _pointHistory = [];

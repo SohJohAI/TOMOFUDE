@@ -54,6 +54,7 @@ dependencies:
   firebase_auth: ^4.15.3
   firebase_auth_web: ^5.8.12
   cloud_firestore: ^4.13.6
+  cloud_firestore_web: ^3.12.5
   cloud_functions: ^4.5.8
   firebase_messaging: ^14.7.9
   firebase_messaging_web: ^3.5.8
@@ -63,6 +64,7 @@ dependencies:
   # Utility packages
   share_plus: ^7.1.0
   intl: ^0.18.1
+  get_it: ^7.6.4
 
 dev_dependencies:
   flutter_test:
