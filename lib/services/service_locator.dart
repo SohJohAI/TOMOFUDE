@@ -12,6 +12,8 @@ import 'point_service.dart';
 import 'point_service_interface.dart';
 import 'preview_service.dart';
 import 'storage_service.dart';
+import 'supabase_service.dart';
+import 'supabase_service_interface.dart';
 
 /// Global ServiceLocator instance
 final GetIt serviceLocator = GetIt.instance;
@@ -66,7 +68,13 @@ Future<void> setupServiceLocator() async {
     () => StorageService(),
   );
 
+  // Supabase Service
+  serviceLocator.registerLazySingleton<SupabaseServiceInterface>(
+    () => SupabaseService(),
+  );
+
   // Initialize services that require async initialization
   await serviceLocator<AuthServiceInterface>().initialize();
   await serviceLocator<PointServiceInterface>().initialize();
+  await serviceLocator<SupabaseServiceInterface>().initialize();
 }
