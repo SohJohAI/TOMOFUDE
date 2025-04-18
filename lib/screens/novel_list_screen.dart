@@ -1,16 +1,42 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../providers/app_state.dart';
 import '../models/novel.dart';
 import '../providers/novel_list_provider.dart';
+import '../services/auth_service_interface.dart';
+import '../services/service_locator.dart';
 import 'editor_screen.dart';
 import 'faq_screen.dart'; // FAQページのインポートを追加
 import 'work_list_screen.dart'; // 作品一覧画面のインポートを追加
 import 'plot_booster_screen.dart'; // プロットブースター画面のインポートを追加
 
-class NovelListScreen extends StatelessWidget {
+class NovelListScreen extends StatefulWidget {
   const NovelListScreen({Key? key}) : super(key: key);
+
+  @override
+  State<NovelListScreen> createState() => _NovelListScreenState();
+}
+
+class _NovelListScreenState extends State<NovelListScreen> {
+  final AuthServiceInterface _authService =
+      serviceLocator<AuthServiceInterface>();
+
+  /// Sign out the current user
+  Future<void> _signOut() async {
+    try {
+      await _authService.signOut();
+      // The AuthGate will automatically redirect to the auth screen
+    } catch (e) {
+      // Show error message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('ログアウトに失敗しました: ${e.toString()}')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -93,6 +119,12 @@ class NovelListScreen extends StatelessWidget {
                 context,
                 listen: false,
               ).toggleTheme(),
+            ),
+            // ログアウトボタン
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              child: const Icon(CupertinoIcons.square_arrow_right),
+              onPressed: _signOut,
             ),
           ],
         ),
