@@ -12,8 +12,13 @@ import 'point_service.dart';
 import 'point_service_interface.dart';
 import 'preview_service.dart';
 import 'storage_service.dart';
+import 'stripe_service.dart';
+import 'stripe_service_interface.dart';
 import 'supabase_service.dart';
 import 'supabase_service_interface.dart';
+import 'supabase_auth_service.dart';
+import 'supabase_auth_service_web.dart' as web;
+import 'supabase_database_service.dart';
 
 /// Global ServiceLocator instance
 final GetIt serviceLocator = GetIt.instance;
@@ -31,7 +36,13 @@ Future<void> setupServiceLocator() async {
   serviceLocator.registerLazySingleton<AuthServiceInterface>(
     () {
       // Use the appropriate implementation based on the platform
-      return AuthService();
+      if (kIsWeb) {
+        // Use web-specific Supabase auth service for web
+        return web.AuthService();
+      } else {
+        // Use Supabase auth service for other platforms
+        return SupabaseAuthService();
+      }
     },
   );
 
@@ -73,8 +84,19 @@ Future<void> setupServiceLocator() async {
     () => SupabaseService(),
   );
 
+  // Supabase Database Service
+  serviceLocator.registerLazySingleton<SupabaseDatabaseService>(
+    () => SupabaseDatabaseService(),
+  );
+
+  // Stripe Service
+  serviceLocator.registerLazySingleton<StripeServiceInterface>(
+    () => StripeService(),
+  );
+
   // Initialize services that require async initialization
   await serviceLocator<AuthServiceInterface>().initialize();
   await serviceLocator<PointServiceInterface>().initialize();
   await serviceLocator<SupabaseServiceInterface>().initialize();
+  await serviceLocator<StripeServiceInterface>().initialize();
 }

@@ -53,6 +53,10 @@ dependencies:
   intl: ^0.18.1
   get_it: ^7.6.4
   supabase_flutter: ^2.8.4
+  
+  # Payment related packages
+  flutter_stripe: ^10.0.0
+  http: ^1.1.0
 
 dev_dependencies:
   flutter_test:

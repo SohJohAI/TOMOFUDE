@@ -5,6 +5,7 @@ import '../providers/payment_provider.dart';
 import '../widgets/point_display_widget.dart';
 import '../screens/referral_code_screen.dart';
 import '../screens/point_history_screen.dart';
+import '../screens/subscription_screen.dart';
 
 /// A screen that displays the user's payment information.
 ///
@@ -74,6 +75,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
           _buildActionButtons(isDark),
           const SizedBox(height: 24),
 
+          // Subscription button
+          _buildSubscriptionButton(isDark),
+          const SizedBox(height: 24),
+
           // Information section
           _buildInfoSection(isDark),
           const SizedBox(height: 24),
@@ -98,6 +103,21 @@ class _PaymentScreenState extends State<PaymentScreen> {
             ),
             const SizedBox(height: 24),
           ],
+        ],
+      ),
+    );
+  }
+
+  /// Builds the subscription button.
+  Widget _buildSubscriptionButton(bool isDark) {
+    return CupertinoButton.filled(
+      onPressed: _navigateToSubscriptionScreen,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(CupertinoIcons.star_fill),
+          const SizedBox(width: 8),
+          const Text('月額プランに加入する'),
         ],
       ),
     );
@@ -211,6 +231,15 @@ class _PaymentScreenState extends State<PaymentScreen> {
     Navigator.of(context).push(
       CupertinoPageRoute(
         builder: (context) => const PointHistoryScreen(),
+      ),
+    );
+  }
+
+  /// Navigates to the subscription screen.
+  void _navigateToSubscriptionScreen() {
+    Navigator.of(context).push(
+      CupertinoPageRoute(
+        builder: (context) => const SubscriptionScreen(),
       ),
     );
   }
