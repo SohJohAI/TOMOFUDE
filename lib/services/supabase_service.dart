@@ -22,10 +22,19 @@ class SupabaseService implements SupabaseServiceInterface {
   /// Initialize the Supabase client
   @override
   Future<void> initialize() async {
-    await Supabase.initialize(
-      url: _supabaseUrl,
-      anonKey: _supabaseKey,
-    );
+    // Check if Supabase is already initialized
+    try {
+      // If Supabase.instance can be accessed without error, it's already initialized
+      Supabase.instance.client;
+      print('SupabaseService: Supabase already initialized');
+    } catch (e) {
+      // If accessing Supabase.instance throws an error, initialize it
+      print('SupabaseService: Initializing Supabase');
+      await Supabase.initialize(
+        url: _supabaseUrl,
+        anonKey: _supabaseKey,
+      );
+    }
   }
 
   /// Get the Supabase client instance

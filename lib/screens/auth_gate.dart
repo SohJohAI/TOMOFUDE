@@ -32,6 +32,10 @@ class _AuthGateState extends State<AuthGate> {
     // Check if the user is authenticated
     final session = Supabase.instance.client.auth.currentSession;
 
+    // Debug information
+    print('AuthGate: session is $session');
+    print('AuthGate: user is ${Supabase.instance.client.auth.currentUser}');
+
     if (session == null) {
       // User is not authenticated, show the auth screen
       return const AuthScreen();
