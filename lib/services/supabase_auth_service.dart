@@ -152,10 +152,17 @@ class SupabaseAuthService implements AuthServiceInterface {
           password,
         );
 
-        // Create user record in the users table
-        if (response.user != null) {
+        final user = response.user;
+        if (user == null) {
+          // ユーザーがnullの場合はメール確認待ちの可能性がある
+          print('ユーザー登録済みだがメール確認待ち状態。');
+          // ここでUIに案内を表示する処理を追加できる
+        } else {
+          // ユーザーが取得できた場合のみデータを登録
           try {
-            await _supabaseService.updateUserData({
+            // response.userから直接IDを取得して使用
+            await _supabaseService.client.from('users').insert({
+              'id': user.id,
               'email': email,
               'plan': 'free',
               'points': 300,

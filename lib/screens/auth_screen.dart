@@ -49,8 +49,13 @@ class _AuthScreenState extends State<AuthScreen> {
       );
 
       if (result != null) {
-        // Successfully signed up
-        _showMessage('登録が完了しました: ${result.user?.email}');
+        if (result.user == null) {
+          // ユーザーがnullの場合はメール確認が必要
+          _showMessage('登録が完了しました。確認メールをご確認ください。');
+        } else {
+          // Successfully signed up and user is available
+          _showMessage('登録が完了しました: ${result.user?.email}');
+        }
       } else {
         // Sign up failed
         setState(() {
