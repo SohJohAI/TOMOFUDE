@@ -289,7 +289,7 @@ class AuthService implements AuthServiceInterface {
         final referrer = referrerList.first;
 
         // Check if the user is trying to use their own code
-        if (referrer['uid'] == _currentUser!.uid) {
+        if (referrer['uid'] == _currentUser?.uid) {
           errorHandler.logError(
             'Cannot use own referral code',
             'AuthService.applyReferralCode',
@@ -299,7 +299,7 @@ class AuthService implements AuthServiceInterface {
 
         // Find current user in users list
         final currentUserIndex =
-            users.indexWhere((u) => u['uid'] == _currentUser!.uid);
+            users.indexWhere((u) => u['uid'] == _currentUser?.uid);
 
         if (currentUserIndex == -1) {
           errorHandler.logError(

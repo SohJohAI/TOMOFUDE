@@ -104,6 +104,32 @@ Future<void> _signUp() async {
 }
 ```
 
+#### 2.3 非nullアサーション演算子（`!`）の修正
+
+コード内の非nullアサーション演算子（`!`）を使用している箇所を修正しました：
+
+1. `lib/examples/supabase_auth_simple_example.dart`：
+   ```dart
+   // 修正前
+   _message = 'Successfully signed up: ${response.user!.email}';
+   
+   // 修正後
+   _message = 'Successfully signed up: ${response.user?.email}';
+   ```
+
+2. `lib/services/auth_service.dart`：
+   ```dart
+   // 修正前
+   if (referrer['uid'] == _currentUser!.uid) {
+     // ...
+   }
+   
+   // 修正後
+   if (referrer['uid'] == _currentUser?.uid) {
+     // ...
+   }
+   ```
+
 ### 3. 一般的なnullセーフティのベストプラクティス
 
 1. **非nullアサーション演算子（`!`）の使用を避ける**：
@@ -130,6 +156,19 @@ Future<void> _signUp() async {
    final email = Supabase.instance.client.auth.currentUser?.email ?? '未設定';
    ```
 
+4. **nullチェックの後でも非nullアサーションを避ける**：
+   ```dart
+   // 避けるべき書き方
+   if (user != null) {
+     final email = user!.email; // user != null が確認済みなのに ! を使っている
+   }
+   
+   // 推奨される書き方
+   if (user != null) {
+     final email = user.email; // user が non-null なので ! は不要
+   }
+   ```
+
 ## 本番環境での対応
 
 本番環境ではメール確認を有効にすることが推奨されます。その場合は以下の点に注意してください：
@@ -148,3 +187,5 @@ Future<void> _signUp() async {
 ## まとめ
 
 Supabaseの認証機能を使用する際は、メール確認の有無によって`currentUser`の挙動が変わることを理解し、適切にnullチェックを行うことが重要です。開発中はメール確認を無効化して効率的に開発を進め、本番環境では適切なエラーハンドリングとユーザーガイダンスを提供することで、安全で使いやすい認証フローを実現できます。
+
+非nullアサーション演算子（`!`）の使用は避け、常にnull安全なコードを書くことを心がけましょう。特にユーザー認証のような状態が変化しやすい処理では、nullチェックとnull安全な演算子の使用が重要です。

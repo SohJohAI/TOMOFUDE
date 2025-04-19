@@ -43,7 +43,7 @@ class _SupabaseAuthSimpleExampleState extends State<SupabaseAuthSimpleExample> {
 
       if (response.user != null) {
         setState(() {
-          _message = 'Successfully signed up: ${response.user!.email}';
+          _message = 'Successfully signed up: ${response.user?.email}';
         });
       } else {
         setState(() {
@@ -77,7 +77,7 @@ class _SupabaseAuthSimpleExampleState extends State<SupabaseAuthSimpleExample> {
 
       if (response.user != null) {
         setState(() {
-          _message = 'Successfully signed in: ${response.user!.email}';
+          _message = 'Successfully signed in: ${response.user?.email}';
         });
       } else {
         setState(() {
