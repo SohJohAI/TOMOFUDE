@@ -1,0 +1,148 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
+import '../../providers/plot_booster_provider.dart';
+import '../../services/plot_booster_service.dart';
+
+/// STEP 3: 世界観設定
+class Step3WorldSettingWidget extends StatefulWidget {
+  @override
+  _Step3WorldSettingWidgetState createState() =>
+      _Step3WorldSettingWidgetState();
+}
+
+class _Step3WorldSettingWidgetState extends State<Step3WorldSettingWidget> {
+  final TextEditingController _worldSettingController = TextEditingController();
+  final PlotBoosterService _service = PlotBoosterService();
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // 既存の値があれば設定
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider = Provider.of<PlotBoosterProvider>(context, listen: false);
+      _worldSettingController.text = provider.plotBooster.worldSetting;
+    });
+  }
+
+  void _requestAIHelp() async {
+    final provider = Provider.of<PlotBoosterProvider>(context, listen: false);
+    if (!provider.isAIAssistEnabled) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // モックレスポンス
+      final aiResponse = '''
+## 世界観設定のアイデア
+
+1. **失われた文明の遺跡が点在する未来世界** - 高度な科学技術と古代の魔法が融合した世界。巨大な浮遊都市と荒廃した地上の対比。
+
+2. **記憶を通貨として使う社会** - 人々は自分の記憶を売買し、価値ある記憶ほど高価格で取引される。記憶を失った者は社会的地位を失う。
+
+3. **季節が数十年単位で変わる惑星** - 一つの季節が何十年も続き、世代を超えて冬を経験したことのない人々も存在する。季節の変わり目は大きな社会変動をもたらす。
+
+4. **感情が目に見える形で現れる世界** - 人々の感情は色彩豊かなオーラとして視覚化され、感情を隠すことは不可能。感情の制御が社会的ステータスとなる。
+
+5. **夢と現実の境界が曖昧な世界** - 夢の中で経験したことが現実に影響を与え、夢の中での行動が法的責任を問われることもある。夢を操る能力を持つ者は強大な力を持つ。
+      ''';
+
+      // AIレスポンスをダイアログで表示
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('AIアシスト'),
+          content: Container(
+            width: double.maxFinite,
+            child: SingleChildScrollView(
+              child: Markdown(
+                data: aiResponse,
+                shrinkWrap: true,
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('閉じる'),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('AIアシストの取得に失敗しました: $e')),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final provider = Provider.of<PlotBoosterProvider>(context);
+
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'STEP 3：世界観設定',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          SizedBox(height: 8),
+          Text(
+            '物語の舞台となる世界の特徴や法則、歴史などを設定します。',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          SizedBox(height: 16),
+
+          // 世界観設定入力
+          TextField(
+            controller: _worldSettingController,
+            decoration: InputDecoration(
+              labelText: '世界観設定',
+              hintText: '例：魔法が日常的に使われる中世ファンタジー世界。魔法の才能は生まれつき決まっており...',
+              border: OutlineInputBorder(),
+            ),
+            maxLines: 8,
+            onChanged: (value) {
+              provider.updateWorldSetting(value);
+            },
+          ),
+
+          // AIアシスト
+          SizedBox(height: 24),
+          if (provider.isAIAssistEnabled) ...[
+            ElevatedButton.icon(
+              icon: Icon(Icons.lightbulb_outline),
+              label: Text('AIに助けを求める'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.amber,
+              ),
+              onPressed: _isLoading ? null : _requestAIHelp,
+            ),
+            if (_isLoading)
+              Padding(
+                padding: EdgeInsets.all(16),
+                child: Center(child: CircularProgressIndicator()),
+              ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _worldSettingController.dispose();
+    super.dispose();
+  }
+}
