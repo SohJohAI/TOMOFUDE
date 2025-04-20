@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import '../../providers/plot_booster_provider.dart';
 import '../../services/plot_booster_service.dart';
+import '../../utils/ai_helper.dart';
 
 /// STEP 3: 世界観設定
 class Step3WorldSettingWidget extends StatefulWidget {
@@ -52,31 +53,10 @@ class _Step3WorldSettingWidgetState extends State<Step3WorldSettingWidget> {
       ''';
 
       // AIレスポンスをダイアログで表示
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text('AIアシスト'),
-          content: Container(
-            width: double.maxFinite,
-            child: SingleChildScrollView(
-              child: Markdown(
-                data: aiResponse,
-                shrinkWrap: true,
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text('閉じる'),
-            ),
-          ],
-        ),
-      );
+      AIHelper.showAIResponse(context, aiResponse);
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('AIアシストの取得に失敗しました: $e')),
-      );
+      // エラーダイアログを表示
+      AIHelper.showAIError(context, e);
     } finally {
       setState(() {
         _isLoading = false;

@@ -5,6 +5,7 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import '../../providers/plot_booster_provider.dart';
 import '../../services/plot_booster_service.dart';
 import '../../models/plot_booster.dart';
+import '../../utils/ai_helper.dart';
 
 /// STEP 7: 出力
 class Step7OutputWidget extends StatefulWidget {
@@ -187,9 +188,8 @@ class _Step7OutputWidgetState extends State<Step7OutputWidget> {
       // マークダウンを再生成
       _generateMarkdown();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('AI支援資料の生成に失敗しました: $e')),
-      );
+      // エラーダイアログを表示
+      AIHelper.showAIError(context, e);
     } finally {
       setState(() {
         _isLoading = false;

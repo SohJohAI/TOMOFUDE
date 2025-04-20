@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import '../../providers/plot_booster_provider.dart';
 import '../../services/plot_booster_service.dart';
+import '../../utils/ai_helper.dart';
 
 /// STEP 1: ログライン（物語の要約）の作成
 class Step1LoglineWidget extends StatefulWidget {
@@ -51,31 +52,10 @@ class _Step1LoglineWidgetState extends State<Step1LoglineWidget> {
       ''';
 
       // AIレスポンスをダイアログで表示
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text('AIアシスト'),
-          content: Container(
-            width: double.maxFinite,
-            child: SingleChildScrollView(
-              child: Markdown(
-                data: aiResponse,
-                shrinkWrap: true,
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text('閉じる'),
-            ),
-          ],
-        ),
-      );
+      AIHelper.showAIResponse(context, aiResponse);
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('AIアシストの取得に失敗しました: $e')),
-      );
+      // エラーダイアログを表示
+      AIHelper.showAIError(context, e);
     } finally {
       setState(() {
         _isLoading = false;

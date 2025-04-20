@@ -3,14 +3,14 @@ import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import '../providers/plot_booster_provider.dart';
 import '../widgets/plot_step_indicator.dart';
-import '../widgets/steps/logline_step.dart';
-import '../widgets/steps/theme_step.dart';
-import '../widgets/steps/world_setting_step.dart';
-import '../widgets/steps/key_setting_step.dart';
-import '../widgets/steps/character_step.dart';
-import '../widgets/steps/chapter_structure_step.dart';
-import '../widgets/steps/output_step.dart';
-import '../widgets/steps/step0_genre_style_widget.dart'; // 変更: GenreStyleStepの代わりにStep0GenreStyleWidgetをインポート
+import '../widgets/steps/step0_genre_style_widget.dart';
+import '../widgets/steps/step1_logline_widget.dart';
+import '../widgets/steps/step2_theme_widget.dart';
+import '../widgets/steps/step3_world_setting_widget.dart';
+import '../widgets/steps/step4_key_setting_widget.dart';
+import '../widgets/steps/step5_character_widget.dart';
+import '../widgets/steps/step6_chapter_structure_widget.dart';
+import '../widgets/steps/step7_output_widget.dart';
 import '../models/work.dart';
 import '../providers/work_list_provider.dart';
 
@@ -178,14 +178,14 @@ class _PlotBoosterScreenState extends State<PlotBoosterScreen> {
                   });
                 },
                 children: [
-                  Step0GenreStyleWidget(), // 変更: GenreStyleStepの代わりにStep0GenreStyleWidgetを使用
-                  LoglineStep(),
-                  ThemeStep(),
-                  WorldSettingStep(),
-                  KeySettingStep(),
-                  CharacterStep(),
-                  ChapterStructureStep(),
-                  OutputStep(),
+                  Step0GenreStyleWidget(),
+                  Step1LoglineWidget(),
+                  Step2ThemeWidget(),
+                  Step3WorldSettingWidget(),
+                  Step4KeySettingWidget(),
+                  Step5CharacterWidget(),
+                  Step6ChapterStructureWidget(),
+                  Step7OutputWidget(),
                 ],
               ),
             ),
