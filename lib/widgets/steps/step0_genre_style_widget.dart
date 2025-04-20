@@ -260,23 +260,35 @@ class _Step0GenreStyleWidgetState extends State<Step0GenreStyleWidget> {
             ),
           ],
 
-          // AIアシスト
+          // AIアシスト - 条件付きレンダリングを修正
           SizedBox(height: 24),
-          if (provider.isAIAssistEnabled) ...[
-            ElevatedButton.icon(
-              icon: Icon(Icons.lightbulb_outline),
-              label: Text('AIに助けを求める'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.amber,
-              ),
-              onPressed: _isLoading ? null : _requestAIHelp,
+          // AIアシストボタンを常に表示（無効化はするが非表示にはしない）
+          ElevatedButton.icon(
+            icon: Icon(Icons.lightbulb_outline),
+            label: Text('AIに助けを求める'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.amber,
+              // ボタンが見えるように最小サイズを設定
+              minimumSize: Size(200, 48),
             ),
-            if (_isLoading)
-              Padding(
-                padding: EdgeInsets.all(16),
-                child: Center(child: CircularProgressIndicator()),
+            onPressed: (_isLoading || !provider.isAIAssistEnabled)
+                ? null
+                : _requestAIHelp,
+          ),
+          if (_isLoading)
+            Padding(
+              padding: EdgeInsets.all(16),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+          // AIアシストが無効の場合のメッセージ
+          if (!provider.isAIAssistEnabled)
+            Padding(
+              padding: EdgeInsets.only(top: 8),
+              child: Text(
+                'AIアシストは現在無効です。有効にするには画面上部のスイッチをオンにしてください。',
+                style: TextStyle(color: Colors.grey, fontSize: 12),
               ),
-          ],
+            ),
         ],
       ),
     );

@@ -2,12 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 
 /// AIアシスト機能のヘルパークラス
-/// AIレスポンスの表示やエラーハンドリングを共通化する
+/// AIレスポンスの表示とエラーハンドリングを共通化する
 class AIHelper {
   /// AIレスポンスをダイアログで表示する
-  ///
-  /// [context] ビルドコンテキスト
-  /// [aiResponse] AIからのレスポンス
+  /// 空レスポンスの場合は代替テキストを表示
   static void showAIResponse(BuildContext context, String aiResponse) {
     showDialog(
       context: context,
@@ -35,31 +33,44 @@ class AIHelper {
   }
 
   /// AIエラーをダイアログで表示する
-  ///
-  /// [context] ビルドコンテキスト
-  /// [e] 発生した例外
-  static void showAIError(BuildContext context, dynamic e) {
-    String errorMessage = e.toString();
-    String userMessage = '⚠️ AIアシストに失敗しました。';
+  /// エラーの種類に応じて適切なメッセージを表示
+  static void showAIError(BuildContext context, dynamic error) {
+    String errorMessage = 'AIアシストの取得に失敗しました。';
+    String detailMessage = '';
 
-    if (errorMessage.contains('429') ||
-        errorMessage.contains('Too Many Requests')) {
-      userMessage += '\n\nAPIの無料利用上限を超えた可能性があります。明日以降に再試行するか、有料プランをご検討ください。';
-    } else if (errorMessage.contains('timeout') ||
-        errorMessage.contains('timed out')) {
-      userMessage += '\n\nサーバーの応答がタイムアウトしました。後ほど再試行してください。';
+    // エラーの種類に応じてメッセージを変更
+    final errorString = error.toString().toLowerCase();
+    if (errorString.contains('429') ||
+        errorString.contains('too many requests')) {
+      errorMessage = 'APIの無料利用上限を超えた可能性があります。';
+      detailMessage = '明日以降に再試行するか、有料プランをご検討ください。';
+    } else if (errorString.contains('timeout') ||
+        errorString.contains('timed out')) {
+      errorMessage = 'リクエストがタイムアウトしました。';
+      detailMessage = 'ネットワーク接続を確認して、再度お試しください。';
     } else {
-      userMessage += '\n\nネットワークやAPI制限をご確認ください。\n\n詳細: $e';
+      detailMessage = 'エラー詳細: $error';
     }
 
+    // エラーダイアログを表示
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
         title: Text('AIアシストに失敗しました'),
-        content: Text(userMessage),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(errorMessage),
+            SizedBox(height: 8),
+            Text(detailMessage),
+          ],
+        ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context), child: Text('閉じる'))
+            onPressed: () => Navigator.pop(context),
+            child: Text('閉じる'),
+          ),
         ],
       ),
     );

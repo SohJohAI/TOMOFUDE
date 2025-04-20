@@ -66,6 +66,9 @@ class _Step1LoglineWidgetState extends State<Step1LoglineWidget> {
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<PlotBoosterProvider>(context);
+    // デバッグ出力を追加
+    print(
+        "LoglineWidget build: isAIAssistEnabled = ${provider.isAIAssistEnabled}");
 
     return SingleChildScrollView(
       padding: EdgeInsets.all(16),
@@ -83,37 +86,58 @@ class _Step1LoglineWidgetState extends State<Step1LoglineWidget> {
           ),
           SizedBox(height: 16),
 
-          // ログライン入力
-          TextField(
-            controller: _loglineController,
-            decoration: InputDecoration(
-              labelText: 'ログライン',
-              hintText: '例：復讐のために帝国を滅ぼそうとする少女が、仲間との絆に揺れる。',
-              border: OutlineInputBorder(),
+          // ログライン入力 - 明示的な高さを設定
+          Container(
+            constraints: BoxConstraints(minHeight: 100),
+            child: TextField(
+              controller: _loglineController,
+              decoration: InputDecoration(
+                labelText: 'ログライン',
+                hintText: '例：復讐のために帝国を滅ぼそうとする少女が、仲間との絆に揺れる。',
+                border: OutlineInputBorder(),
+                // 入力欄が見えるようにフィルカラーを設定
+                filled: true,
+                fillColor: Theme.of(context).inputDecorationTheme.fillColor ??
+                    (Theme.of(context).brightness == Brightness.dark
+                        ? Colors.grey[800]
+                        : Colors.grey[200]),
+              ),
+              maxLines: 2,
+              onChanged: (value) {
+                provider.updateLogline(value);
+              },
             ),
-            maxLines: 2,
-            onChanged: (value) {
-              provider.updateLogline(value);
-            },
           ),
 
-          // AIアシスト
+          // AIアシスト - 条件付きレンダリングを修正
           SizedBox(height: 24),
-          if (provider.isAIAssistEnabled) ...[
-            ElevatedButton.icon(
-              icon: Icon(Icons.lightbulb_outline),
-              label: Text('AIに助けを求める'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.amber,
-              ),
-              onPressed: _isLoading ? null : _requestAIHelp,
+          // AIアシストボタンを常に表示（無効化はするが非表示にはしない）
+          ElevatedButton.icon(
+            icon: Icon(Icons.lightbulb_outline),
+            label: Text('AIに助けを求める'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.amber,
+              // ボタンが見えるように最小サイズを設定
+              minimumSize: Size(200, 48),
             ),
-            if (_isLoading)
-              Padding(
-                padding: EdgeInsets.all(16),
-                child: Center(child: CircularProgressIndicator()),
+            onPressed: (_isLoading || !provider.isAIAssistEnabled)
+                ? null
+                : _requestAIHelp,
+          ),
+          if (_isLoading)
+            Padding(
+              padding: EdgeInsets.all(16),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+          // AIアシストが無効の場合のメッセージ
+          if (!provider.isAIAssistEnabled)
+            Padding(
+              padding: EdgeInsets.only(top: 8),
+              child: Text(
+                'AIアシストは現在無効です。有効にするには画面上部のスイッチをオンにしてください。',
+                style: TextStyle(color: Colors.grey, fontSize: 12),
               ),
-          ],
+            ),
         ],
       ),
     );
