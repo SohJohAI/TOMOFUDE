@@ -3,7 +3,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import '../providers/plot_booster_provider.dart';
 import '../widgets/plot_step_indicator.dart';
-import '../widgets/steps/genre_style_step.dart';
 import '../widgets/steps/logline_step.dart';
 import '../widgets/steps/theme_step.dart';
 import '../widgets/steps/world_setting_step.dart';
@@ -11,6 +10,7 @@ import '../widgets/steps/key_setting_step.dart';
 import '../widgets/steps/character_step.dart';
 import '../widgets/steps/chapter_structure_step.dart';
 import '../widgets/steps/output_step.dart';
+import '../widgets/steps/step0_genre_style_widget.dart'; // 変更: GenreStyleStepの代わりにStep0GenreStyleWidgetをインポート
 import '../models/work.dart';
 import '../providers/work_list_provider.dart';
 
@@ -23,6 +23,16 @@ class _PlotBoosterScreenState extends State<PlotBoosterScreen> {
   int _currentStep = 0;
   bool _isAIAssistEnabled = true;
   final PageController _pageController = PageController();
+  late PlotBoosterProvider _plotBoosterProvider;
+
+  @override
+  void initState() {
+    super.initState();
+    print("PlotBoosterScreen initState called");
+    // プロバイダーを一度だけ初期化
+    _plotBoosterProvider = PlotBoosterProvider()
+      ..setAIAssistEnabled(_isAIAssistEnabled);
+  }
 
   @override
   void dispose() {
@@ -75,13 +85,11 @@ class _PlotBoosterScreenState extends State<PlotBoosterScreen> {
     });
 
     // プロバイダーの状態も更新
-    Provider.of<PlotBoosterProvider>(context, listen: false)
-        .setAIAssistEnabled(_isAIAssistEnabled);
+    _plotBoosterProvider.setAIAssistEnabled(_isAIAssistEnabled);
   }
 
   void _createWorkFromPlot() {
-    final plotBooster =
-        Provider.of<PlotBoosterProvider>(context, listen: false).plotBooster;
+    final plotBooster = _plotBoosterProvider.plotBooster;
     final workListProvider =
         Provider.of<WorkListProvider>(context, listen: false);
 
@@ -119,11 +127,11 @@ class _PlotBoosterScreenState extends State<PlotBoosterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    print("PlotBoosterScreen build method called");
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return ChangeNotifierProvider(
-      create: (_) =>
-          PlotBoosterProvider()..setAIAssistEnabled(_isAIAssistEnabled),
+    return ChangeNotifierProvider.value(
+      value: _plotBoosterProvider,
       child: Scaffold(
         appBar: AppBar(
           title: Text('プロットブースター'),
@@ -170,7 +178,7 @@ class _PlotBoosterScreenState extends State<PlotBoosterScreen> {
                   });
                 },
                 children: [
-                  GenreStyleStep(),
+                  Step0GenreStyleWidget(), // 変更: GenreStyleStepの代わりにStep0GenreStyleWidgetを使用
                   LoglineStep(),
                   ThemeStep(),
                   WorldSettingStep(),
