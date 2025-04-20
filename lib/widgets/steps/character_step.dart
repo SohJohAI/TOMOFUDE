@@ -40,44 +40,57 @@ class _CharacterStepState extends State<CharacterStep>
   @override
   void initState() {
     super.initState();
+    print("CharacterStep initState called");
     _tabController = TabController(length: 2, vsync: this);
 
     // 既存の値があれば設定
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final provider = Provider.of<PlotBoosterProvider>(context, listen: false);
+      print("CharacterStep PostFrameCallback executed");
+      try {
+        final provider =
+            Provider.of<PlotBoosterProvider>(context, listen: false);
+        print(
+            "Provider in CharacterStep PostFrameCallback: Protagonist=${provider.plotBooster.protagonist.name}, Antagonist=${provider.plotBooster.antagonist.name}");
 
-      // 主人公の情報を設定
-      _protagonistNameController.text = provider.plotBooster.protagonist.name;
-      _protagonistDescController.text =
-          provider.plotBooster.protagonist.description;
-      _protagonistMotivationController.text =
-          provider.plotBooster.protagonist.motivation;
-      _protagonistConflictController.text =
-          provider.plotBooster.protagonist.conflict;
+        // 主人公の情報を設定
+        _protagonistNameController.text = provider.plotBooster.protagonist.name;
+        _protagonistDescController.text =
+            provider.plotBooster.protagonist.description;
+        _protagonistMotivationController.text =
+            provider.plotBooster.protagonist.motivation;
+        _protagonistConflictController.text =
+            provider.plotBooster.protagonist.conflict;
 
-      // 敵対者の情報を設定
-      _antagonistNameController.text = provider.plotBooster.antagonist.name;
-      _antagonistDescController.text =
-          provider.plotBooster.antagonist.description;
-      _antagonistMotivationController.text =
-          provider.plotBooster.antagonist.motivation;
-      _antagonistConflictController.text =
-          provider.plotBooster.antagonist.conflict;
+        // 敵対者の情報を設定
+        _antagonistNameController.text = provider.plotBooster.antagonist.name;
+        _antagonistDescController.text =
+            provider.plotBooster.antagonist.description;
+        _antagonistMotivationController.text =
+            provider.plotBooster.antagonist.motivation;
+        _antagonistConflictController.text =
+            provider.plotBooster.antagonist.conflict;
+      } catch (e) {
+        print("Error in CharacterStep PostFrameCallback: $e");
+      }
     });
   }
 
   Future<void> _loadProtagonistSuggestion() async {
+    print("CharacterStep _loadProtagonistSuggestion called");
     setState(() {
       _isLoadingProtagonist = true;
     });
 
     try {
       final provider = Provider.of<PlotBoosterProvider>(context, listen: false);
+      print(
+          "Provider in _loadProtagonistSuggestion: AI Assist=${provider.isAIAssistEnabled}, Logline=${provider.plotBooster.logline}, Themes=${provider.plotBooster.themes}");
       if (provider.isAIAssistEnabled) {
         final suggestion = await _service.suggestProtagonist(
           provider.plotBooster.logline,
           provider.plotBooster.themes,
         );
+        print("Protagonist suggestion loaded: ${suggestion.name}");
 
         setState(() {
           _protagonistNameController.text = suggestion.name;
@@ -90,7 +103,7 @@ class _CharacterStepState extends State<CharacterStep>
         provider.updateProtagonist(suggestion);
       }
     } catch (e) {
-      print('提案の読み込みエラー: $e');
+      print('Protagonist提案の読み込みエラー: $e');
     } finally {
       setState(() {
         _isLoadingProtagonist = false;
@@ -99,24 +112,24 @@ class _CharacterStepState extends State<CharacterStep>
   }
 
   Future<void> _loadAntagonistSuggestion() async {
+    print("CharacterStep _loadAntagonistSuggestion called");
     setState(() {
       _isLoadingAntagonist = true;
     });
 
     try {
       final provider = Provider.of<PlotBoosterProvider>(context, listen: false);
+      print(
+          "Provider in _loadAntagonistSuggestion: AI Assist=${provider.isAIAssistEnabled}, Logline=${provider.plotBooster.logline}, Protagonist=${provider.plotBooster.protagonist.name}");
       if (provider.isAIAssistEnabled) {
-        final protagonist = Character(
-          name: _protagonistNameController.text,
-          description: _protagonistDescController.text,
-          motivation: _protagonistMotivationController.text,
-          conflict: _protagonistConflictController.text,
-        );
+        // Use current state from provider for protagonist context
+        final protagonist = provider.plotBooster.protagonist;
 
         final suggestion = await _service.suggestAntagonist(
           provider.plotBooster.logline,
           protagonist,
         );
+        print("Antagonist suggestion loaded: ${suggestion.name}");
 
         setState(() {
           _antagonistNameController.text = suggestion.name;
@@ -129,7 +142,7 @@ class _CharacterStepState extends State<CharacterStep>
         provider.updateAntagonist(suggestion);
       }
     } catch (e) {
-      print('提案の読み込みエラー: $e');
+      print('Antagonist提案の読み込みエラー: $e');
     } finally {
       setState(() {
         _isLoadingAntagonist = false;
@@ -138,6 +151,7 @@ class _CharacterStepState extends State<CharacterStep>
   }
 
   void _updateProtagonist() {
+    print("CharacterStep _updateProtagonist called");
     final provider = Provider.of<PlotBoosterProvider>(context, listen: false);
     final protagonist = Character(
       name: _protagonistNameController.text,
@@ -145,11 +159,12 @@ class _CharacterStepState extends State<CharacterStep>
       motivation: _protagonistMotivationController.text,
       conflict: _protagonistConflictController.text,
     );
-
+    print("Updating protagonist in provider: ${protagonist.name}");
     provider.updateProtagonist(protagonist);
   }
 
   void _updateAntagonist() {
+    print("CharacterStep _updateAntagonist called");
     final provider = Provider.of<PlotBoosterProvider>(context, listen: false);
     final antagonist = Character(
       name: _antagonistNameController.text,
@@ -157,189 +172,202 @@ class _CharacterStepState extends State<CharacterStep>
       motivation: _antagonistMotivationController.text,
       conflict: _antagonistConflictController.text,
     );
-
+    print("Updating antagonist in provider: ${antagonist.name}");
     provider.updateAntagonist(antagonist);
   }
 
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<PlotBoosterProvider>(context);
+    print("CharacterStep build method called");
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'キャラクターを設計しましょう',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              SizedBox(height: 8),
-              Text(
-                '主人公と敵対者（または主な障害）を設定します。',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
+    try {
+      final provider = Provider.of<PlotBoosterProvider>(context);
+      print(
+          "Provider in CharacterStep build: Protagonist=${provider.plotBooster.protagonist.name}, Antagonist=${provider.plotBooster.antagonist.name}");
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'キャラクターを設計しましょう',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                SizedBox(height: 8),
+                Text(
+                  '主人公と敵対者（または主な障害）を設定します。',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                SizedBox(height: 8),
+                // デバッグ情報
+                Container(
+                  padding: EdgeInsets.all(8),
+                  color: Colors.red.withOpacity(0.1),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text("デバッグ情報 (CharacterStep):",
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                      Text("Provider: ${provider != null ? '取得済み' : 'null'}"),
+                      Text(
+                          "Protagonist (Provider): ${provider.plotBooster.protagonist.name}"),
+                      Text(
+                          "Antagonist (Provider): ${provider.plotBooster.antagonist.name}"),
+                      Text("AI Assist: ${provider.isAIAssistEnabled}"),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // タブバー
+          TabBar(
+            controller: _tabController,
+            tabs: [
+              Tab(text: '主人公'),
+              Tab(text: '敵対者/障害'),
             ],
           ),
-        ),
 
-        // タブバー
-        TabBar(
-          controller: _tabController,
-          tabs: [
-            Tab(text: '主人公'),
-            Tab(text: '敵対者/障害'),
+          // タブビュー
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                // 主人公タブ
+                _buildCharacterForm(
+                  context: context,
+                  nameController: _protagonistNameController,
+                  descController: _protagonistDescController,
+                  motivationController: _protagonistMotivationController,
+                  conflictController: _protagonistConflictController,
+                  updateCharacter: _updateProtagonist,
+                  loadSuggestion: _loadProtagonistSuggestion,
+                  isLoading: _isLoadingProtagonist,
+                  characterType: '主人公',
+                  provider: provider,
+                ),
+
+                // 敵対者タブ
+                _buildCharacterForm(
+                  context: context,
+                  nameController: _antagonistNameController,
+                  descController: _antagonistDescController,
+                  motivationController: _antagonistMotivationController,
+                  conflictController: _antagonistConflictController,
+                  updateCharacter: _updateAntagonist,
+                  loadSuggestion: _loadAntagonistSuggestion,
+                  isLoading: _isLoadingAntagonist,
+                  characterType: '敵対者',
+                  provider: provider,
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    } catch (e) {
+      print("Error in CharacterStep build method: $e");
+      // エラー時のフォールバック表示
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 48, color: Colors.red),
+            SizedBox(height: 16),
+            Text("エラーが発生しました: $e"),
+            SizedBox(height: 16),
+            Text("デバッグ用テキスト: CharacterStep is rendering"),
           ],
         ),
+      );
+    }
+  }
 
-        // タブビュー
-        Expanded(
-          child: TabBarView(
-            controller: _tabController,
-            children: [
-              // 主人公タブ
-              SingleChildScrollView(
-                padding: EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // 主人公入力フォーム
-                    TextField(
-                      controller: _protagonistNameController,
-                      decoration: InputDecoration(
-                        labelText: '名前',
-                        hintText: '例: 太郎、アリス、主人公名など',
-                        border: OutlineInputBorder(),
-                      ),
-                      onChanged: (_) => _updateProtagonist(),
-                    ),
-                    SizedBox(height: 16),
-                    TextField(
-                      controller: _protagonistDescController,
-                      decoration: InputDecoration(
-                        labelText: '人物像',
-                        hintText: '例: 18歳の少年。魔法学校の落ちこぼれだが、好奇心旺盛で冒険心がある。',
-                        border: OutlineInputBorder(),
-                      ),
-                      maxLines: 3,
-                      onChanged: (_) => _updateProtagonist(),
-                    ),
-                    SizedBox(height: 16),
-                    TextField(
-                      controller: _protagonistMotivationController,
-                      decoration: InputDecoration(
-                        labelText: '動機',
-                        hintText: '例: 失われた力を取り戻し、家族の名誉を回復したい。',
-                        border: OutlineInputBorder(),
-                      ),
-                      maxLines: 2,
-                      onChanged: (_) => _updateProtagonist(),
-                    ),
-                    SizedBox(height: 16),
-                    TextField(
-                      controller: _protagonistConflictController,
-                      decoration: InputDecoration(
-                        labelText: '内的葛藤',
-                        hintText: '例: 自分の能力に自信が持てず、重要な場面で躊躇してしまう。',
-                        border: OutlineInputBorder(),
-                      ),
-                      maxLines: 2,
-                      onChanged: (_) => _updateProtagonist(),
-                    ),
-                    SizedBox(height: 24),
-
-                    // AI提案ボタン
-                    if (provider.isAIAssistEnabled)
-                      Center(
-                        child: _isLoadingProtagonist
-                            ? CircularProgressIndicator()
-                            : ElevatedButton.icon(
-                                icon: Icon(Icons.auto_awesome),
-                                label: Text('主人公を提案してもらう'),
-                                onPressed: _loadProtagonistSuggestion,
-                              ),
-                      ),
-                  ],
-                ),
-              ),
-
-              // 敵対者タブ
-              SingleChildScrollView(
-                padding: EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // 敵対者入力フォーム
-                    TextField(
-                      controller: _antagonistNameController,
-                      decoration: InputDecoration(
-                        labelText: '名前',
-                        hintText: '例: 次郎、ダークロード、敵対者名など',
-                        border: OutlineInputBorder(),
-                      ),
-                      onChanged: (_) => _updateAntagonist(),
-                    ),
-                    SizedBox(height: 16),
-                    TextField(
-                      controller: _antagonistDescController,
-                      decoration: InputDecoration(
-                        labelText: '人物像',
-                        hintText: '例: 古代魔法を研究する秘密結社のリーダー。冷静沈着で計算高い。',
-                        border: OutlineInputBorder(),
-                      ),
-                      maxLines: 3,
-                      onChanged: (_) => _updateAntagonist(),
-                    ),
-                    SizedBox(height: 16),
-                    TextField(
-                      controller: _antagonistMotivationController,
-                      decoration: InputDecoration(
-                        labelText: '動機',
-                        hintText: '例: 古代の禁断の魔法を復活させ、世界を支配したい。',
-                        border: OutlineInputBorder(),
-                      ),
-                      maxLines: 2,
-                      onChanged: (_) => _updateAntagonist(),
-                    ),
-                    SizedBox(height: 16),
-                    TextField(
-                      controller: _antagonistConflictController,
-                      decoration: InputDecoration(
-                        labelText: '内的葛藤',
-                        hintText: '例: 過去のトラウマから他者を信頼できず、孤独に苦しんでいる。',
-                        border: OutlineInputBorder(),
-                      ),
-                      maxLines: 2,
-                      onChanged: (_) => _updateAntagonist(),
-                    ),
-                    SizedBox(height: 24),
-
-                    // AI提案ボタン
-                    if (provider.isAIAssistEnabled)
-                      Center(
-                        child: _isLoadingAntagonist
-                            ? CircularProgressIndicator()
-                            : ElevatedButton.icon(
-                                icon: Icon(Icons.auto_awesome),
-                                label: Text('敵対者を提案してもらう'),
-                                onPressed: _loadAntagonistSuggestion,
-                              ),
-                      ),
-                  ],
-                ),
-              ),
-            ],
+  // Helper method to build character form
+  Widget _buildCharacterForm({
+    required BuildContext context,
+    required TextEditingController nameController,
+    required TextEditingController descController,
+    required TextEditingController motivationController,
+    required TextEditingController conflictController,
+    required VoidCallback updateCharacter,
+    required Future<void> Function() loadSuggestion,
+    required bool isLoading,
+    required String characterType,
+    required PlotBoosterProvider provider,
+  }) {
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextField(
+            controller: nameController,
+            decoration: InputDecoration(
+              labelText: '名前',
+              hintText: '例: 太郎、アリス、$characterType名など',
+              border: OutlineInputBorder(),
+            ),
+            onChanged: (_) => updateCharacter(),
           ),
-        ),
-      ],
+          SizedBox(height: 16),
+          TextField(
+            controller: descController,
+            decoration: InputDecoration(
+              labelText: '人物像',
+              hintText: '例: 18歳の少年。魔法学校の落ちこぼれだが...',
+              border: OutlineInputBorder(),
+            ),
+            maxLines: 3,
+            onChanged: (_) => updateCharacter(),
+          ),
+          SizedBox(height: 16),
+          TextField(
+            controller: motivationController,
+            decoration: InputDecoration(
+              labelText: '動機',
+              hintText: '例: 失われた力を取り戻し...',
+              border: OutlineInputBorder(),
+            ),
+            maxLines: 2,
+            onChanged: (_) => updateCharacter(),
+          ),
+          SizedBox(height: 16),
+          TextField(
+            controller: conflictController,
+            decoration: InputDecoration(
+              labelText: '内的葛藤',
+              hintText: '例: 自分の能力に自信が持てず...',
+              border: OutlineInputBorder(),
+            ),
+            maxLines: 2,
+            onChanged: (_) => updateCharacter(),
+          ),
+          SizedBox(height: 24),
+          if (provider.isAIAssistEnabled)
+            Center(
+              child: isLoading
+                  ? CircularProgressIndicator()
+                  : ElevatedButton.icon(
+                      icon: Icon(Icons.auto_awesome),
+                      label: Text('$characterTypeを提案してもらう'),
+                      onPressed: loadSuggestion,
+                    ),
+            ),
+        ],
+      ),
     );
   }
 
   @override
   void dispose() {
+    print("CharacterStep dispose called");
     _tabController.dispose();
 
     _protagonistNameController.dispose();
