@@ -33,11 +33,11 @@ class SupabaseTablesExample {
   static Future<Map<String, dynamic>?> getCurrentUserData() async {
     if (_currentUserId == null) return null;
 
-    final response = await _client
-        .from('users')
-        .select()
-        .eq('id', _currentUserId)
-        .maybeSingle();
+    // Since we've checked _currentUserId is not null, we can use the non-null assertion
+    final userId = _currentUserId!;
+
+    final response =
+        await _client.from('users').select().eq('id', userId).maybeSingle();
     return response;
   }
 
@@ -45,18 +45,24 @@ class SupabaseTablesExample {
   static Future<void> updateUserPlan(String plan) async {
     if (_currentUserId == null) return;
 
+    // Since we've checked _currentUserId is not null, we can use the non-null assertion
+    final userId = _currentUserId!;
+
     await _client.from('users').update({
       'plan': plan,
-    }).eq('id', _currentUserId!);
+    }).eq('id', userId);
   }
 
   /// Update user points
   static Future<void> updateUserPoints(int points) async {
     if (_currentUserId == null) return;
 
+    // Since we've checked _currentUserId is not null, we can use the non-null assertion
+    final userId = _currentUserId!;
+
     await _client.from('users').update({
       'points': points,
-    }).eq('id', _currentUserId!);
+    }).eq('id', userId);
   }
 
   /// Create a new project
@@ -83,10 +89,13 @@ class SupabaseTablesExample {
   static Future<List<Map<String, dynamic>>> getUserProjects() async {
     if (_currentUserId == null) return [];
 
+    // Since we've checked _currentUserId is not null, we can use the non-null assertion
+    final userId = _currentUserId!;
+
     final response = await _client
         .from('projects')
         .select()
-        .eq('user_id', _currentUserId)
+        .eq('user_id', userId)
         .order('created_at', ascending: false);
     return response;
   }
