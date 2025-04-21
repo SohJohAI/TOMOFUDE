@@ -161,7 +161,65 @@ class DummyAIService implements AIService {
 
   // 設定情報の例
   @override
-  Map<String, dynamic> generateSettings(String content) {
+  Future<Map<String, dynamic>> generateSettings(String content,
+      {String? aiDocs, String? contentType}) async {
+    // 処理をシミュレート
+    await Future.delayed(const Duration(milliseconds: 1200));
+
+    // Claude-3.7-Sonnetプロンプトを構築（実際の実装では、このプロンプトをAIサービスに送信する）
+    final prompt = '''
+@Claude-3.7-Sonnet 登場人物、組織、舞台、ジャンル、専門用語の設定情報を抽出・蓄積してJSON形式で返してください。
+
+登場人物については各キャラクターの名前だけでなく、性格や役割、背景なども継続的に更新して説明してください。
+組織については組織名と、その目的や特徴、所属メンバーなどを説明してください。
+舞台は場所や時代などの情報を、ジャンルはこの小説の種類を判断してください。
+専門用語については作品内で使われる特殊な言葉や概念、固有名詞などを説明してください。
+
+重要：あなたは小説の設定を管理するデータベース担当者です。文章から設定情報を蓄積してください。
+登場人物、組織、舞台、専門用語などの説明を、新しい情報が出てくるたびに豊かにしていってください。
+${aiDocs != null ? '\n\n小説情報:\n$aiDocs' : ''}
+${aiDocs == null && contentType != null ? '\n\n分析対象文章（$contentType）:\n${content.substring(0, min(800, content.length))}' : ''}
+
+これまでに蓄積した設定情報がある場合は、それに新しい情報を追加・更新してください。
+ない場合は、新規に作成してください。
+
+Provide ONLY raw JSON in your response with no explanations, additional text, or code block formatting (no \`\`\`). JSON format:
+{
+  "characters": [
+    {
+      "name": "キャラクター名1",
+      "description": "性格や役割、背景などの詳細説明"
+    },
+    {
+      "name": "キャラクター名2",
+      "description": "性格や役割、背景などの詳細説明"
+    }
+  ],
+  "organizations": [
+    {
+      "name": "組織名1",
+      "description": "目的や特徴、所属メンバーなどの説明"
+    },
+    {
+      "name": "組織名2",
+      "description": "目的や特徴、所属メンバーなどの説明"
+    }
+  ],
+  "terminology": [
+    {
+      "term": "専門用語1",
+      "definition": "その用語の定義や説明"
+    },
+    {
+      "term": "専門用語2",
+      "definition": "その用語の定義や説明"
+    }
+  ],
+  "setting": "舞台の詳細説明",
+  "genre": "ジャンル"
+}
+''';
+
     // 文章が短い場合は基本的な設定を返す
     if (content.length < 100) {
       return {
@@ -213,7 +271,36 @@ class DummyAIService implements AIService {
 
   // プロット情報の生成
   @override
-  Map<String, dynamic> generatePlotAnalysis(String content) {
+  Future<Map<String, dynamic>> generatePlotAnalysis(String content,
+      {String? aiDocs, String? newContent}) async {
+    // 処理をシミュレート
+    await Future.delayed(const Duration(milliseconds: 1000));
+
+    // Claude-3.7-Sonnetプロンプトを構築（実際の実装では、このプロンプトをAIサービスに送信する）
+    final prompt = '''
+@Claude-3.7-Sonnet 物語全体のプロット構造を分析して、ストーリーの各要素をJSON形式で整理してください。
+
+主要要素の特定:
+- 導入部: 物語の設定やキャラクターが紹介される部分
+- 主な出来事: 物語の中心となる重要なイベント
+- 転換点: 物語の流れが変わるような重要な転機
+- 現在の展開状況: 物語が現在どの段階にあるか（導入、展開、クライマックスなど）
+- 未解決の問題: まだ解決していない問題やミステリー
+- 予想される展開: 今後どのように物語が進む可能性があるか
+${aiDocs != null ? '\n\n小説情報:\n$aiDocs' : ''}
+${aiDocs == null && newContent != null ? '\n\n小説の最近の部分:\n${newContent.substring(0, min(800, newContent.length))}' : ''}
+
+Provide ONLY raw JSON in your response with no explanations, additional text, or code block formatting (no \`\`\`). JSON format:
+{
+  "introduction": "物語の導入部の説明",
+  "mainEvents": ["出来事1", "出来事2", "出来事3"],
+  "turningPoints": ["転換点1", "転換点2"],
+  "currentStage": "現在の物語段階（導入/展開/クライマックス/結末など）",
+  "unresolvedIssues": ["未解決の問題1", "未解決の問題2"],
+  "possibleDevelopments": ["今後の展開予測1", "今後の展開予測2"]
+}
+''';
+
     final stage = _getRandomElement(
         ['導入', '展開', '盛り上がり', 'クライマックスに向かう途中', 'クライマックス', '結末']);
 
@@ -280,13 +367,36 @@ class DummyAIService implements AIService {
 
   // AIレビューを生成
   @override
-  Map<String, String> generateReview() {
+  Future<Map<String, String>> generateReview(String analysisContent) async {
+    // 処理をシミュレート
+    await Future.delayed(const Duration(milliseconds: 800));
+
+    // Claude-3.7-Sonnetプロンプトを構築（実際の実装では、このプロンプトをAIサービスに送信する）
+    final prompt = '''
+@Claude-3.7-Sonnet 以下の小説を異なる3つの視点からレビューを生成してください。それぞれのレビューは100字程度で簡潔に作成してください。
+
+1. 読者視点: 一般読者としての感想。特に物語の面白さ、感情移入のしやすさ、没入感などを評価。
+2. 編集者視点: 文章の構成、ストーリー展開、キャラクター設定などの技術的な側面を評価。
+3. 審査員視点: 文学としての価値、テーマ性、作品の独自性などを評価。
+
+小説:
+$analysisContent
+
+Provide ONLY raw JSON in your response with no explanations, additional text, or code block formatting (no \`\`\`). JSON format:
+{
+  "reader": "読者視点からのレビュー文",
+  "editor": "編集者視点からのレビュー文",
+  "jury": "審査員視点からのレビュー文"
+}
+''';
+
     return _reviews[_random.nextInt(_reviews.length)];
   }
 
   // 複数の続きの候補を生成
   @override
-  Future<List<String>> generateContinuations(String content) async {
+  Future<List<String>> generateContinuations(String content,
+      {String? aiDocs, String? newContent, String? settingInfo}) async {
     if (content.isEmpty) {
       return [
         "物語は始まったばかりだ。最初の一文を書いてみよう。",
@@ -294,6 +404,27 @@ class DummyAIService implements AIService {
         "「すべての物語には始まりがある」彼はペンを手に取り、最初の一文を書き始めた。"
       ];
     }
+
+    // Claude-3.7-Sonnetプロンプトを構築（実際の実装では、このプロンプトをAIサービスに送信する）
+    final prompt = '''
+@Claude-3.7-Sonnet 小説の次に展開しそうな内容を3つ、簡潔に提案してください。各提案は一文で、具体的かつ魅力的なものにしてください。
+
+特に重要：小説の最近の部分に焦点を当てて、次の展開を考えてください。
+本文の続きとしてふさわしい、自然な展開を提案してください。
+一貫性のある展開を提案してください。
+${aiDocs != null ? '\n\n小説情報（これを元に展開候補を提案してください）:\n$aiDocs' : ''}
+${aiDocs == null && newContent != null ? '\n\n最近追加された部分（または末尾部分）:\n${newContent.substring(0, min(500, newContent.length))}' : ''}
+${settingInfo != null ? '\n\n設定情報:\n$settingInfo' : ''}
+
+Provide ONLY raw JSON in your response with no explanations, additional text, or code block formatting (no \`\`\`). JSON format:
+{
+  "suggestions": [
+    "提案1",
+    "提案2",
+    "提案3"
+  ]
+}
+''';
 
     final analysis = _analyzeContent(content);
     final character = analysis['character'];
@@ -324,14 +455,20 @@ class DummyAIService implements AIService {
     return continuations;
   }
 
-  // 処理の遅延をシミュレート（実際のAI呼び出しのような遅延を演出）
-  Future<List<String>> generateContinuationsAsync(String content) async {
-    return generateContinuations(content);
-  }
-
   // 展開候補を採用して拡張する
   @override
-  Future<String> expandSuggestion(String content, String suggestion) async {
+  Future<String> expandSuggestion(String content, String suggestion,
+      {String? aiDocs, String? recentContent}) async {
+    // Claude-3.7-Sonnetプロンプトを構築（実際の実装では、このプロンプトをAIサービスに送信する）
+    final prompt = '''
+@Claude-3.7-Sonnet あなたは小説執筆アシスタントです。選択された展開に沿った続きを書いてください。続きは200〜300字程度にしてください。文体や雰囲気を一致させてください。追加説明は不要です、純粋に小説の続きのみを提供してください。
+
+選択された展開:
+$suggestion
+${aiDocs != null ? '\n\n小説情報（これを元に続きを書いてください）:\n$aiDocs' : ''}
+${recentContent != null ? '\n\n小説の最近の部分:\n${recentContent.substring(0, min(500, recentContent.length))}' : '\n\n小説の一部:\n${content.substring(max(0, content.length - 500), content.length)}'}
+''';
+
     // AIの「思考」時間をシミュレート
     await Future.delayed(const Duration(seconds: 1));
 
@@ -373,92 +510,110 @@ class DummyAIService implements AIService {
     // 分析処理をシミュレート
     await Future.delayed(const Duration(milliseconds: 1200));
 
-    // モックデータ生成
-    final segments = _generateMockEmotionSegments(content);
+    // Claude-3.7-Sonnetプロンプトを構築（実際の実装では、このプロンプトをAIサービスに送信する）
+    final prompt = '''
+@Claude-3.7-Sonnet あなたは小説の感情分析AIです。提供された小説情報を元に、読者が感じるであろう感情を特定してください。
 
-    return {
-      "segments": segments,
-      "summary": "物語全体を通して${_getRandomElement([
-            '希望',
-            '不安',
-            '緊張',
-            '喜び',
-            '悲しみ'
-          ])}の感情が主流となっており、${_getRandomElement([
-            '中盤',
-            '終盤',
-            '序盤'
-          ])}で感情の高まりが見られます。"
-    };
-  }
+## 分析手順
+1. 小説を5つの主要セクションに分割してください：導入、展開、転機/決断、クライマックス、結末
+2. 各セクションで最も強く表れている感情を以下のカテゴリから選択してください：
+   - 悲しみ（青: #3498db）
+   - 不安（紫: #9b59b6）
+   - 緊張（赤: #e74c3c）
+   - 期待（黄: #f1c40f）
+   - 喜び（緑: #2ecc71）
+3. 各セクションの盛り上がり度（読者の興奮度や没入度）を1〜100の数値で評価してください
+4. 各セクションの感情状態と盛り上がりの理由を簡潔に説明してください
 
-  // モック感情セグメントの生成
-  List<Map<String, dynamic>> _generateMockEmotionSegments(String content) {
-    // テキストの長さに基づいてセグメント数を決定
-    final segmentCount = min(max(content.length ~/ 200, 3), 8);
+## 分析の観点
+- 登場人物の感情表現（言葉、行動、描写）
+- 場面設定と雰囲気
+- 比喩やイメージの使用
+- ストーリーの展開速度と予測可能性
+- 対話と内的独白のバランス
+- 感情の対比と変化
+${aiDocs != null ? '\n\n小説情報:\n$aiDocs' : ''}
+${aiDocs == null ? '\n\n小説の一部:\n${content.substring(0, min(1000, content.length))}' : ''}
 
+Provide ONLY raw JSON in your response with no explanations, additional text, or code block formatting (no \`\`\`). JSON format:
+{
+  "segments": [
+    {
+      "name": "導入",
+      "dominant_emotion": "悲しみ",
+      "emotion_code": "#3498db", 
+      "emotion_value": 80,
+      "excitement": 30,
+      "description": "失恋の痛みと孤独感が読者に伝わる。雨と涙のイメージが重なり、悲哀感が強調されている。"
+    },
+    {
+      "name": "展開",
+      "dominant_emotion": "不安",
+      "emotion_code": "#9b59b6",
+      "emotion_value": 70,
+      "excitement": 40,
+      "description": "突然の電話による不安と期待が入り混じり、緊張感が高まる。"
+    },
+    {
+      "name": "転機/決断",
+      "dominant_emotion": "緊張",
+      "emotion_code": "#e74c3c",
+      "emotion_value": 85,
+      "excitement": 65,
+      "description": "会うことを決意した主人公の葛藤と選択の瞬間の緊張感が伝わる。"
+    },
+    {
+      "name": "クライマックス",
+      "dominant_emotion": "期待",
+      "emotion_code": "#f1c40f",
+      "emotion_value": 90,
+      "excitement": 85,
+      "description": "再会シーンでの高揚感と期待、結末への予感が読者を引き込む。"
+    },
+    {
+      "name": "結末",
+      "dominant_emotion": "喜び",
+      "emotion_code": "#2ecc71",
+      "emotion_value": 95,
+      "excitement": 90,
+      "description": "告白による歓喜と喜びの涙が読者に感情的なカタルシスをもたらす。"
+    }
+  ],
+  "summary": "悲しみから始まり、不安と緊張を経て、期待から喜びへと転換する感情の流れ。盛り上がり度も徐々に高まり、読者に強い感動を与える構成になっている。"
+}
+''';
+
+    // 新しいプロンプト形式に合わせたモックデータ
+    final emotions = [
+      {"name": "悲しみ", "code": "#3498db", "baseValue": 80},
+      {"name": "不安", "code": "#9b59b6", "baseValue": 70},
+      {"name": "緊張", "code": "#e74c3c", "baseValue": 85},
+      {"name": "期待", "code": "#f1c40f", "baseValue": 90},
+      {"name": "喜び", "code": "#2ecc71", "baseValue": 95},
+    ];
+
+    // 5つのセグメントを生成
+    final segmentNames = ["導入", "展開", "転機/決断", "クライマックス", "結末"];
     List<Map<String, dynamic>> segments = [];
 
-    // 物語の流れを模したデータ生成（起承転結のような感情の流れ）
-    for (int i = 0; i < segmentCount; i++) {
-      final emotion = _emotions[_random.nextInt(_emotions.length)];
-      final segmentPosition = i / (segmentCount - 1); // 0.0 から 1.0 の値
-
-      // 物語の位置に応じた感情値と盛り上がり度の調整
-      int emotionValue = _adjustValueBasedOnPosition(
-          emotion["baseValue"] as int, segmentPosition);
-
-      // 盛り上がり度は物語の中盤から終盤にかけて上昇するパターン
-      int excitement = _generateExcitementValue(segmentPosition);
-
+    for (int i = 0; i < 5; i++) {
+      final emotion = emotions[i];
       segments.add({
-        "name": "セグメント ${i + 1}",
+        "name": segmentNames[i],
         "dominantEmotion": emotion["name"],
         "emotionCode": emotion["code"],
-        "emotionValue": emotionValue,
-        "excitement": excitement,
-        "description":
-            _generateEmotionDescription(emotion["name"] as String, emotionValue)
+        "emotionValue": emotion["baseValue"],
+        "excitement": 30 + (i * 15), // 徐々に盛り上がる
+        "description": _generateEmotionDescription(
+            emotion["name"] as String, emotion["baseValue"] as int)
       });
     }
 
-    return segments;
-  }
-
-  // 物語の位置に基づいて感情値を調整
-  int _adjustValueBasedOnPosition(int baseValue, double position) {
-    // 物語の中盤で感情が高まり、終盤で解決に向かうようなパターン
-    if (position < 0.3) {
-      // 序盤: 基準値からやや低め
-      return (baseValue - 10 + _random.nextInt(20)).clamp(40, 90);
-    } else if (position < 0.7) {
-      // 中盤: 基準値から高め
-      return (baseValue + 5 + _random.nextInt(25)).clamp(50, 95);
-    } else {
-      // 終盤: 基準値に収束
-      return (baseValue + _random.nextInt(20)).clamp(45, 90);
-    }
-  }
-
-  // 盛り上がり度の生成
-  int _generateExcitementValue(double position) {
-    // 物語の進行に合わせて盛り上がりが変化するパターン
-    if (position < 0.2) {
-      // 序盤: 低め
-      return 30 + _random.nextInt(20);
-    } else if (position < 0.4) {
-      // 序盤から中盤: 徐々に上昇
-      return 40 + _random.nextInt(25);
-    } else if (position < 0.7) {
-      // 中盤: 高め
-      return 60 + _random.nextInt(30);
-    } else if (position < 0.9) {
-      // クライマックス: 最高潮
-      return 75 + _random.nextInt(25);
-    } else {
-      // 終盤: 収束
-      return 50 + _random.nextInt(30);
-    }
+    return {
+      "segments": segments,
+      "summary":
+          "悲しみから始まり、不安と緊張を経て、期待から喜びへと転換する感情の流れ。盛り上がり度も徐々に高まり、読者に強い感動を与える構成になっている。"
+    };
   }
 
   // 感情の説明文生成
@@ -480,20 +635,10 @@ class DummyAIService implements AIService {
         "物悲しい雰囲気の中で$intensity悲しみが描かれています。",
         "内省的な$intensity悲しみが読者の共感を誘います。"
       ],
-      "怒り": [
-        "$intensity怒りや憤りが表現されています。対立や葛藤が描かれています。",
-        "不満や不公平に対する$intensity怒りが中心となっています。",
-        "抑制された$intensity怒りが緊張感を生み出しています。"
-      ],
-      "恐怖": [
-        "$intensity恐怖や不安が描かれています。未知のものへの恐れが表現されています。",
-        "差し迫った危険による$intensity恐怖感が中心です。",
-        "漠然とした$intensity恐怖が雰囲気を支配しています。"
-      ],
-      "驚き": [
-        "$intensity驚きや衝撃が表現されています。予想外の展開が描かれています。",
-        "新たな発見による$intensity驚きが中心となっています。",
-        "登場人物の$intensity驚きが読者の興味を引きます。"
+      "緊張": [
+        "$intensity緊張感が表現されています。重要な決断や対立の場面が描かれています。",
+        "差し迫った状況による$intensity緊張感が中心です。",
+        "抑制された$intensity緊張感が読者の興味を引きます。"
       ],
       "期待": [
         "$intensity期待や希望が描かれています。未来への展望が表現されています。",
@@ -504,11 +649,6 @@ class DummyAIService implements AIService {
         "$intensity不安や懸念が表現されています。不確かな状況が描かれています。",
         "将来への$intensity不安感が中心となっています。",
         "内面的な$intensity不安が繊細に描写されています。"
-      ],
-      "安心": [
-        "$intensity安心感や安堵が描かれています。危機からの解放が表現されています。",
-        "信頼関係による$intensity安心感が中心です。",
-        "平穏な状況での$intensity安心感が雰囲気を作り出しています。"
       ]
     };
 

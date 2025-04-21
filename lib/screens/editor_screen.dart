@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
@@ -78,21 +79,23 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
     await Future.wait([
       Future(() async {
         await Future.delayed(const Duration(milliseconds: 800));
-        _settingsData = _aiService.generateSettings(_contentController.text);
+        _settingsData =
+            await _aiService.generateSettings(_contentController.text);
         setState(() {
           _isAnalyzingSettings = false;
         });
       }),
       Future(() async {
         await Future.delayed(const Duration(seconds: 1));
-        _plotData = _aiService.generatePlotAnalysis(_contentController.text);
+        _plotData =
+            await _aiService.generatePlotAnalysis(_contentController.text);
         setState(() {
           _isAnalyzingPlot = false;
         });
       }),
       Future(() async {
         await Future.delayed(const Duration(milliseconds: 500));
-        _reviewData = _aiService.generateReview();
+        _reviewData = await _aiService.generateReview(_contentController.text);
         setState(() {
           _isGeneratingReview = false;
         });
@@ -475,18 +478,28 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
       _isAnalyzingSettings = true;
     });
 
-    // 分析処理
-    await Future.delayed(const Duration(seconds: 1));
+    try {
+      // 分析処理
+      _settingsData = await _aiService.generateSettings(
+        _contentController.text,
+        contentType: "小説本文",
+        aiDocs: _aiDocsContent,
+      );
+      _lastAnalyzedContent = _contentController.text;
 
-    _settingsData = _aiService.generateSettings(_contentController.text);
-    _lastAnalyzedContent = _contentController.text;
+      setState(() {
+        _isAnalyzingSettings = false;
+      });
 
-    setState(() {
-      _isAnalyzingSettings = false;
-    });
+      // 更新を通知
+      _showExportSuccessAlert('設定情報を更新しました');
+    } catch (e) {
+      setState(() {
+        _isAnalyzingSettings = false;
+      });
 
-    // 更新を通知
-    _showExportSuccessAlert('設定情報を更新しました');
+      _showExportSuccessAlert('エラーが発生しました: $e');
+    }
   }
 
   // プロット情報を分析
@@ -495,17 +508,32 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
       _isAnalyzingPlot = true;
     });
 
-    // 分析処理
-    await Future.delayed(const Duration(milliseconds: 1500));
+    try {
+      // 分析処理
+      final newContent =
+          _contentController.text.substring(_lastAnalyzedContent.length);
 
-    _plotData = _aiService.generatePlotAnalysis(_contentController.text);
+      _plotData = await _aiService.generatePlotAnalysis(
+        _contentController.text,
+        aiDocs: _aiDocsContent,
+        newContent: newContent.isNotEmpty ? newContent : null,
+      );
 
-    setState(() {
-      _isAnalyzingPlot = false;
-    });
+      _lastAnalyzedContent = _contentController.text;
 
-    // 更新を通知
-    _showExportSuccessAlert('プロット情報を更新しました');
+      setState(() {
+        _isAnalyzingPlot = false;
+      });
+
+      // 更新を通知
+      _showExportSuccessAlert('プロット情報を更新しました');
+    } catch (e) {
+      setState(() {
+        _isAnalyzingPlot = false;
+      });
+
+      _showExportSuccessAlert('エラーが発生しました: $e');
+    }
   }
 
   // レビューを生成
@@ -514,17 +542,23 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
       _isGeneratingReview = true;
     });
 
-    // レビュー生成処理
-    await Future.delayed(const Duration(milliseconds: 800));
+    try {
+      // レビュー生成処理
+      _reviewData = await _aiService.generateReview(_contentController.text);
 
-    _reviewData = _aiService.generateReview();
+      setState(() {
+        _isGeneratingReview = false;
+      });
 
-    setState(() {
-      _isGeneratingReview = false;
-    });
+      // 更新を通知
+      _showExportSuccessAlert('レビューを更新しました');
+    } catch (e) {
+      setState(() {
+        _isGeneratingReview = false;
+      });
 
-    // 更新を通知
-    _showExportSuccessAlert('レビューを更新しました');
+      _showExportSuccessAlert('エラーが発生しました: $e');
+    }
   }
 
   // AIに次の展開を提案してもらう
@@ -536,8 +570,26 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
     });
 
     try {
-      final suggestions =
-          await _aiService.generateContinuations(_contentController.text);
+      // 設定情報を文字列に変換
+      String? settingInfo;
+      if (_settingsData.isNotEmpty) {
+        settingInfo = "登場人物: ${_settingsData['characters']?.length ?? 0}人\n"
+            "組織: ${_settingsData['organizations']?.length ?? 0}個\n"
+            "専門用語: ${_settingsData['terminology']?.length ?? 0}個\n"
+            "舞台: ${_settingsData['setting'] ?? '未設定'}\n"
+            "ジャンル: ${_settingsData['genre'] ?? '未設定'}";
+      }
+
+      // 最近追加された部分を取得
+      final newContent =
+          _contentController.text.substring(_lastAnalyzedContent.length);
+
+      final suggestions = await _aiService.generateContinuations(
+        _contentController.text,
+        aiDocs: _aiDocsContent,
+        newContent: newContent.isNotEmpty ? newContent : null,
+        settingInfo: settingInfo,
+      );
 
       setState(() {
         _aiSuggestions = suggestions;
@@ -656,9 +708,18 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
     });
 
     try {
+      // 最近の部分を取得
+      final recentContent = _contentController.text.substring(
+          max(0, _contentController.text.length - 500),
+          _contentController.text.length);
+
       // 提案を元に拡張テキストを生成
       final expandedText = await _aiService.expandSuggestion(
-          _contentController.text, suggestion);
+        _contentController.text,
+        suggestion,
+        aiDocs: _aiDocsContent,
+        recentContent: recentContent,
+      );
 
       final currentText = _contentController.text;
       final updatedText =
