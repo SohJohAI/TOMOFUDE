@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import '../models/subscription_plan.dart';
 import '../providers/payment_provider.dart';
+import 'transaction_law_screen.dart';
 
 /// A screen that displays subscription plans and allows users to subscribe.
 ///
@@ -307,6 +308,33 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
             style: TextStyle(
               fontSize: 12,
               fontStyle: FontStyle.italic,
+            ),
+          ),
+          const SizedBox(height: 16),
+          GestureDetector(
+            onTap: () {
+              Navigator.of(context).push(
+                CupertinoPageRoute(
+                  builder: (context) => const TransactionLawScreen(),
+                ),
+              );
+            },
+            child: Row(
+              children: [
+                Icon(
+                  CupertinoIcons.doc_text,
+                  color: CupertinoTheme.of(context).primaryColor,
+                  size: 16,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  '特定商取引法に基づく表記',
+                  style: TextStyle(
+                    color: CupertinoTheme.of(context).primaryColor,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ],
             ),
           ),
         ],

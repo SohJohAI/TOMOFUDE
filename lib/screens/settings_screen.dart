@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
 import '../models/app_settings.dart';
+import 'transaction_law_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -148,6 +149,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         onPressed: () => Navigator.pop(context),
                       ),
                     ],
+                  ),
+                );
+              },
+            ),
+
+            // 特定商取引法に基づく表記
+            _buildSettingItem(
+              context,
+              icon: CupertinoIcons.doc_text,
+              title: '特定商取引法に基づく表記',
+              onTap: () {
+                Navigator.of(context).push(
+                  CupertinoPageRoute(
+                    builder: (context) => const TransactionLawScreen(),
                   ),
                 );
               },
