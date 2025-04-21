@@ -11,6 +11,10 @@ import 'screens/novel_list_screen.dart';
 import 'screens/work_list_screen.dart';
 import 'screens/payment_screen.dart';
 import 'screens/auth_gate.dart';
+import 'screens/home_screen.dart';
+import 'screens/transaction_law_screen.dart';
+import 'screens/subscription_screen.dart';
+import 'screens/faq_screen.dart';
 import 'services/service_locator.dart';
 
 void main() async {
@@ -75,9 +79,13 @@ class TomofudeApp extends StatelessWidget {
         return Material(color: Colors.transparent, child: child);
       },
       routes: {
-        '/': (context) => const AuthGate(),
+        '/': (context) => HomeScreen(),
+        '/auth': (context) => const AuthGate(),
         '/works': (context) => const WorkListScreen(),
         '/payment': (context) => const PaymentScreen(),
+        '/transaction_law': (context) => const TransactionLawScreen(),
+        '/subscription': (context) => const SubscriptionScreen(),
+        '/faq': (context) => const FAQScreen(),
       },
       initialRoute: '/',
     );
