@@ -51,33 +51,23 @@ class TomofudeApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final appState = Provider.of<NovelAppState>(context);
 
-    // Cupertinoスタイルのアプリに変更
-    return CupertinoApp(
+    // Material 3 スタイルのアプリに変更
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: '共筆。（TOMOFUDE）- AI小説執筆アプリ',
-      theme: CupertinoThemeData(
-        primaryColor: const Color(0xFF5D5CDE),
+      theme: ThemeData(
+        useMaterial3: true,
         brightness: appState.isDarkMode ? Brightness.dark : Brightness.light,
-        scaffoldBackgroundColor: appState.isDarkMode
-            ? const Color(0xFF181818)
-            : CupertinoColors.white,
-        barBackgroundColor: appState.isDarkMode
-            ? const Color(0xFF252525)
-            : CupertinoColors.white,
-        textTheme: CupertinoTextThemeData(
-          primaryColor: const Color(0xFF5D5CDE),
-          textStyle: TextStyle(
-            color: appState.isDarkMode
-                ? CupertinoColors.white
-                : CupertinoColors.black,
-            fontFamily: 'Hiragino Sans',
-          ),
-        ),
+        colorSchemeSeed: const Color(0xFF6E32FF),
+        fontFamily: 'Hiragino Sans',
       ),
-      // Material Widgetも使用するためのブリッジ
-      builder: (context, child) {
-        return Material(color: Colors.transparent, child: child);
-      },
+      darkTheme: ThemeData(
+        useMaterial3: true,
+        brightness: Brightness.dark,
+        colorSchemeSeed: const Color(0xFF6E32FF),
+        fontFamily: 'Hiragino Sans',
+      ),
+      themeMode: appState.isDarkMode ? ThemeMode.dark : ThemeMode.light,
       routes: {
         '/': (context) => HomeScreen(),
         '/auth': (context) => const AuthGate(),

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 
 /// A screen that displays the Specified Commercial Transaction Act disclosure.
 ///
@@ -11,42 +10,39 @@ class TransactionLawScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = CupertinoTheme.of(context).brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = Theme.of(context).colorScheme.primary;
 
-    return CupertinoPageScaffold(
-      navigationBar: const CupertinoNavigationBar(
-        middle: Text('特定商取引法に基づく表記'),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('特定商取引法に基づく表記'),
+        backgroundColor: primaryColor,
+        foregroundColor: Colors.white,
       ),
-      child: SafeArea(
+      body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(24.0),
           children: [
             // Title
             const Text(
               '特定商取引法に基づく表記',
               style: TextStyle(
-                fontSize: 24,
+                fontSize: 28,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
 
             // Content table
-            Container(
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: isDark
-                      ? CupertinoColors.systemGrey.darkColor
-                      : CupertinoColors.systemGrey4,
-                ),
-                borderRadius: BorderRadius.circular(8),
+            Card(
+              elevation: 4,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Table(
                 border: TableBorder.all(
-                  color: isDark
-                      ? CupertinoColors.systemGrey.darkColor
-                      : CupertinoColors.systemGrey4,
-                  width: 0.5,
+                  color: isDark ? Colors.grey[700]! : Colors.grey[300]!,
+                  width: 1,
                 ),
                 columnWidths: const {
                   0: FlexColumnWidth(1),
@@ -86,39 +82,47 @@ class TransactionLawScreen extends StatelessWidget {
 
   /// Builds a table row with the given title and content.
   TableRow _buildTableRow(String title, String content, {VoidCallback? onTap}) {
-    final contentWidget = onTap != null
-        ? GestureDetector(
-            onTap: onTap,
-            child: Text.rich(
-              TextSpan(
-                children: [
-                  TextSpan(text: content.split('料金ページ')[0]),
-                  TextSpan(
-                    text: '料金ページ',
-                    style: const TextStyle(
-                      color: CupertinoColors.activeBlue,
-                      decoration: TextDecoration.underline,
-                    ),
-                  ),
-                  TextSpan(text: content.split('料金ページ')[1]),
-                ],
-              ),
-            ),
-          )
-        : Text(content);
-
     return TableRow(
       children: [
         Padding(
           padding: const EdgeInsets.all(12.0),
           child: Text(
             title,
-            style: const TextStyle(fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
           ),
         ),
         Padding(
           padding: const EdgeInsets.all(12.0),
-          child: contentWidget,
+          child: Builder(
+            builder: (context) {
+              final contentWidget = onTap != null
+                  ? GestureDetector(
+                      onTap: onTap,
+                      child: Text.rich(
+                        TextSpan(
+                          children: [
+                            TextSpan(text: content.split('料金ページ')[0]),
+                            TextSpan(
+                              text: '料金ページ',
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.primary,
+                                decoration: TextDecoration.underline,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            TextSpan(text: content.split('料金ページ')[1]),
+                          ],
+                        ),
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    )
+                  : Text(content, style: const TextStyle(fontSize: 16));
+              return contentWidget;
+            },
+          ),
         ),
       ],
     );
