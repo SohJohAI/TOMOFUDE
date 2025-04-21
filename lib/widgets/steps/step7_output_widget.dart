@@ -151,35 +151,53 @@ class _Step7OutputWidgetState extends State<Step7OutputWidget> {
     });
 
     try {
-      // モックレスポンス
+      // 実際のAIサービスを使用する場合は、以下のようにPlotBoosterServiceを呼び出す
+      // final aiResponse = await _service.generateSupportMaterial(provider.plotBooster);
+
+      // モックレスポンス - 実際の実装ではClaudeのプロンプトを使用
       final aiResponse = '''
 # 執筆支援資料
 
-## 物語の骨格分析
-- **構造**: 3幕構成の冒険譚
-- **ペース**: 序盤はゆっくりと世界観を描写し、中盤から徐々にテンポを上げる
+## 1. 作品概要
+- **ジャンル**: ${provider.plotBooster.genre}
+- **テーマ**: ${provider.plotBooster.themes.isNotEmpty ? provider.plotBooster.themes.join(', ') : '未設定'}
+- **全体的な雰囲気**: ${provider.plotBooster.style}
+- **主要な筋書き**: ${provider.plotBooster.logline}
+
+## 2. 登場人物
+### 主人公: ${provider.plotBooster.protagonist.name}
+- **人物像**: ${provider.plotBooster.protagonist.description}
+- **動機**: ${provider.plotBooster.protagonist.motivation}
+- **内的葛藤**: ${provider.plotBooster.protagonist.conflict}
+
+### 敵対者/障害: ${provider.plotBooster.antagonist.name}
+- **人物像**: ${provider.plotBooster.antagonist.description}
+- **動機**: ${provider.plotBooster.antagonist.motivation}
+- **主人公との対立点**: ${provider.plotBooster.antagonist.conflict}
+
+## 3. 世界設定
+${provider.plotBooster.worldSetting}
+
+## 4. 物語構造
+- **現在までのプロット展開**: 物語は導入部から始まり、主人公の日常と内的葛藤が描かれる
+- **重要な出来事**: 主人公が冒険に踏み出す決断、最初の障害との遭遇
+- **物語のペース**: 序盤はゆっくりと世界観を描写し、中盤から徐々にテンポを上げる
+
+## 5. 文体と語り口
 - **視点**: 主人公視点の三人称限定視点が適している
+- **時制**: 過去形での語りが基本
+- **特徴**: 内面描写と情景描写のバランスを取り、読者が世界に没入できるよう工夫する
 
-## 執筆アドバイス
-- 主人公の内面描写を丁寧に行い、読者が感情移入しやすくする
-- 世界観の独自性を小さなディテールで表現する
-- 敵対者の動機を複雑に描くことで、単純な善悪二元論を避ける
-- 伏線は物語の前半に自然な形で埋め込み、後半で回収する
-- 各章の終わりに小さなクリフハンガーを設けることで、読者の興味を持続させる
+## 6. 重要な伏線と未解決の謎
+- 主人公の過去に関する謎
+- 敵対者の真の目的
+- キー設定の隠された力や制限
 
-## 潜在的な課題と解決策
-- **課題**: 設定が複雑すぎて読者が混乱する可能性
-  **解決策**: 重要な設定は繰り返し言及し、徐々に深掘りする
-- **課題**: キャラクターの動機が不明確
-  **解決策**: 過去のトラウマや価値観を具体的なエピソードで示す
-- **課題**: 物語のテーマが埋もれる
-  **解決策**: 重要な場面でテーマに関連する象徴やメタファーを使用する
-
-## 参考作品
-この物語のテーマや構造に類似した作品:
-1. 「○○の物語」 - 世界観構築の参考に
-2. 「△△」 - キャラクター造形の参考に
-3. 「□□」 - 伏線の張り方の参考に
+## 7. 今後の展開に向けた注意点
+- キャラクターの動機に一貫性を持たせる
+- 世界観の法則性を守る
+- 伏線の回収を計画的に行う
+- テーマを各章で異なる角度から探求する
       ''';
 
       // AI支援資料を更新

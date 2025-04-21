@@ -169,7 +169,7 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
             "感情の流れ: ${_emotionAnalysis!.summary}";
       }
 
-      // AI資料生成
+      // AI資料生成 - Claude-3.7-Sonnetプロンプトを使用
       _aiDocsContent = await _aiService.generateAIDocs(_contentController.text,
           settingInfo: settingInfo,
           plotInfo: plotInfo,

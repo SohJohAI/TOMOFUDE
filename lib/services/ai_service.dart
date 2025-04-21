@@ -524,28 +524,19 @@ class DummyAIService implements AIService {
     await Future.delayed(const Duration(milliseconds: 1500));
 
     // 基本情報
-    String docs = "【AI資料】\n\n";
+    String docs = "# 執筆支援資料\n\n";
 
-    // 設定情報があれば追加
-    if (settingInfo != null && settingInfo.isNotEmpty) {
-      docs += "■ 設定情報\n$settingInfo\n\n";
-    }
-
-    // プロット情報があれば追加
-    if (plotInfo != null && plotInfo.isNotEmpty) {
-      docs += "■ プロット情報\n$plotInfo\n\n";
-    }
-
-    // 感情情報があれば追加
-    if (emotionInfo != null && emotionInfo.isNotEmpty) {
-      docs += "■ 感情分析\n$emotionInfo\n\n";
-    }
-
-    // 内容から抽出した情報（モック）
-    docs += "■ 内容分析\n";
-    docs +=
-        "・文体: ${_getRandomElement(['叙述的', '会話中心', '心理描写が多い', '情景描写が豊か'])}\n";
-    docs += "・テーマ: ${_getRandomElement([
+    // 作品概要
+    docs += "## 1. 作品概要\n";
+    docs += "- **ジャンル**: ${_getRandomElement([
+          'ファンタジー',
+          'SF',
+          'ミステリー',
+          '恋愛',
+          '青春',
+          'ホラー'
+        ])}\n";
+    docs += "- **テーマ**: ${_getRandomElement([
           '成長',
           '葛藤',
           '愛',
@@ -554,27 +545,86 @@ class DummyAIService implements AIService {
           '再生',
           '対立'
         ])}\n";
-    docs += "・特徴: ${_getRandomElement([
-          '伏線が効果的',
-          '心理描写が繊細',
-          'テンポが良い',
-          '比喩表現が豊か',
-          '対比が効果的'
+    docs += "- **雰囲気**: ${_getRandomElement([
+          '明るい',
+          '暗い',
+          '神秘的',
+          '緊張感がある',
+          '穏やか',
+          '不安定'
+        ])}\n";
+    docs += "- **筋書き**: ${_generateRandomSentence()}\n\n";
+
+    // 登場人物
+    docs += "## 2. 登場人物\n";
+    docs += "### 主人公\n";
+    docs +=
+        "- **人物像**: ${_generateCharacterDescription(_getRandomElement(_characters))}\n";
+    docs += "- **動機**: ${_getRandomElement([
+          '失われたものを取り戻す',
+          '真実を知る',
+          '誰かを守る',
+          '復讐を果たす',
+          '自分を証明する'
+        ])}\n";
+    docs += "- **成長の軌跡**: ${_getRandomElement([
+          '自信を得る',
+          '過去のトラウマを乗り越える',
+          '他者との絆を深める',
+          '自分の限界を超える'
         ])}\n\n";
 
-    // アドバイス（モック）
-    docs += "■ 執筆アドバイス\n";
-    docs += "・${_getRandomElement([
-          '登場人物の動機をより明確にすると良いでしょう',
-          '感情描写をさらに深めると良いでしょう',
-          '場面転換のテンポを工夫すると良いでしょう',
-          '伏線の回収を意識すると良いでしょう'
+    // 世界設定
+    docs += "## 3. 世界設定\n";
+    docs += _generateSetting(_detectAtmosphere(content)) + "\n\n";
+
+    // 物語構造
+    docs += "## 4. 物語構造\n";
+    docs += "- **現在の段階**: ${_getRandomElement([
+          '導入',
+          '展開',
+          '盛り上がり',
+          'クライマックスに向かう途中',
+          'クライマックス',
+          '結末'
         ])}\n";
-    docs += "・${_getRandomElement([
-          '読者の期待を裏切る展開を検討してみてください',
-          '五感を使った描写を増やすと臨場感が増します',
-          '登場人物の内面と外面のギャップを表現すると立体的になります',
-          'サブプロットを追加すると物語に厚みが出ます'
+    docs += "- **重要な出来事**: ${_generateRandomEventSentence()}\n";
+    docs += "- **物語のペース**: ${_getRandomElement([
+          'ゆっくりと展開する',
+          '急速に展開する',
+          '緩急のメリハリがある'
+        ])}\n\n";
+
+    // 文体と語り口
+    docs += "## 5. 文体と語り口\n";
+    docs += "- **視点**: ${_getRandomElement(['一人称', '三人称限定', '三人称全知'])}\n";
+    docs += "- **時制**: ${_getRandomElement(['現在形', '過去形', '現在形と過去形の混在'])}\n";
+    docs += "- **特徴**: ${_getRandomElement([
+          '簡潔な文体',
+          '詩的な表現',
+          '会話が多い',
+          '内面描写が豊か',
+          '情景描写が細かい'
+        ])}\n\n";
+
+    // 伏線と謎
+    docs += "## 6. 重要な伏線と未解決の謎\n";
+    docs += "- ${_generateRandomIssueSentence()}\n";
+    docs += "- ${_generateRandomIssueSentence()}\n\n";
+
+    // 今後の展開に向けた注意点
+    docs += "## 7. 今後の展開に向けた注意点\n";
+    docs += "- ${_getRandomElement([
+          'キャラクターの動機に一貫性を持たせる',
+          '伏線の回収を忘れない',
+          '世界観の法則性を守る',
+          '感情の起伏を大切にする'
+        ])}\n";
+    docs += "- ${_getRandomElement([
+          '読者の期待を裏切る展開を検討する',
+          '五感を使った描写を増やす',
+          'キャラクターの内面と外面のギャップを表現する',
+          'サブプロットを主要プロットと絡める'
         ])}\n";
 
     return docs;

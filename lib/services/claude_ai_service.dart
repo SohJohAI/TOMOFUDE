@@ -231,28 +231,26 @@ ${aiDocs != null ? '===AI資料===\n$aiDocs\n' : ''}
   Future<String> generateAIDocs(String content,
       {String? settingInfo, String? plotInfo, String? emotionInfo}) async {
     final prompt = '''
-あなたは小説執筆を支援するAIアシスタントです。
-以下の小説の文章と関連情報を分析し、執筆のためのAI資料を生成してください。
+@Claude-3.7-Sonnet あなたは小説の執筆支援AIです。以下の小説から、AIが執筆支援をする際に役立つ包括的な資料を作成してください。
 
-===小説の文章===
+小説の本文:
 $content
 
-${settingInfo != null ? '===設定情報===\n$settingInfo\n' : ''}
-${plotInfo != null ? '===プロット情報===\n$plotInfo\n' : ''}
-${emotionInfo != null ? '===感情分析===\n$emotionInfo\n' : ''}
+${settingInfo != null ? '設定情報:\n$settingInfo\n' : ''}
+${plotInfo != null ? 'プロット情報:\n$plotInfo\n' : ''}
+${emotionInfo != null ? '感情分析:\n$emotionInfo\n' : ''}
 
-以下の形式でAI資料を生成してください:
+以下の項目を含む、構造化された資料を作成してください:
 
-【AI資料】
+1. 作品概要: ジャンル、テーマ、全体的な雰囲気、主要な筋書きを簡潔に説明
+2. 登場人物: 各キャラクターの詳細な人物像、動機、関係性、成長の軌跡
+3. 世界設定: 物語の舞台となる世界の詳細情報（地理、歴史、文化、魔法/技術システムなど）
+4. 物語構造: 現在までのプロット展開、重要な出来事のタイムライン、物語のペース
+5. 文体と語り口: 既存の文体の特徴（一人称/三人称、時制、語り口の特徴など）
+6. 重要な伏線と未解決の謎: 物語中に設置されている伏線や謎、その解決の可能性
+7. 今後の展開に向けた注意点: 一貫性を保ちながら物語を進めるための留意事項
 
-■ 内容分析
-・文体: 
-・テーマ: 
-・特徴: 
-
-■ 執筆アドバイス
-・
-・
+この資料はAIが物語の続きを書く際や、小説に関する質問に答える際に参照する資料となります。情報は具体的かつ詳細に、しかし簡潔にまとめてください。
 ''';
 
     final claudeResponse = await _sendClaudeRequest(prompt);

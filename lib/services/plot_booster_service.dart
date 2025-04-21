@@ -253,108 +253,91 @@ class PlotBoosterService {
 
   // 執筆支援資料生成
   Future<String> generateSupportMaterial(PlotBooster plotBooster) async {
-    // モックデータ（後でPoe APIに置き換え）
+    // 実際の実装では、AIサービスを使用してClaudeにリクエストを送信する
+    // 現在はモックデータを返す
     await Future.delayed(Duration(milliseconds: 1500));
 
-    final buffer = StringBuffer();
+    // Claudeプロンプトを構築（実際の実装では、このプロンプトをAIサービスに送信する）
+    final prompt = '''
+@Claude-3.7-Sonnet あなたは小説の執筆支援AIです。以下の小説から、AIが執筆支援をする際に役立つ包括的な資料を作成してください。
 
-    buffer.writeln('# 執筆支援資料');
-    buffer.writeln();
+小説の本文:
+${plotBooster.logline}
 
-    // 基本情報
-    buffer.writeln('## 物語の核');
-    buffer.writeln(
-        plotBooster.logline.isNotEmpty ? plotBooster.logline : '（未設定）');
-    buffer.writeln();
+設定情報:
+ジャンル: ${plotBooster.genre}
+作風: ${plotBooster.style}
+テーマ: ${plotBooster.themes.join(', ')}
+世界観: ${plotBooster.worldSetting}
+${plotBooster.keySettings.isNotEmpty ? 'キー設定: ' + plotBooster.keySettings.map((k) => '${k.name}（${k.effect}）').join(', ') : ''}
 
-    // ジャンルと作風
-    buffer.writeln('## ジャンルと作風');
-    buffer.writeln(
-        '- ジャンル: ${plotBooster.genre.isNotEmpty ? plotBooster.genre : '（未設定）'}');
-    buffer.writeln(
-        '- 作風: ${plotBooster.style.isNotEmpty ? plotBooster.style : '（未設定）'}');
-    buffer.writeln();
+プロット情報:
+主人公: ${plotBooster.protagonist.name} - ${plotBooster.protagonist.description}
+動機: ${plotBooster.protagonist.motivation}
+内的葛藤: ${plotBooster.protagonist.conflict}
+敵対者: ${plotBooster.antagonist.name} - ${plotBooster.antagonist.description}
+敵の動機: ${plotBooster.antagonist.motivation}
+対立点: ${plotBooster.antagonist.conflict}
+${plotBooster.chapterOutlines.isNotEmpty ? '章構成: ' + plotBooster.chapterOutlines.map((c) => c.title).join(' → ') : ''}
 
-    // テーマ
-    if (plotBooster.themes.isNotEmpty) {
-      buffer.writeln('## テーマ');
-      for (var theme in plotBooster.themes) {
-        buffer.writeln('- $theme');
-      }
-      buffer.writeln();
-    }
+以下の項目を含む、構造化された資料を作成してください:
 
-    // 世界観
-    if (plotBooster.worldSetting.isNotEmpty) {
-      buffer.writeln('## 世界観');
-      buffer.writeln(plotBooster.worldSetting);
-      buffer.writeln();
-    }
+1. 作品概要: ジャンル、テーマ、全体的な雰囲気、主要な筋書きを簡潔に説明
+2. 登場人物: 各キャラクターの詳細な人物像、動機、関係性、成長の軌跡
+3. 世界設定: 物語の舞台となる世界の詳細情報（地理、歴史、文化、魔法/技術システムなど）
+4. 物語構造: 現在までのプロット展開、重要な出来事のタイムライン、物語のペース
+5. 文体と語り口: 既存の文体の特徴（一人称/三人称、時制、語り口の特徴など）
+6. 重要な伏線と未解決の謎: 物語中に設置されている伏線や謎、その解決の可能性
+7. 今後の展開に向けた注意点: 一貫性を保ちながら物語を進めるための留意事項
 
-    // キー設定
-    if (plotBooster.keySettings.isNotEmpty) {
-      buffer.writeln('## キー設定');
-      for (var setting in plotBooster.keySettings) {
-        buffer.writeln('### ${setting.name}');
-        buffer.writeln('- 効果: ${setting.effect}');
-        if (setting.limitation.isNotEmpty) {
-          buffer.writeln('- 制約: ${setting.limitation}');
-        }
-        buffer.writeln();
-      }
-    }
+この資料はAIが物語の続きを書く際や、小説に関する質問に答える際に参照する資料となります。情報は具体的かつ詳細に、しかし簡潔にまとめてください。
+''';
 
-    // キャラクター
-    buffer.writeln('## 主要キャラクター');
+    // モックレスポンス（実際の実装では、AIサービスからのレスポンスを返す）
+    return '''
+# 執筆支援資料
 
-    // 主人公
-    buffer.writeln(
-        '### 主人公: ${plotBooster.protagonist.name.isNotEmpty ? plotBooster.protagonist.name : '（名前未設定）'}');
-    if (plotBooster.protagonist.description.isNotEmpty) {
-      buffer.writeln(plotBooster.protagonist.description);
-    }
-    if (plotBooster.protagonist.motivation.isNotEmpty) {
-      buffer.writeln('- 動機: ${plotBooster.protagonist.motivation}');
-    }
-    if (plotBooster.protagonist.conflict.isNotEmpty) {
-      buffer.writeln('- 内的葛藤: ${plotBooster.protagonist.conflict}');
-    }
-    buffer.writeln();
+## 1. 作品概要
+- **ジャンル**: ${plotBooster.genre.isNotEmpty ? plotBooster.genre : '未設定'}
+- **テーマ**: ${plotBooster.themes.isNotEmpty ? plotBooster.themes.join(', ') : '未設定'}
+- **全体的な雰囲気**: ${plotBooster.style.isNotEmpty ? plotBooster.style : '未設定'}
+- **主要な筋書き**: ${plotBooster.logline.isNotEmpty ? plotBooster.logline : '未設定'}
 
-    // 敵対者
-    buffer.writeln(
-        '### 敵対者: ${plotBooster.antagonist.name.isNotEmpty ? plotBooster.antagonist.name : '（名前未設定）'}');
-    if (plotBooster.antagonist.description.isNotEmpty) {
-      buffer.writeln(plotBooster.antagonist.description);
-    }
-    if (plotBooster.antagonist.motivation.isNotEmpty) {
-      buffer.writeln('- 動機: ${plotBooster.antagonist.motivation}');
-    }
-    if (plotBooster.antagonist.conflict.isNotEmpty) {
-      buffer.writeln('- 内的葛藤: ${plotBooster.antagonist.conflict}');
-    }
-    buffer.writeln();
+## 2. 登場人物
+### 主人公: ${plotBooster.protagonist.name.isNotEmpty ? plotBooster.protagonist.name : '未設定'}
+- **人物像**: ${plotBooster.protagonist.description.isNotEmpty ? plotBooster.protagonist.description : '未設定'}
+- **動機**: ${plotBooster.protagonist.motivation.isNotEmpty ? plotBooster.protagonist.motivation : '未設定'}
+- **内的葛藤**: ${plotBooster.protagonist.conflict.isNotEmpty ? plotBooster.protagonist.conflict : '未設定'}
+- **成長の軌跡**: 物語を通じて自信を獲得し、内面的な強さを見出していく
 
-    // 章構成
-    if (plotBooster.chapterOutlines.isNotEmpty) {
-      buffer.writeln('## 章構成');
-      for (var i = 0; i < plotBooster.chapterOutlines.length; i++) {
-        final chapter = plotBooster.chapterOutlines[i];
-        buffer.writeln('### ${chapter.title}');
-        buffer
-            .writeln(chapter.content.isNotEmpty ? chapter.content : '（内容未設定）');
-        buffer.writeln();
-      }
-    }
+### 敵対者/障害: ${plotBooster.antagonist.name.isNotEmpty ? plotBooster.antagonist.name : '未設定'}
+- **人物像**: ${plotBooster.antagonist.description.isNotEmpty ? plotBooster.antagonist.description : '未設定'}
+- **動機**: ${plotBooster.antagonist.motivation.isNotEmpty ? plotBooster.antagonist.motivation : '未設定'}
+- **主人公との対立点**: ${plotBooster.antagonist.conflict.isNotEmpty ? plotBooster.antagonist.conflict : '未設定'}
 
-    // 執筆アドバイス
-    buffer.writeln('## 執筆アドバイス');
-    buffer.writeln('- 主人公の内面的成長を物語の軸として描きましょう。');
-    buffer.writeln('- 世界観の独自性を活かした描写を心がけましょう。');
-    buffer.writeln('- 敵対者にも共感できる動機や葛藤を持たせることで、物語に深みが出ます。');
-    buffer.writeln('- 伏線を計画的に張り、回収することで読者を満足させましょう。');
-    buffer.writeln('- 各章の終わりに小さなクリフハンガーを用意すると、読者の興味を持続させることができます。');
+## 3. 世界設定
+${plotBooster.worldSetting.isNotEmpty ? plotBooster.worldSetting : '世界設定はまだ詳細に定義されていません。'}
 
-    return buffer.toString();
+## 4. 物語構造
+- **現在までのプロット展開**: 物語は導入部から始まり、主人公の日常と内的葛藤が描かれる
+- **重要な出来事**: 主人公が冒険に踏み出す決断、最初の障害との遭遇
+- **物語のペース**: 序盤はゆっくりと世界観を描写し、中盤から徐々にテンポを上げる
+
+## 5. 文体と語り口
+- **視点**: 主人公視点の三人称限定視点が適している
+- **時制**: 過去形での語りが基本
+- **特徴**: 内面描写と情景描写のバランスを取り、読者が世界に没入できるよう工夫する
+
+## 6. 重要な伏線と未解決の謎
+- 主人公の過去に関する謎
+- 敵対者の真の目的
+- キー設定の隠された力や制限
+
+## 7. 今後の展開に向けた注意点
+- キャラクターの動機に一貫性を持たせる
+- 世界観の法則性を守る
+- 伏線の回収を計画的に行う
+- テーマを各章で異なる角度から探求する
+''';
   }
 }
