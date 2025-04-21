@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show AuthException;
 import '../services/auth_service_interface.dart';
 import '../services/service_locator.dart';
 
@@ -28,6 +29,27 @@ class _SupabaseAuthExampleState extends State<SupabaseAuthExample> {
     super.dispose();
   }
 
+  /// Handle authentication errors and display user-friendly messages
+  void _handleAuthError(BuildContext context, String? message) {
+    String readableMessage = 'An error occurred.';
+
+    if (message != null) {
+      if (message.contains('invalid login credentials')) {
+        readableMessage = 'Invalid email or password.';
+      } else if (message.contains('User already registered')) {
+        readableMessage = 'This email is already registered.';
+      } else if (message.contains('password should be at least 6 characters')) {
+        readableMessage = 'Password should be at least 6 characters.';
+      } else {
+        readableMessage = message;
+      }
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(readableMessage)),
+    );
+  }
+
   /// Sign up with email and password
   Future<void> _signUp() async {
     if (!_formKey.currentState!.validate()) return;
@@ -45,17 +67,22 @@ class _SupabaseAuthExampleState extends State<SupabaseAuthExample> {
 
       if (result != null) {
         // Successfully signed up
-        _showMessage('Successfully signed up: ${result.user?.email}');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Successfully signed up: ${result.user?.email}')),
+        );
       } else {
         // Sign up failed
-        setState(() {
-          _errorMessage = 'Sign up failed';
-        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Unknown error occurred.')),
+        );
       }
+    } on AuthException catch (e) {
+      _handleAuthError(context, e.message);
     } catch (e) {
-      setState(() {
-        _errorMessage = e.toString();
-      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
     } finally {
       setState(() {
         _isLoading = false;
@@ -80,17 +107,22 @@ class _SupabaseAuthExampleState extends State<SupabaseAuthExample> {
 
       if (result != null) {
         // Successfully signed in
-        _showMessage('Successfully signed in: ${result.user?.email}');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Successfully signed in: ${result.user?.email}')),
+        );
       } else {
         // Sign in failed
-        setState(() {
-          _errorMessage = 'Sign in failed';
-        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Unknown error occurred.')),
+        );
       }
+    } on AuthException catch (e) {
+      _handleAuthError(context, e.message);
     } catch (e) {
-      setState(() {
-        _errorMessage = e.toString();
-      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
     } finally {
       setState(() {
         _isLoading = false;
@@ -107,11 +139,15 @@ class _SupabaseAuthExampleState extends State<SupabaseAuthExample> {
 
     try {
       await _authService.signOut();
-      _showMessage('Successfully signed out');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Successfully signed out')),
+      );
+    } on AuthException catch (e) {
+      _handleAuthError(context, e.message);
     } catch (e) {
-      setState(() {
-        _errorMessage = e.toString();
-      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
     } finally {
       setState(() {
         _isLoading = false;
@@ -123,17 +159,14 @@ class _SupabaseAuthExampleState extends State<SupabaseAuthExample> {
   void _getCurrentUser() {
     final user = _authService.currentUser;
     if (user != null) {
-      _showMessage('Current user: ${user.email}');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Current user: ${user.email}')),
+      );
     } else {
-      _showMessage('No user is currently signed in');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No user is currently signed in')),
+      );
     }
-  }
-
-  /// Show a message to the user
-  void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
   }
 
   @override

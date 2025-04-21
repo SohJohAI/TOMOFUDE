@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show AuthException;
 import '../services/auth_service_interface.dart';
 import '../services/service_locator.dart';
 
@@ -33,6 +34,27 @@ class _AuthScreenState extends State<AuthScreen> {
     super.dispose();
   }
 
+  /// Handle authentication errors and display user-friendly messages
+  void _handleAuthError(BuildContext context, String? message) {
+    String readableMessage = 'エラーが発生しました。';
+
+    if (message != null) {
+      if (message.contains('invalid login credentials')) {
+        readableMessage = 'メールアドレスまたはパスワードが間違っています。';
+      } else if (message.contains('User already registered')) {
+        readableMessage = 'このメールアドレスは既に登録されています。';
+      } else if (message.contains('password should be at least 6 characters')) {
+        readableMessage = 'パスワードは6文字以上で入力してください。';
+      } else {
+        readableMessage = message;
+      }
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(readableMessage)),
+    );
+  }
+
   /// Sign up with email and password
   Future<void> _signUp() async {
     if (!_formKey.currentState!.validate()) return;
@@ -51,21 +73,27 @@ class _AuthScreenState extends State<AuthScreen> {
       if (result != null) {
         if (result.user == null) {
           // ユーザーがnullの場合はメール確認が必要
-          _showMessage('登録が完了しました。確認メールをご確認ください。');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('登録が完了しました。確認メールをご確認ください。')),
+          );
         } else {
           // Successfully signed up and user is available
-          _showMessage('登録が完了しました: ${result.user?.email}');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('登録が完了しました！')),
+          );
         }
       } else {
         // Sign up failed
-        setState(() {
-          _errorMessage = '登録に失敗しました';
-        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('不明なエラーが発生しました。')),
+        );
       }
+    } on AuthException catch (e) {
+      _handleAuthError(context, e.message);
     } catch (e) {
-      setState(() {
-        _errorMessage = _formatErrorMessage(e.toString());
-      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('エラー: $e')),
+      );
     } finally {
       setState(() {
         _isLoading = false;
@@ -90,38 +118,26 @@ class _AuthScreenState extends State<AuthScreen> {
 
       if (result != null) {
         // Successfully signed in
-        _showMessage('ログインしました: ${result.user?.email}');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('ログイン成功')),
+        );
       } else {
         // Sign in failed
-        setState(() {
-          _errorMessage = 'ログインに失敗しました';
-        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('不明なエラーが発生しました。')),
+        );
       }
+    } on AuthException catch (e) {
+      _handleAuthError(context, e.message);
     } catch (e) {
-      setState(() {
-        _errorMessage = _formatErrorMessage(e.toString());
-      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('エラー: $e')),
+      );
     } finally {
       setState(() {
         _isLoading = false;
       });
     }
-  }
-
-  /// Format error message to be more user-friendly
-  String _formatErrorMessage(String message) {
-    if (message.contains('Invalid login credentials')) {
-      return 'メールアドレスまたはパスワードが正しくありません';
-    } else if (message.contains('Email not confirmed')) {
-      return 'メールアドレスが確認されていません。メールをご確認ください';
-    } else if (message.contains('User already registered')) {
-      return 'このメールアドレスは既に登録されています';
-    } else if (message.contains('Password should be at least 6 characters')) {
-      return 'パスワードは6文字以上である必要があります';
-    } else if (message.contains('Invalid email')) {
-      return '有効なメールアドレスを入力してください';
-    }
-    return message;
   }
 
   /// Show a message to the user

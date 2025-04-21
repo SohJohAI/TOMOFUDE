@@ -27,6 +27,27 @@ class _SupabaseAuthSimpleExampleState extends State<SupabaseAuthSimpleExample> {
     super.dispose();
   }
 
+  /// Handle authentication errors and display user-friendly messages
+  void _handleAuthError(BuildContext context, String? message) {
+    String readableMessage = 'An error occurred.';
+
+    if (message != null) {
+      if (message.contains('invalid login credentials')) {
+        readableMessage = 'Invalid email or password.';
+      } else if (message.contains('User already registered')) {
+        readableMessage = 'This email is already registered.';
+      } else if (message.contains('password should be at least 6 characters')) {
+        readableMessage = 'Password should be at least 6 characters.';
+      } else {
+        readableMessage = message;
+      }
+    }
+
+    setState(() {
+      _message = readableMessage;
+    });
+  }
+
   /// Sign up with email and password
   Future<void> _signUp() async {
     setState(() {
@@ -47,9 +68,11 @@ class _SupabaseAuthSimpleExampleState extends State<SupabaseAuthSimpleExample> {
         });
       } else {
         setState(() {
-          _message = 'Sign up failed';
+          _message = 'Unknown error occurred.';
         });
       }
+    } on AuthException catch (e) {
+      _handleAuthError(context, e.message);
     } catch (e) {
       setState(() {
         _message = 'Error: $e';
@@ -81,9 +104,11 @@ class _SupabaseAuthSimpleExampleState extends State<SupabaseAuthSimpleExample> {
         });
       } else {
         setState(() {
-          _message = 'Sign in failed';
+          _message = 'Unknown error occurred.';
         });
       }
+    } on AuthException catch (e) {
+      _handleAuthError(context, e.message);
     } catch (e) {
       setState(() {
         _message = 'Error: $e';
@@ -122,6 +147,8 @@ class _SupabaseAuthSimpleExampleState extends State<SupabaseAuthSimpleExample> {
       setState(() {
         _message = 'Successfully signed out';
       });
+    } on AuthException catch (e) {
+      _handleAuthError(context, e.message);
     } catch (e) {
       setState(() {
         _message = 'Error: $e';
