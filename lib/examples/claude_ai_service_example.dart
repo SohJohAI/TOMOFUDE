@@ -25,11 +25,13 @@ class _ClaudeAIServiceExampleState extends State<ClaudeAIServiceExample> {
     super.initState();
 
     // Claude AI Serviceの初期化
-    // 注: 実際の使用時には、適切なURLに置き換えてください
-    _aiService = ClaudeAIService(
-      claudeGatewayUrl:
-          'https://[project-id].functions.supabase.co/claude-gateway',
-    );
+    // デフォルトのエンドポイントを使用
+    _aiService = ClaudeAIService();
+
+    // または、カスタムエンドポイントを指定する場合:
+    // _aiService = ClaudeAIService(
+    //   claudeGatewayUrl: 'https://[project-id].functions.supabase.co/claude-gateway',
+    // );
 
     // または、サービスロケーターを使用する場合:
     // _aiService = serviceLocator<AIService>();
@@ -168,9 +170,13 @@ class _ClaudeAIServiceExampleState extends State<ClaudeAIServiceExample> {
 void setupClaudeAIService() {
   // サービスロケーターにClaudeAIServiceを登録
   serviceLocator.registerSingleton<AIService>(
-    ClaudeAIService(
-      claudeGatewayUrl:
-          'https://[project-id].functions.supabase.co/claude-gateway',
-    ),
+    ClaudeAIService(),
   );
+
+  // または、カスタムエンドポイントを指定する場合:
+  // serviceLocator.registerSingleton<AIService>(
+  //   ClaudeAIService(
+  //     claudeGatewayUrl: 'https://[project-id].functions.supabase.co/claude-gateway',
+  //   ),
+  // );
 }

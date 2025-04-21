@@ -3,6 +3,7 @@ import 'package:get_it/get_it.dart';
 
 import 'ai_service.dart';
 import 'ai_service_interface.dart';
+import 'claude_ai_service.dart';
 import 'auth_service.dart';
 import 'auth_service_interface.dart';
 import 'export_service.dart';
@@ -29,7 +30,7 @@ Future<void> setupServiceLocator() async {
 
   // AI Service
   serviceLocator.registerLazySingleton<AIService>(
-    () => DummyAIService(),
+    () => ClaudeAIService(),
   );
 
   // Auth Service
