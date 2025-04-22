@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import '../models/emotion.dart';
+import '../services/point_service_interface.dart';
 
 // HexColorユーティリティクラス
 class HexColor extends Color {
@@ -209,12 +210,16 @@ class EmotionPanel extends StatelessWidget {
   final EmotionAnalysis? emotionAnalysis;
   final bool isLoading;
   final VoidCallback onRefresh;
+  final PointServiceInterface? pointService;
+  final Function? onConsumePoints;
 
   const EmotionPanel({
     Key? key,
     this.emotionAnalysis,
     required this.isLoading,
     required this.onRefresh,
+    this.pointService,
+    this.onConsumePoints,
   }) : super(key: key);
 
   @override
@@ -253,6 +258,92 @@ class EmotionPanel extends StatelessWidget {
     );
   }
 
+  // ポイント消費の確認
+  Future<bool> _checkAndConfirmPointConsumption(
+      BuildContext context, int amount) async {
+    if (pointService == null) return true;
+
+    // ポイント残高を確認
+    final hasEnoughPoints = await pointService!.hasEnoughPoints(amount);
+
+    if (!hasEnoughPoints) {
+      // ポイント不足の場合、ダイアログを表示
+      final shouldProceed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('ポイント不足'),
+          content: Text('この操作には$amountポイントが必要ですが、ポイントが足りません。ポイントを購入しますか？'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('キャンセル'),
+            ),
+            TextButton(
+              onPressed: () {
+                // ポイント購入画面に遷移
+                Navigator.pop(context, false);
+                // TODO: ポイント購入画面への遷移を実装
+              },
+              child: const Text('ポイントを購入'),
+            ),
+          ],
+        ),
+      );
+
+      return shouldProceed ?? false;
+    }
+
+    // ポイント消費の確認ダイアログを表示
+    final shouldProceed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('ポイント消費の確認'),
+        content: Text('この操作には$amountポイントが消費されます。続行しますか？'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('キャンセル'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('続行'),
+          ),
+        ],
+      ),
+    );
+
+    return shouldProceed ?? false;
+  }
+
+  // ポイントを消費
+  Future<bool> _consumePoints(
+      BuildContext context, int amount, String purpose) async {
+    if (pointService == null) return true;
+
+    try {
+      if (onConsumePoints != null) {
+        return await onConsumePoints!(amount, purpose);
+      }
+
+      final success = await pointService!.consumePoints(amount, purpose);
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('$amountポイントを消費しました')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('ポイント消費に失敗しました')),
+        );
+      }
+      return success;
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('ポイント消費エラー: $e')),
+      );
+      return false;
+    }
+  }
+
   // ヘッダー部分を構築
   Widget _buildHeader(BuildContext context, bool isDark) {
     return Padding(
@@ -284,7 +375,18 @@ class EmotionPanel extends StatelessWidget {
               size: 18,
               color: isDark ? CupertinoColors.white : CupertinoColors.black,
             ),
-            onPressed: onRefresh,
+            onPressed: () async {
+              // ポイント消費の確認（30ポイント）
+              final canProceed =
+                  await _checkAndConfirmPointConsumption(context, 30);
+              if (!canProceed) return;
+
+              // 感情分析を更新
+              onRefresh();
+
+              // 成功後にポイントを消費
+              await _consumePoints(context, 30, '感情分析更新');
+            },
           ),
         ],
       ),

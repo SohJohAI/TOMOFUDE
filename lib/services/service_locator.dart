@@ -30,7 +30,7 @@ Future<void> setupServiceLocator() async {
 
   // AI Service
   serviceLocator.registerLazySingleton<AIService>(
-    () => ClaudeAIService(),
+    () => const SupabaseAIService(),
   );
 
   // Auth Service
