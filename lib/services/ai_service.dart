@@ -10,7 +10,7 @@ import 'ai_service_interface.dart';
 
 class SupabaseAIService implements AIService {
   final String _endpoint =
-      'https://awbrfvdyokwkpwrqmfwd.supabase.co/functions/v1/claude-gateway';
+      'https://tomofudeserver-production.up.railway.app/claude';
   final Duration _timeout;
 
   const SupabaseAIService({
