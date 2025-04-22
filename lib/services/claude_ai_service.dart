@@ -43,7 +43,7 @@ class ClaudeAIService implements AIService {
         body: requestBody,
       )
           .timeout(
-        const Duration(seconds: 30),
+        const Duration(minutes: 5),
         onTimeout: () {
           throw Exception('Request timed out after 30 seconds');
         },
@@ -178,7 +178,7 @@ class ClaudeAIService implements AIService {
               'max_tokens': 1024,
             }),
           )
-          .timeout(const Duration(seconds: 60));
+          .timeout(const Duration(minutes: 5));
 
       developer.log('Response status: ${response.statusCode}',
           name: 'ClaudeAIService');
