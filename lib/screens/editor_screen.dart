@@ -11,13 +11,9 @@ import '../models/novel.dart';
 import '../models/emotion.dart';
 import '../services/ai_service.dart';
 import '../services/ai_service_interface.dart';
-import '../services/service_locator.dart';
-import '../services/point_service_interface.dart';
 import '../widgets/novel_editor.dart';
 import '../widgets/emotion_panel.dart';
-import '../widgets/ai_panel.dart';
 import 'work_list_screen.dart';
-import 'plot_booster_screen.dart';
 
 class NovelEditorScreen extends StatefulWidget {
   final Novel novel;
@@ -30,7 +26,6 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
   late final TextEditingController _titleController;
   late final TextEditingController _contentController;
   late final AIService _aiService;
-  late final PointServiceInterface _pointService;
 
   final Map<String, dynamic> _settingsData = {};
   final Map<String, dynamic> _plotData = {};
@@ -48,8 +43,7 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
   @override
   void initState() {
     super.initState();
-    _aiService = serviceLocator<AIService>();
-    _pointService = serviceLocator<PointServiceInterface>();
+    _aiService = const SupabaseAIService();
 
     _titleController = TextEditingController(text: widget.novel.title)
       ..addListener(_persistNovel);
@@ -74,90 +68,9 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
   // ---------------------------------------------------------------------------
   // AI resource generation
   // ---------------------------------------------------------------------------
-
-  // ポイント消費の確認
-  Future<bool> _checkAndConfirmPointConsumption(int amount) async {
-    // ポイント残高を確認
-    final hasEnoughPoints = await _pointService.hasEnoughPoints(amount);
-
-    if (!hasEnoughPoints) {
-      // ポイント不足の場合、ダイアログを表示
-      final shouldProceed = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('ポイント不足'),
-          content: Text('この操作には$amountポイントが必要ですが、ポイントが足りません。ポイントを購入しますか？'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('キャンセル'),
-            ),
-            TextButton(
-              onPressed: () {
-                // ポイント購入画面に遷移
-                Navigator.pop(context, false);
-                // TODO: ポイント購入画面への遷移を実装
-              },
-              child: const Text('ポイントを購入'),
-            ),
-          ],
-        ),
-      );
-
-      return shouldProceed ?? false;
-    }
-
-    // ポイント消費の確認ダイアログを表示
-    final shouldProceed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('ポイント消費の確認'),
-        content: Text('この操作には$amountポイントが消費されます。続行しますか？'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('キャンセル'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('続行'),
-          ),
-        ],
-      ),
-    );
-
-    return shouldProceed ?? false;
-  }
-
-  // ポイントを消費
-  Future<bool> _consumePoints(int amount, String purpose) async {
-    try {
-      final success = await _pointService.consumePoints(amount, purpose);
-      if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$amountポイントを消費しました')),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('ポイント消費に失敗しました')),
-        );
-      }
-      return success;
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('ポイント消費エラー: $e')),
-      );
-      return false;
-    }
-  }
-
   Future<void> _generateResources() async {
     if (_busy) return;
 <<<<<<< HEAD
-
-    // ポイント消費の確認（100ポイント）
-    final canProceed = await _checkAndConfirmPointConsumption(100);
-    if (!canProceed) return;
 
     // 既存資料の入力を確認するダイアログを表示
     final existingDocs = await _showExistingDocsDialog();
@@ -202,10 +115,6 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
       _reviewData.addAll(await _aiService.generateReview(content));
 
       if (!mounted) return;
-
-      // 生成成功後にポイントを消費
-      await _consumePoints(100, 'AI資料生成');
-
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('AI資料を生成しました')),
       );
@@ -333,18 +242,7 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
             child: Row(
               children: [
                 ElevatedButton.icon(
-                  onPressed: () async {
-                    // ポイント消費の確認（30ポイント）
-                    final canProceed =
-                        await _checkAndConfirmPointConsumption(30);
-                    if (!canProceed) return;
-
-                    // 再生成
-                    await _generateAIDocs();
-
-                    // 成功後にポイントを消費
-                    await _consumePoints(30, 'AI執筆支援資料再生成');
-                  },
+                  onPressed: () => _generateAIDocs(),
                   icon: const Icon(Icons.refresh),
                   label: const Text('再生成'),
                 ),
@@ -431,42 +329,6 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
         ),
       );
 
-  // 展開候補を本文に挿入
-  Future<void> _insertContinuation(String continuation) async {
-    // ポイント消費の確認（20ポイント）
-    final canProceed = await _checkAndConfirmPointConsumption(20);
-    if (!canProceed) return;
-
-    final currentText = _contentController.text;
-    final selection = _contentController.selection;
-
-    // 選択範囲の末尾に挿入
-    final newText = currentText.replaceRange(
-      selection.end,
-      selection.end,
-      '\n\n$continuation',
-    );
-
-    // テキストを更新し、カーソルを挿入した文章の末尾に移動
-    _contentController.value = TextEditingValue(
-      text: newText,
-      selection: TextSelection.collapsed(
-        offset: selection.end + continuation.length + 2,
-      ),
-    );
-
-    // ダイアログを閉じる
-    Navigator.pop(context);
-
-    // ポイントを消費
-    await _consumePoints(20, '展開候補挿入');
-
-    // 挿入完了メッセージを表示
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('展開候補を挿入しました')),
-    );
-  }
-
   void _showCandidates() => _openDialog(
         '展開候補',
         ListView(
@@ -478,40 +340,14 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
                       child: Text('★ ${e.key}',
                           style: Theme.of(context).textTheme.titleMedium),
                     ),
-                    ..._buildCandidateItems(e.value),
+                    ...e.value.map((c) => Padding(
+                          padding: const EdgeInsets.only(left: 12, bottom: 8),
+                          child: Text('• $c'),
+                        ))
                   ])
               .toList(),
         ),
       );
-
-  // 展開候補アイテムを構築（挿入ボタン付き）
-  List<Widget> _buildCandidateItems(List<String> candidates) {
-    return candidates
-        .map((c) => Card(
-              margin: const EdgeInsets.only(left: 12, bottom: 8),
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(c),
-                    const SizedBox(height: 4),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        TextButton.icon(
-                          icon: const Icon(Icons.add, size: 16),
-                          label: const Text('挿入'),
-                          onPressed: () => _insertContinuation(c),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ))
-        .toList();
-  }
 
   void _showEmotion() => _openDialog(
         '感情分析',
@@ -523,8 +359,6 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
                   emotionAnalysis: _emotionAnalysis,
                   isLoading: false,
                   onRefresh: _generateResources,
-                  pointService: _pointService,
-                  onConsumePoints: _consumePoints,
                 ),
               ),
       );
@@ -542,84 +376,6 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
         ),
       );
 
-  // AIパネルを表示（設定情報、プロット、レビューをタブ形式で表示）
-  void _showAIPanel() => _openDialog(
-        'AI分析パネル',
-        AIPanel(
-          settingsData: _settingsData,
-          plotData: _plotData,
-          reviewData: _reviewData,
-          onAnalyzeSettings: _generateResources,
-          onAnalyzePlot: _generateResources,
-          onGenerateReview: _generateResources,
-          isAnalyzingSettings: _busy,
-          isAnalyzingPlot: _busy,
-          isGeneratingReview: _busy,
-          pointService: _pointService,
-          onConsumePoints: _consumePoints,
-        ),
-      );
-
-  // ---------------------------------------------------------------------------
-  // Plot Booster Integration
-  // ---------------------------------------------------------------------------
-
-  // プロットブースターからデータをインポート
-  Future<void> _importFromPlotBooster() async {
-    try {
-      // ポイント消費の確認（50ポイント）
-      final canProceed = await _checkAndConfirmPointConsumption(50);
-      if (!canProceed) return;
-
-      // プロットブースター画面を表示
-      final result = await Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => PlotBoosterScreen()),
-      );
-
-      // プロットブースターから戻ってきた結果を処理
-      if (result != null && result is Map<String, dynamic>) {
-        setState(() {
-          _busy = true;
-          _busyMessage = 'プロットブースターからデータをインポート中...';
-        });
-
-        // プロットデータをインポート
-        if (result.containsKey('plotData')) {
-          _plotData.clear();
-          _plotData.addAll(result['plotData']);
-        }
-
-        // 設定データをインポート
-        if (result.containsKey('settingsData')) {
-          _settingsData.clear();
-          _settingsData.addAll(result['settingsData']);
-        }
-
-        // AI執筆支援資料を生成
-        await _generateAIDocs();
-
-        // 成功後にポイントを消費
-        await _consumePoints(50, 'プロットブースターインポート');
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('プロットブースターからデータをインポートしました')),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('インポート失敗: $e')),
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _busy = false;
-          _busyMessage = '';
-        });
-      }
-    }
-  }
-
   // ---------------------------------------------------------------------------
   // UI
   // ---------------------------------------------------------------------------
@@ -629,11 +385,6 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
       appBar: AppBar(
         title: Text(widget.novel.title.isEmpty ? '新規小説' : widget.novel.title),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.analytics),
-            tooltip: 'AI分析パネル',
-            onPressed: () => _showAIPanel(),
-          ),
           IconButton(icon: const Icon(Icons.save), onPressed: _persistNovel),
           IconButton(
             icon: const Icon(Icons.home),
@@ -690,10 +441,13 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
 <<<<<<< HEAD
                     _QuickButton('AI執筆支援資料', _showAIDocsPreview,
                         enabled: _aiDocsPreview.isNotEmpty),
+<<<<<<< HEAD
                     _QuickButton('プロットブースター', _importFromPlotBooster,
                         enabled: true),
 =======
 >>>>>>> parent of 8de1867 (修正６)
+=======
+>>>>>>> parent of b11a7f4 (UI修正)
                   ],
                 ),
               ),

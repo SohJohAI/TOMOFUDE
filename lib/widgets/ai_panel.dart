@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../services/ai_service.dart';
-import '../services/point_service_interface.dart';
 
 enum SettingType { text, character, organization, terminology }
 
@@ -14,8 +13,6 @@ class AIPanel extends StatefulWidget {
   final bool isAnalyzingSettings;
   final bool isAnalyzingPlot;
   final bool isGeneratingReview;
-  final PointServiceInterface? pointService;
-  final Function? onConsumePoints;
 
   const AIPanel({
     Key? key,
@@ -28,8 +25,6 @@ class AIPanel extends StatefulWidget {
     required this.isAnalyzingSettings,
     required this.isAnalyzingPlot,
     required this.isGeneratingReview,
-    this.pointService,
-    this.onConsumePoints,
   }) : super(key: key);
 
   @override
@@ -43,90 +38,6 @@ class _AIPanelState extends State<AIPanel> with SingleTickerProviderStateMixin {
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-  }
-
-  // ポイント消費の確認
-  Future<bool> _checkAndConfirmPointConsumption(int amount) async {
-    if (widget.pointService == null) return true;
-
-    // ポイント残高を確認
-    final hasEnoughPoints = await widget.pointService!.hasEnoughPoints(amount);
-
-    if (!hasEnoughPoints) {
-      // ポイント不足の場合、ダイアログを表示
-      final shouldProceed = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('ポイント不足'),
-          content: Text('この操作には$amountポイントが必要ですが、ポイントが足りません。ポイントを購入しますか？'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('キャンセル'),
-            ),
-            TextButton(
-              onPressed: () {
-                // ポイント購入画面に遷移
-                Navigator.pop(context, false);
-                // TODO: ポイント購入画面への遷移を実装
-              },
-              child: const Text('ポイントを購入'),
-            ),
-          ],
-        ),
-      );
-
-      return shouldProceed ?? false;
-    }
-
-    // ポイント消費の確認ダイアログを表示
-    final shouldProceed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('ポイント消費の確認'),
-        content: Text('この操作には$amountポイントが消費されます。続行しますか？'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('キャンセル'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('続行'),
-          ),
-        ],
-      ),
-    );
-
-    return shouldProceed ?? false;
-  }
-
-  // ポイントを消費
-  Future<bool> _consumePoints(int amount, String purpose) async {
-    if (widget.pointService == null) return true;
-
-    try {
-      if (widget.onConsumePoints != null) {
-        return await widget.onConsumePoints!(amount, purpose);
-      }
-
-      final success = await widget.pointService!.consumePoints(amount, purpose);
-      if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$amountポイントを消費しました')),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('ポイント消費に失敗しました')),
-        );
-      }
-      return success;
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('ポイント消費エラー: $e')),
-      );
-      return false;
-    }
   }
 
   @override
@@ -204,18 +115,7 @@ class _AIPanelState extends State<AIPanel> with SingleTickerProviderStateMixin {
                 IconButton(
                   icon: const Icon(Icons.refresh, size: 18),
                   tooltip: '設定情報を更新',
-                  onPressed: () async {
-                    // ポイント消費の確認（30ポイント）
-                    final canProceed =
-                        await _checkAndConfirmPointConsumption(30);
-                    if (!canProceed) return;
-
-                    // 設定情報を更新
-                    await widget.onAnalyzeSettings();
-
-                    // 成功後にポイントを消費
-                    await _consumePoints(30, '設定情報更新');
-                  },
+                  onPressed: () => widget.onAnalyzeSettings(),
                 ),
               ],
             ),
@@ -404,18 +304,7 @@ class _AIPanelState extends State<AIPanel> with SingleTickerProviderStateMixin {
                 IconButton(
                   icon: const Icon(Icons.refresh, size: 18),
                   tooltip: 'プロットを更新',
-                  onPressed: () async {
-                    // ポイント消費の確認（30ポイント）
-                    final canProceed =
-                        await _checkAndConfirmPointConsumption(30);
-                    if (!canProceed) return;
-
-                    // プロットを更新
-                    await widget.onAnalyzePlot();
-
-                    // 成功後にポイントを消費
-                    await _consumePoints(30, 'プロット更新');
-                  },
+                  onPressed: () => widget.onAnalyzePlot(),
                 ),
               ],
             ),
@@ -577,18 +466,7 @@ class _AIPanelState extends State<AIPanel> with SingleTickerProviderStateMixin {
                 IconButton(
                   icon: const Icon(Icons.refresh, size: 18),
                   tooltip: 'レビューを更新',
-                  onPressed: () async {
-                    // ポイント消費の確認（30ポイント）
-                    final canProceed =
-                        await _checkAndConfirmPointConsumption(30);
-                    if (!canProceed) return;
-
-                    // レビューを更新
-                    await widget.onGenerateReview();
-
-                    // 成功後にポイントを消費
-                    await _consumePoints(30, 'レビュー更新');
-                  },
+                  onPressed: () => widget.onGenerateReview(),
                 ),
               ],
             ),
