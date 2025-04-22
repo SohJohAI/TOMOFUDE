@@ -3,8 +3,10 @@
 // IMPORTANT: replace <PROJECT_ID> with your Supabase project id.
 
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 
 import '../providers/novel_list_provider.dart';
 import '../models/novel.dart';
@@ -36,6 +38,9 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
     'jury': ''
   };
   EmotionAnalysis? _emotionAnalysis;
+
+  // AI執筆支援資料のプレビュー用
+  String _aiDocsPreview = '';
 
   bool _busy = false;
   String _busyMessage = '';
@@ -70,6 +75,11 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
   // ---------------------------------------------------------------------------
   Future<void> _generateResources() async {
     if (_busy) return;
+
+    // 既存資料の入力を確認するダイアログを表示
+    final existingDocs = await _showExistingDocsDialog();
+    if (existingDocs == null) return; // キャンセルされた場合
+
     setState(() {
       _busy = true;
       _busyMessage = 'AIが資料を生成中…';
@@ -106,6 +116,18 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
       _reviewData.updateAll((k, v) => '');
       _reviewData.addAll(await _aiService.generateReview(content));
 
+      // 🔮 6) AI執筆支援資料の生成（既存資料がある場合はそれを使用）
+      if (existingDocs.isNotEmpty) {
+        await _generateAIDocs(
+          settingInfo: existingDocs['settingInfo'],
+          plotInfo: existingDocs['plotInfo'],
+          emotionInfo: existingDocs['emotionInfo'],
+        );
+      } else {
+        // 生成した資料を使用してAI執筆支援資料を生成
+        await _generateAIDocs();
+      }
+
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('AI資料を生成しました')),
@@ -123,6 +145,135 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
         });
       }
     }
+  }
+
+  // 既存資料入力ダイアログを表示
+  Future<Map<String, String>?> _showExistingDocsDialog() async {
+    final settingsController = TextEditingController();
+    final plotController = TextEditingController();
+    final emotionController = TextEditingController();
+
+    return showDialog<Map<String, String>>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('既存の資料を入力しますか？'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: settingsController,
+                decoration: const InputDecoration(labelText: '設定情報'),
+                maxLines: 3,
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: plotController,
+                decoration: const InputDecoration(labelText: 'プロット情報'),
+                maxLines: 3,
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: emotionController,
+                decoration: const InputDecoration(labelText: '感情分析情報'),
+                maxLines: 3,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, null),
+            child: const Text('キャンセル'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, {}), // 空のマップを返す（既存資料なし）
+            child: const Text('資料なしで生成'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, {
+              'settingInfo': settingsController.text,
+              'plotInfo': plotController.text,
+              'emotionInfo': emotionController.text,
+            }),
+            child: const Text('この資料で生成'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // AI執筆支援資料を生成
+  Future<void> _generateAIDocs({
+    String? settingInfo,
+    String? plotInfo,
+    String? emotionInfo,
+  }) async {
+    setState(() {
+      _busyMessage = 'AI執筆支援資料を生成中…';
+    });
+
+    try {
+      final content = _contentController.text;
+
+      // 設定情報、プロット情報、感情分析情報を使用
+      final settingInfoToUse = settingInfo ??
+          (_settingsData.isNotEmpty ? jsonEncode(_settingsData) : null);
+
+      final plotInfoToUse =
+          plotInfo ?? (_plotData.isNotEmpty ? jsonEncode(_plotData) : null);
+
+      final emotionInfoToUse = emotionInfo ??
+          (_emotionAnalysis != null
+              ? jsonEncode(_emotionAnalysis!.toJson())
+              : null);
+
+      // AIドキュメントを生成
+      _aiDocsPreview = await _aiService.generateAIDocs(
+        content,
+        settingInfo: settingInfoToUse,
+        plotInfo: plotInfoToUse,
+        emotionInfo: emotionInfoToUse,
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('AI執筆支援資料の生成に失敗: $e')),
+        );
+      }
+    }
+  }
+
+  // AI執筆支援資料のプレビューを表示
+  void _showAIDocsPreview() {
+    _openDialog(
+      'AI執筆支援資料',
+      Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              children: [
+                ElevatedButton.icon(
+                  onPressed: () => _generateAIDocs(),
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('再生成'),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: _aiDocsPreview.isEmpty
+                ? const Center(child: Text('資料がまだ生成されていません'))
+                : Markdown(
+                    data: _aiDocsPreview,
+                    selectable: true,
+                    padding: const EdgeInsets.all(16),
+                  ),
+          ),
+        ],
+      ),
+    );
   }
 
   // ---------------------------------------------------------------------------
@@ -298,6 +449,8 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
                         enabled: _emotionAnalysis != null),
                     _QuickButton('レビュー', _showReviews,
                         enabled: _reviewData.values.any((v) => v.isNotEmpty)),
+                    _QuickButton('AI執筆支援資料', _showAIDocsPreview,
+                        enabled: _aiDocsPreview.isNotEmpty),
                   ],
                 ),
               ),
