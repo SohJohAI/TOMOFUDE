@@ -28,6 +28,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: "claude-3.7-sonnet-2025-04-09",
+        stream: true, // ← これ追加
         system,
         messages,
         max_tokens,
@@ -41,7 +42,14 @@ serve(async (req) => {
       }));
     }
 
-    return withCors(anthropicRes);
+    return withCors(new Response(anthropicRes.body, {
+        status: anthropicRes.status,
+        headers: {
+          "content-type": "text/event-stream", // ← ここ重要
+          "cache-control": "no-cache",
+        },
+      }));
+      
   } catch (e) {
     console.error(e);
     return withCors(new Response(JSON.stringify({ error: "Edge Function error", detail: String(e) }), { status: 500 }));

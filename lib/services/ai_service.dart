@@ -7,14 +7,15 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'ai_service_interface.dart';
+import '../utils/constants.dart';
 
 class SupabaseAIService implements AIService {
   final String _endpoint =
-      'https://tomofudeserver-production.up.railway.app/claude';
+      'https://awbrfvdyokwkpwrqmfwd.supabase.co/functions/v1/claude-gateway';
   final Duration _timeout;
 
   const SupabaseAIService({
-    Duration timeout = const Duration(seconds: 30),
+    Duration timeout = const Duration(minutes: 5),
   }) : _timeout = timeout;
 
   @override
@@ -143,18 +144,35 @@ class SupabaseAIService implements AIService {
     };
 
     try {
-      final res =
-          await http.post(uri, headers: headers, body: body).timeout(_timeout);
+      final client = http.Client();
 
-      if (res.statusCode != 200) {
-        debugPrint("🔴 API Error: status=${res.statusCode}, body=${res.body}");
-        throw Exception('[SupabaseAIService] ${res.statusCode}: ${res.body}');
+      final req = http.Request('POST', Uri.parse(supabaseFnUrl))
+        ..headers['Content-Type'] = 'application/json'
+        ..body = jsonEncode(payload); // ← 送るメッセージ
+
+      final streamed =
+          await client.send(req).timeout(const Duration(minutes: 2));
+
+      await for (final chunk in streamed.stream.transform(utf8.decoder)) {
+        for (final line in const LineSplitter().convert(chunk)) {
+          if (line.startsWith('data:')) {
+            final jsonStr = line.substring(5).trim();
+            if (jsonStr == "[DONE]") break;
+
+            try {
+              final json = jsonDecode(jsonStr);
+              final content = json["content"] ?? "";
+              // 🔽 ここで逐次UIに表示するなど処理する
+              debugPrint(content);
+              return json; // Return the JSON response
+            } catch (_) {
+              debugPrint("⚠️ JSON decode error: $jsonStr");
+            }
+          }
+        }
       }
-
-      final decoded = jsonDecode(res.body);
-      if (decoded is Map<String, dynamic>) return decoded;
-
-      throw const FormatException('Unexpected response type');
+      // If we get here without returning, return an empty map
+      return {};
     } catch (e) {
       debugPrint("⚠️ Fetch error: $e");
       rethrow;

@@ -9,7 +9,7 @@ class ClaudeAIService implements AIService {
 
   ClaudeAIService({String? claudeGatewayUrl})
       : _endpoint = claudeGatewayUrl ??
-            'https://tomofudeserver-production.up.railway.app/claude';
+            'https://awbrfvdyokwkpwrqmfwd.supabase.co/functions/v1/claude-gateway';
 
   Future<dynamic> _postToClaude(
       String type, Map<String, dynamic> payload) async {
