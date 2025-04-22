@@ -3,13 +3,17 @@ import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 import 'ai_service_interface.dart';
 import '../utils/constants.dart';
+import 'supabase_service_interface.dart';
+import 'service_locator.dart';
 
 class ClaudeAIService implements AIService {
   final String _endpoint;
+  final SupabaseServiceInterface _supabaseService;
 
   ClaudeAIService({String? claudeGatewayUrl})
       : _endpoint = claudeGatewayUrl ??
-            'https://awbrfvdyokwkpwrqmfwd.supabase.co/functions/v1/claude-gateway';
+            'https://awbrfvdyokwkpwrqmfwd.supabase.co/functions/v1/claude-gateway',
+        _supabaseService = serviceLocator<SupabaseServiceInterface>();
 
   Future<dynamic> _postToClaude(
       String type, Map<String, dynamic> payload) async {
@@ -17,7 +21,7 @@ class ClaudeAIService implements AIService {
       developer.log('Sending request to Claude API: $type',
           name: 'ClaudeAIService');
 
-      // Enhanced headers for CORS support
+      // Enhanced headers for CORS support with authentication
       final headers = {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
@@ -25,6 +29,8 @@ class ClaudeAIService implements AIService {
         'Access-Control-Request-Method': 'POST',
         'Access-Control-Request-Headers':
             'content-type,authorization,x-client-info,apikey',
+        'Authorization':
+            'Bearer ${_supabaseService.currentSession?.accessToken}',
       };
 
       final requestBody = jsonEncode({
@@ -171,7 +177,11 @@ class ClaudeAIService implements AIService {
       final response = await http
           .post(
             Uri.parse(supabaseFnUrl),
-            headers: {'Content-Type': 'application/json'},
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization':
+                  'Bearer ${_supabaseService.currentSession?.accessToken}',
+            },
             body: jsonEncode({
               'system': buildSystemPrompt != null ? buildSystemPrompt() : null,
               'messages': buildMessageList(userInput),

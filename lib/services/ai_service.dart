@@ -148,6 +148,8 @@ class SupabaseAIService implements AIService {
 
       final req = http.Request('POST', Uri.parse(supabaseFnUrl))
         ..headers['Content-Type'] = 'application/json'
+        ..headers['Authorization'] =
+            'Bearer ${Supabase.instance.client.auth.currentSession?.accessToken}'
         ..body = jsonEncode(payload); // ← 送るメッセージ
 
       final streamed =
