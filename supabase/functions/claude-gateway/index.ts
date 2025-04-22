@@ -73,6 +73,10 @@ serve(async (req) => {
         });
 
         const claudeResponse = await response.json();
+        console.log("Claude response (raw):", JSON.stringify(claudeResponse));
+        console.log("Extracted text:", extractTextFromResponse(claudeResponse));
+
+
 
         // レスポンスを処理
         let result;

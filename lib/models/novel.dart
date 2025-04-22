@@ -13,6 +13,20 @@ class Novel {
     required this.updatedAt,
   });
 
+  Novel copyWith({
+    String? title,
+    String? content,
+    DateTime? updatedAt,
+  }) {
+    return Novel(
+      id: this.id,
+      title: title ?? this.title,
+      content: content ?? this.content,
+      createdAt: this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,

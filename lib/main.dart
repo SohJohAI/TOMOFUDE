@@ -31,6 +31,16 @@ void main() async {
   // Initialize service locator
   await setupServiceLocator();
 
+  void loginForTest() async {
+    final response = await Supabase.instance.client.auth.signInWithPassword(
+      email: "sohjohai@gmail.com",
+      password: "D99U+P*zPf_rh2Y",
+    );
+
+    final jwt = response.session?.accessToken;
+    print("ログイン成功！JWT: $jwt");
+  }
+
   runApp(
     MultiProvider(
       providers: [
@@ -49,6 +59,8 @@ class TomofudeApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final jwt = Supabase.instance.client.auth.currentSession?.accessToken;
+    print('JWT: $jwt');
     final appState = Provider.of<NovelAppState>(context);
 
     // Material 3 スタイルのアプリに変更
