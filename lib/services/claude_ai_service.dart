@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 import 'ai_service_interface.dart';
+import '../utils/constants.dart';
 
 class ClaudeAIService implements AIService {
   final String _endpoint;
@@ -153,5 +154,49 @@ class ClaudeAIService implements AIService {
       'emotionInfo': emotionInfo,
     });
     return result['markdown'];
+  }
+
+  /// Supabase Function を使用して Claude に直接リクエストを送信する
+  ///
+  /// [userInput] ユーザーの入力テキスト
+  /// [buildMessageList] メッセージリストを構築する関数
+  /// [buildSystemPrompt] システムプロンプトを構築する関数（オプション）
+  Future<Map<String, dynamic>> postToSupabaseClaude(String userInput,
+      List<Map<String, String>> Function(String) buildMessageList,
+      {String Function()? buildSystemPrompt}) async {
+    try {
+      developer.log('Sending request to Supabase Claude Gateway',
+          name: 'ClaudeAIService');
+
+      final response = await http
+          .post(
+            Uri.parse(supabaseFnUrl),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'system': buildSystemPrompt != null ? buildSystemPrompt() : null,
+              'messages': buildMessageList(userInput),
+              'max_tokens': 1024,
+            }),
+          )
+          .timeout(const Duration(seconds: 60));
+
+      developer.log('Response status: ${response.statusCode}',
+          name: 'ClaudeAIService');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        developer.log('Response data: $data', name: 'ClaudeAIService');
+        return data;
+      } else {
+        developer.log('Error response: ${response.body}',
+            name: 'ClaudeAIService');
+        throw Exception(
+            'Claude error ${response.statusCode}: ${response.body}');
+      }
+    } catch (e) {
+      developer.log('Exception in postToSupabaseClaude: $e',
+          name: 'ClaudeAIService', error: e);
+      rethrow;
+    }
   }
 }
