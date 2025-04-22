@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:developer' as developer;
-import 'package:http/http.dart' as http;
 import 'ai_service_interface.dart';
 import '../utils/constants.dart';
 import 'supabase_service_interface.dart';
@@ -21,54 +20,37 @@ class ClaudeAIService implements AIService {
       developer.log('Sending request to Claude API: $type',
           name: 'ClaudeAIService');
 
-      // Enhanced headers for CORS support with authentication
-      final headers = {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Origin': 'https://tomofude.app', // Add your app's origin
-        'Access-Control-Request-Method': 'POST',
-        'Access-Control-Request-Headers':
-            'content-type,authorization,x-client-info,apikey',
-        'Authorization':
-            'Bearer ${_supabaseService.currentSession?.accessToken}',
-      };
-
-      final requestBody = jsonEncode({
+      final requestBody = {
         'type': type,
         ...payload,
-      });
+      };
 
-      developer.log('Request headers: $headers', name: 'ClaudeAIService');
       developer.log('Request body: $requestBody', name: 'ClaudeAIService');
 
-      // Add timeout to prevent hanging requests
-      final response = await http
-          .post(
-        Uri.parse(_endpoint),
-        headers: headers,
+      // Use Supabase SDK's functions.invoke() method
+      final response = await _supabaseService.client.functions
+          .invoke(
+        'claude-gateway',
         body: requestBody,
       )
           .timeout(
         const Duration(minutes: 5),
         onTimeout: () {
-          throw Exception('Request timed out after 30 seconds');
+          throw Exception('Request timed out after 5 minutes');
         },
       );
 
-      developer.log('Response status: ${response.statusCode}',
-          name: 'ClaudeAIService');
-      developer.log('Response headers: ${response.headers}',
+      developer.log('Response status: ${response.status}',
           name: 'ClaudeAIService');
 
-      if (response.statusCode == 200) {
-        final responseBody = response.body;
-        developer.log('Response body: $responseBody', name: 'ClaudeAIService');
-        return jsonDecode(responseBody);
+      if (response.status == 200) {
+        final data = response.data;
+        developer.log('Response data: $data', name: 'ClaudeAIService');
+        return data;
       } else {
-        developer.log('Error response: ${response.body}',
+        developer.log('Error response status: ${response.status}',
             name: 'ClaudeAIService');
-        throw Exception(
-            'Claude API error: ${response.statusCode} - ${response.body}');
+        throw Exception('Claude API error: ${response.status}');
       }
     } catch (e) {
       developer.log('Exception in _postToClaude: $e',
@@ -174,34 +156,31 @@ class ClaudeAIService implements AIService {
       developer.log('Sending request to Supabase Claude Gateway',
           name: 'ClaudeAIService');
 
-      final response = await http
-          .post(
-            Uri.parse(supabaseFnUrl),
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization':
-                  'Bearer ${_supabaseService.currentSession?.accessToken}',
-            },
-            body: jsonEncode({
-              'system': buildSystemPrompt != null ? buildSystemPrompt() : null,
-              'messages': buildMessageList(userInput),
-              'max_tokens': 1024,
-            }),
+      final requestBody = {
+        'system': buildSystemPrompt != null ? buildSystemPrompt() : null,
+        'messages': buildMessageList(userInput),
+        'max_tokens': 1024,
+      };
+
+      // Use Supabase SDK's functions.invoke() method
+      final response = await _supabaseService.client.functions
+          .invoke(
+            'claude-gateway',
+            body: requestBody,
           )
           .timeout(const Duration(minutes: 5));
 
-      developer.log('Response status: ${response.statusCode}',
+      developer.log('Response status: ${response.status}',
           name: 'ClaudeAIService');
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+      if (response.status == 200) {
+        final data = response.data;
         developer.log('Response data: $data', name: 'ClaudeAIService');
-        return data;
+        return Map<String, dynamic>.from(data);
       } else {
-        developer.log('Error response: ${response.body}',
+        developer.log('Error response status: ${response.status}',
             name: 'ClaudeAIService');
-        throw Exception(
-            'Claude error ${response.statusCode}: ${response.body}');
+        throw Exception('Claude error ${response.status}');
       }
     } catch (e) {
       developer.log('Exception in postToSupabaseClaude: $e',

@@ -38,6 +38,7 @@ serve(async (req) => {
       });
     }
 
+<<<<<<< HEAD
     return new Response(anthropicRes.body, {
       status: anthropicRes.status,
       headers: {
@@ -54,4 +55,102 @@ serve(async (req) => {
       headers: cors 
     });
   }
+=======
+    try {
+        const { type, ...payload } = await req.json();
+
+        // プロンプトを構築
+        let prompt = "";
+
+        switch (type) {
+            case "generateSettings":
+                prompt = buildSettingsPrompt(payload);
+                break;
+            case "generatePlotAnalysis":
+                prompt = buildPlotAnalysisPrompt(payload);
+                break;
+            case "generateReview":
+                prompt = buildReviewPrompt(payload);
+                break;
+            case "generateContinuations":
+                prompt = buildContinuationsPrompt(payload);
+                break;
+            case "expandSuggestion":
+                prompt = buildExpandSuggestionPrompt(payload);
+                break;
+            case "analyzeEmotion":
+                prompt = buildEmotionAnalysisPrompt(payload);
+                break;
+            case "generateAIDocs":
+                prompt = buildAIDocsPrompt(payload);
+                break;
+            default:
+                return setCorsHeaders(new Response(JSON.stringify({ error: "Unknown request type" }), {
+                    status: 400,
+                    headers: { "Content-Type": "application/json" }
+                }));
+        }
+
+        // Claude APIにリクエスト
+        const response = await fetch("https://api.anthropic.com/v1/messages", {
+            method: "POST",
+            headers: {
+                "x-api-key": Deno.env.get("CLAUDE_API_KEY"), // ← キーはsupabase secretsで注入
+                "anthropic-version": "2023-06-01",
+                "content-type": "application/json",
+            },
+            body: JSON.stringify({
+                model: "claude-3-sonnet-20240229",
+                messages: [
+                    { role: "user", content: prompt },
+                ],
+                max_tokens: 4096,
+            }),
+        });
+
+        const claudeResponse = await response.json();
+        console.log("Claude response (raw):", JSON.stringify(claudeResponse));
+        console.log("Extracted text:", extractTextFromResponse(claudeResponse));
+
+
+
+        // レスポンスを処理
+        let result;
+
+        switch (type) {
+            case "generateSettings":
+            case "generatePlotAnalysis":
+                result = extractJsonFromResponse(claudeResponse);
+                break;
+            case "generateReview":
+                result = extractJsonFromResponse(claudeResponse);
+                break;
+            case "generateContinuations":
+                const suggestions = extractJsonFromResponse(claudeResponse);
+                result = { suggestions: suggestions.suggestions || [] };
+                break;
+            case "expandSuggestion":
+                result = { expanded: extractTextFromResponse(claudeResponse) };
+                break;
+            case "analyzeEmotion":
+                result = extractJsonFromResponse(claudeResponse);
+                break;
+            case "generateAIDocs":
+                result = { markdown: extractTextFromResponse(claudeResponse) };
+                break;
+            default:
+                result = claudeResponse;
+        }
+
+        return setCorsHeaders(new Response(JSON.stringify(result), {
+            headers: { "Content-Type": "application/json" }
+        }));
+    } catch (error) {
+        console.error("Error processing request:", error);
+        return setCorsHeaders(new Response(JSON.stringify({ error: error.message }), {
+            status: 500,
+            headers: { "Content-Type": "application/json" }
+        }));
+    }
+>>>>>>> parent of 6f64aaf (修正5)
 });
