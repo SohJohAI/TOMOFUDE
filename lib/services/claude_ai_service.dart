@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:developer' as developer;
+import 'package:http/http.dart' as http;
 import 'ai_service_interface.dart';
 import '../utils/constants.dart';
 import 'supabase_service_interface.dart';
@@ -186,6 +188,101 @@ class ClaudeAIService implements AIService {
       developer.log('Exception in postToSupabaseClaude: $e',
           name: 'ClaudeAIService', error: e);
       rethrow;
+    }
+  }
+
+  /// Calls the Claude gateway function to get a streaming response.
+  ///
+  /// Returns a stream of raw SSE event strings. The caller is responsible
+  /// for parsing these events (e.g., lines starting with "data: ").
+  Stream<String> streamFromClaude(
+    String userInput,
+    List<Map<String, String>> Function(String) buildMessageList, {
+    String Function()? buildSystemPrompt,
+    String model = "claude-3-sonnet-20240229", // Or your preferred default
+    int maxTokens = 1024,
+  }) async* {
+    // Use async* for streams
+    final uri = Uri.parse(_endpoint);
+    final client = http.Client();
+    final request = http.Request('POST', uri);
+
+    final accessToken =
+        _supabaseService.client.auth.currentSession?.accessToken;
+    // Use the public anon key from the Supabase service interface
+    final anonKey = _supabaseService.supabaseAnonKey;
+
+    if (accessToken == null) {
+      // It's often better to let Supabase handle token refresh automatically,
+      // but check if the session is valid. If not, throw an error.
+      developer.log('User session invalid or expired.',
+          name: 'ClaudeAIService');
+      throw Exception('User not authenticated or session expired.');
+    }
+    if (anonKey == null) {
+      developer.log('Supabase anon key is missing.', name: 'ClaudeAIService');
+      throw Exception(
+          'Supabase client not properly initialized (missing anon key).');
+    }
+
+    request.headers.addAll({
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $accessToken',
+      'apikey': anonKey, // Use the actual anon key
+      // Add other headers if required by your Supabase function policies
+    });
+
+    // Construct the body based on the Edge Function's expectation
+    // It seems the function expects 'messages', 'system', 'model', 'max_tokens', 'stream'
+    final requestBody = {
+      'model': model,
+      'max_tokens': maxTokens,
+      'stream': true, // Ensure streaming is requested
+      'system': buildSystemPrompt != null ? buildSystemPrompt() : null,
+      'messages': buildMessageList(userInput),
+      // Note: The Edge function uses 'messages', not 'content' directly in the body for the API call
+    };
+
+    request.body = jsonEncode(requestBody);
+    developer.log('Streaming request body: ${request.body}',
+        name: 'ClaudeAIService');
+
+    try {
+      final response = await client
+          .send(request)
+          .timeout(const Duration(minutes: 5)); // Add timeout
+
+      developer.log('Streaming response status: ${response.statusCode}',
+          name: 'ClaudeAIService');
+
+      if (response.statusCode == 200) {
+        // Yield chunks from the stream
+        await for (final chunk in response.stream.transform(utf8.decoder)) {
+          developer.log('Received stream chunk: $chunk',
+              name: 'ClaudeAIService'); // Log received chunks
+          yield chunk;
+        }
+        developer.log('Stream finished.', name: 'ClaudeAIService');
+      } else {
+        // Handle non-200 responses (errors)
+        final errorBody = await response.stream.bytesToString();
+        developer.log(
+            'Error streaming from Claude: ${response.statusCode} - $errorBody',
+            name: 'ClaudeAIService');
+        throw Exception(
+            'Claude streaming error ${response.statusCode}: $errorBody');
+      }
+    } catch (e, stackTrace) {
+      // Catch stackTrace
+      developer.log('Exception during streaming: $e\n$stackTrace',
+          name: 'ClaudeAIService',
+          error: e,
+          stackTrace: stackTrace); // Log stacktrace
+      // Rethrow specific exception types if needed, or a generic one
+      throw Exception('Failed to stream from Claude: $e');
+    } finally {
+      client.close(); // Ensure the client is closed
+      developer.log('HTTP client closed.', name: 'ClaudeAIService');
     }
   }
 }

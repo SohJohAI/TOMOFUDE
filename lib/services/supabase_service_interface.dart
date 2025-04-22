@@ -14,6 +14,9 @@ abstract class SupabaseServiceInterface {
   /// Get the current session
   Session? get currentSession;
 
+  /// Get the Supabase public anonymous key
+  String get supabaseAnonKey;
+
   /// Sign in with email and password
   Future<AuthResponse> signInWithEmailAndPassword(
       String email, String password);

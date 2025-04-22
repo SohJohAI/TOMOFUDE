@@ -49,6 +49,10 @@ class SupabaseService implements SupabaseServiceInterface {
   @override
   Session? get currentSession => client.auth.currentSession;
 
+  /// Get the Supabase public anonymous key
+  @override
+  String get supabaseAnonKey => _supabaseKey;
+
   /// Sign in with email and password
   @override
   Future<AuthResponse> signInWithEmailAndPassword(
