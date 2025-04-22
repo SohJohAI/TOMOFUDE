@@ -3,10 +3,8 @@
 // IMPORTANT: replace <PROJECT_ID> with your Supabase project id.
 
 import 'dart:async';
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
 
 import '../providers/novel_list_provider.dart';
 import '../models/novel.dart';
@@ -43,9 +41,6 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
     'jury': ''
   };
   EmotionAnalysis? _emotionAnalysis;
-
-  // AI執筆支援資料のプレビュー用
-  String _aiDocsPreview = '';
 
   bool _busy = false;
   String _busyMessage = '';
@@ -158,6 +153,7 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
 
   Future<void> _generateResources() async {
     if (_busy) return;
+<<<<<<< HEAD
 
     // ポイント消費の確認（100ポイント）
     final canProceed = await _checkAndConfirmPointConsumption(100);
@@ -167,6 +163,8 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
     final existingDocs = await _showExistingDocsDialog();
     if (existingDocs == null) return; // キャンセルされた場合
 
+=======
+>>>>>>> parent of 8de1867 (修正６)
     setState(() {
       _busy = true;
       _busyMessage = 'AIが資料を生成中…';
@@ -203,18 +201,6 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
       _reviewData.updateAll((k, v) => '');
       _reviewData.addAll(await _aiService.generateReview(content));
 
-      // 🔮 6) AI執筆支援資料の生成（既存資料がある場合はそれを使用）
-      if (existingDocs.isNotEmpty) {
-        await _generateAIDocs(
-          settingInfo: existingDocs['settingInfo'],
-          plotInfo: existingDocs['plotInfo'],
-          emotionInfo: existingDocs['emotionInfo'],
-        );
-      } else {
-        // 生成した資料を使用してAI執筆支援資料を生成
-        await _generateAIDocs();
-      }
-
       if (!mounted) return;
 
       // 生成成功後にポイントを消費
@@ -238,6 +224,7 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
     }
   }
 
+<<<<<<< HEAD
   // 既存資料入力ダイアログを表示
   Future<Map<String, String>?> _showExistingDocsDialog() async {
     final settingsController = TextEditingController();
@@ -378,6 +365,8 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
     );
   }
 
+=======
+>>>>>>> parent of 8de1867 (修正６)
   // ---------------------------------------------------------------------------
   // Helpers – modal windows
   // ---------------------------------------------------------------------------
@@ -698,10 +687,13 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
                         enabled: _emotionAnalysis != null),
                     _QuickButton('レビュー', _showReviews,
                         enabled: _reviewData.values.any((v) => v.isNotEmpty)),
+<<<<<<< HEAD
                     _QuickButton('AI執筆支援資料', _showAIDocsPreview,
                         enabled: _aiDocsPreview.isNotEmpty),
                     _QuickButton('プロットブースター', _importFromPlotBooster,
                         enabled: true),
+=======
+>>>>>>> parent of 8de1867 (修正６)
                   ],
                 ),
               ),

@@ -25,17 +25,6 @@ class EmotionSegment {
       description: json['description'] ?? '',
     );
   }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'name': name,
-      'dominantEmotion': dominantEmotion,
-      'emotionCode': emotionCode,
-      'emotionValue': emotionValue,
-      'excitement': excitement,
-      'description': description,
-    };
-  }
 }
 
 class EmotionAnalysis {
@@ -57,12 +46,5 @@ class EmotionAnalysis {
       segments: segments,
       summary: json['summary'] ?? '',
     );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'segments': segments.map((segment) => segment.toJson()).toList(),
-      'summary': summary,
-    };
   }
 }
