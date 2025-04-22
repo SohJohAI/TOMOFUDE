@@ -3,13 +3,14 @@
 // the Supabase project URL.
 
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'ai_service_interface.dart';
 
 class SupabaseAIService implements AIService {
   final String _endpoint =
-      'https://awbrfvdyokwkpwrqmfwd.functions.supabase.co/claude-gateway';
+      'https://awbrfvdyokwkpwrqmfwd.supabase.co/functions/v1/claude-gateway';
   final Duration _timeout;
 
   const SupabaseAIService({
@@ -141,16 +142,22 @@ class SupabaseAIService implements AIService {
       if (jwt != null) 'Authorization': 'Bearer $jwt',
     };
 
-    final res =
-        await http.post(uri, headers: headers, body: body).timeout(_timeout);
+    try {
+      final res =
+          await http.post(uri, headers: headers, body: body).timeout(_timeout);
 
-    if (res.statusCode != 200) {
-      throw Exception('[SupabaseAIService] ${res.statusCode}: ${res.body}');
+      if (res.statusCode != 200) {
+        debugPrint("🔴 API Error: status=${res.statusCode}, body=${res.body}");
+        throw Exception('[SupabaseAIService] ${res.statusCode}: ${res.body}');
+      }
+
+      final decoded = jsonDecode(res.body);
+      if (decoded is Map<String, dynamic>) return decoded;
+
+      throw const FormatException('Unexpected response type');
+    } catch (e) {
+      debugPrint("⚠️ Fetch error: $e");
+      rethrow;
     }
-
-    final decoded = jsonDecode(res.body);
-    if (decoded is Map<String, dynamic>) return decoded;
-
-    throw const FormatException('Unexpected response type');
   }
 }

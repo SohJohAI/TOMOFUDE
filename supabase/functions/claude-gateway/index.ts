@@ -5,7 +5,7 @@ function setCorsHeaders(response: Response): Response {
     const headers = new Headers(response.headers);
     headers.set("Access-Control-Allow-Origin", "*");
     headers.set("Access-Control-Allow-Methods", "POST, OPTIONS");
-    headers.set("Access-Control-Allow-Headers", "Content-Type");
+    headers.set("Access-Control-Allow-Headers", "authorization, x-client-info, apikey, content-type");
 
     return new Response(response.body, {
         status: response.status,

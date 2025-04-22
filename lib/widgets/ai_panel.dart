@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/ai_service.dart';
 
+enum SettingType { text, character, organization, terminology }
+
 class AIPanel extends StatefulWidget {
   final Map<String, dynamic> settingsData;
   final Map<String, dynamic> plotData;

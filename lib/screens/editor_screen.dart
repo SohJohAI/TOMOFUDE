@@ -15,8 +15,6 @@ import '../widgets/novel_editor.dart';
 import '../widgets/emotion_panel.dart';
 import 'work_list_screen.dart';
 
-enum SettingType { text, character, organization, terminology }
-
 class NovelEditorScreen extends StatefulWidget {
   final Novel novel;
   const NovelEditorScreen({Key? key, required this.novel}) : super(key: key);
