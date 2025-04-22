@@ -1,20 +1,15 @@
 // supabase/functions/claude-gateway/index.ts  ※Deno 1.40+
 import { serve } from "https://deno.land/std@0.204.0/http/server.ts";
 
-function withCors(r: Response) {
-  return new Response(r.body, {
-    ...r,
-    headers: {
-      ...r.headers,
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "POST,OPTIONS",
-      "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-    },
-  });
-}
+const cors = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") return withCors(new Response(null, { status: 204 }));
+  // OPTIONS プリフライト
+  if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
 
   try {
     const { messages, system = "", max_tokens = 1024 } = await req.json();
@@ -36,22 +31,27 @@ serve(async (req) => {
     });
 
     if (!anthropicRes.ok) {
-      return withCors(new Response(await anthropicRes.text(), {
+      return new Response(await anthropicRes.text(), {
         status: anthropicRes.status,
         statusText: anthropicRes.statusText,
-      }));
+        headers: cors,
+      });
     }
 
-    return withCors(new Response(anthropicRes.body, {
-        status: anthropicRes.status,
-        headers: {
-          "content-type": "text/event-stream", // ← ここ重要
-          "cache-control": "no-cache",
-        },
-      }));
+    return new Response(anthropicRes.body, {
+      status: anthropicRes.status,
+      headers: {
+        ...cors,
+        "content-type": "text/event-stream", // ← ここ重要
+        "cache-control": "no-cache",
+      },
+    });
       
   } catch (e) {
     console.error(e);
-    return withCors(new Response(JSON.stringify({ error: "Edge Function error", detail: String(e) }), { status: 500 }));
+    return new Response(JSON.stringify({ error: "Edge Function error", detail: String(e) }), { 
+      status: 500, 
+      headers: cors 
+    });
   }
 });
