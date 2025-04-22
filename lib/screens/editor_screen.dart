@@ -1,8 +1,9 @@
-// ✅ REVISED: NovelEditorScreen – now includes AI‑powered resource generation button
-//            and pop‑up panels for 設定情報, プロット, 展開候補, 感情分析, レビュー.
+// ✅ CLEANED: NovelEditorScreen – AI‑powered resource generation + preview panes
 // IMPORTANT: replace <PROJECT_ID> with your Supabase project id.
 
 import 'dart:async';
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -33,9 +34,12 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
   final Map<String, String> _reviewData = {
     'reader': '',
     'editor': '',
-    'jury': ''
+    'jury': '',
   };
   EmotionAnalysis? _emotionAnalysis;
+
+  // AI Docs preview markdown
+  String _aiDocsPreview = '';
 
   bool _busy = false;
   String _busyMessage = '';
@@ -66,21 +70,14 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
   }
 
   // ---------------------------------------------------------------------------
-  // AI resource generation
+  // AI resource generation (settings / plot / suggestions / emotion / reviews)
   // ---------------------------------------------------------------------------
   Future<void> _generateResources() async {
     if (_busy) return;
-<<<<<<< HEAD
 
-    // 既存資料の入力を確認するダイアログを表示
-    final existingDocs = await _showExistingDocsDialog();
-    if (existingDocs == null) return; // キャンセルされた場合
-
-=======
->>>>>>> parent of 8de1867 (修正６)
     setState(() {
       _busy = true;
-      _busyMessage = 'AIが資料を生成中…';
+      _busyMessage = 'AI が資料を生成中…';
     });
     try {
       final content = _contentController.text;
@@ -88,41 +85,41 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
           _titleController.text.isEmpty ? 'Untitled' : _titleController.text;
 
       // 🔮 1) 設定情報
-      _settingsData.clear();
-      _settingsData.addAll(
-          await _aiService.generateSettings(content, contentType: novelTitle));
+      _settingsData
+        ..clear()
+        ..addAll(await _aiService.generateSettings(content,
+            contentType: novelTitle));
 
       // 🔮 2) プロット
-      _plotData.clear();
-      _plotData.addAll(await _aiService.generatePlotAnalysis(content,
-          newContent: novelTitle));
+      _plotData
+        ..clear()
+        ..addAll(await _aiService.generatePlotAnalysis(content,
+            newContent: novelTitle));
 
       // 🔮 3) 展開候補
       _candidates.clear();
-      final suggestions = await _aiService.generateContinuations(content,
+      _candidates['次の展開候補'] = await _aiService.generateContinuations(content,
           newContent: novelTitle);
-      _candidates['次の展開候補'] = suggestions;
 
       // 🔮 4) 感情分析
-      final emotionData = await _aiService.analyzeEmotion(
-        content,
-        aiDocs: novelTitle,
-      );
+      final emotionData =
+          await _aiService.analyzeEmotion(content, aiDocs: novelTitle);
       _emotionAnalysis = EmotionAnalysis.fromJson(emotionData);
 
       // 🔮 5) レビュー
-      _reviewData.updateAll((k, v) => '');
+      _reviewData.updateAll((k, _) => '');
       _reviewData.addAll(await _aiService.generateReview(content));
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('AI資料を生成しました')),
+        const SnackBar(content: Text('AI 資料を生成しました')),
       );
     } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('生成失敗: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('生成失敗: $e')),
+        );
+      }
     } finally {
       if (mounted) {
         setState(() {
@@ -133,140 +130,63 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
     }
   }
 
-<<<<<<< HEAD
-  // 既存資料入力ダイアログを表示
-  Future<Map<String, String>?> _showExistingDocsDialog() async {
-    final settingsController = TextEditingController();
-    final plotController = TextEditingController();
-    final emotionController = TextEditingController();
-
-    return showDialog<Map<String, String>>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('既存の資料を入力しますか？'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: settingsController,
-                decoration: const InputDecoration(labelText: '設定情報'),
-                maxLines: 3,
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: plotController,
-                decoration: const InputDecoration(labelText: 'プロット情報'),
-                maxLines: 3,
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: emotionController,
-                decoration: const InputDecoration(labelText: '感情分析情報'),
-                maxLines: 3,
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, null),
-            child: const Text('キャンセル'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, {}), // 空のマップを返す（既存資料なし）
-            child: const Text('資料なしで生成'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, {
-              'settingInfo': settingsController.text,
-              'plotInfo': plotController.text,
-              'emotionInfo': emotionController.text,
-            }),
-            child: const Text('この資料で生成'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // AI執筆支援資料を生成
+  // ---------------------------------------------------------------------------
+  // AI 執筆支援ドキュメント (setting / plot / emotion を組み合わせる資料)
+  // ---------------------------------------------------------------------------
   Future<void> _generateAIDocs({
     String? settingInfo,
     String? plotInfo,
     String? emotionInfo,
   }) async {
+    if (_busy) return;
     setState(() {
-      _busyMessage = 'AI執筆支援資料を生成中…';
+      _busy = true;
+      _busyMessage = 'AI 執筆支援資料を生成中…';
     });
 
     try {
       final content = _contentController.text;
 
-      // 設定情報、プロット情報、感情分析情報を使用
+      // 優先順位: 引数 > 既に生成済みのデータ > null
       final settingInfoToUse = settingInfo ??
           (_settingsData.isNotEmpty ? jsonEncode(_settingsData) : null);
-
       final plotInfoToUse =
           plotInfo ?? (_plotData.isNotEmpty ? jsonEncode(_plotData) : null);
-
       final emotionInfoToUse = emotionInfo ??
           (_emotionAnalysis != null
               ? jsonEncode(_emotionAnalysis!.toJson())
               : null);
 
-      // AIドキュメントを生成
       _aiDocsPreview = await _aiService.generateAIDocs(
         content,
         settingInfo: settingInfoToUse,
         plotInfo: plotInfoToUse,
         emotionInfo: emotionInfoToUse,
       );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('AI 執筆支援資料を生成しました')),
+        );
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('AI執筆支援資料の生成に失敗: $e')),
+          SnackBar(content: Text('AI 執筆支援資料の生成に失敗: $e')),
         );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          _busyMessage = '';
+        });
       }
     }
   }
 
-  // AI執筆支援資料のプレビューを表示
-  void _showAIDocsPreview() {
-    _openDialog(
-      'AI執筆支援資料',
-      Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              children: [
-                ElevatedButton.icon(
-                  onPressed: () => _generateAIDocs(),
-                  icon: const Icon(Icons.refresh),
-                  label: const Text('再生成'),
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: _aiDocsPreview.isEmpty
-                ? const Center(child: Text('資料がまだ生成されていません'))
-                : Markdown(
-                    data: _aiDocsPreview,
-                    selectable: true,
-                    padding: const EdgeInsets.all(16),
-                  ),
-          ),
-        ],
-      ),
-    );
-  }
-
-=======
->>>>>>> parent of 8de1867 (修正６)
   // ---------------------------------------------------------------------------
-  // Helpers – modal windows
+  // Modal helpers
   // ---------------------------------------------------------------------------
   void _openDialog(String title, Widget body) {
     showModalBottomSheet(
@@ -289,9 +209,8 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
                   Text(title, style: Theme.of(context).textTheme.titleLarge),
                   const Spacer(),
                   IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(context),
-                  ),
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context)),
                 ],
               ),
             ),
@@ -305,48 +224,51 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
 
   void _showSettings() => _openDialog(
         '設定情報',
-        ListView(
-          padding: const EdgeInsets.all(16),
-          children: _settingsData.entries
-              .map((e) => ListTile(
-                    title: Text(e.key),
-                    subtitle: Text(e.value.toString()),
-                  ))
-              .toList(),
-        ),
+        _settingsData.isEmpty
+            ? const Center(child: Text('未生成'))
+            : ListView(
+                padding: const EdgeInsets.all(16),
+                children: _settingsData.entries
+                    .map((e) => ListTile(
+                        title: Text(e.key), subtitle: Text(e.value.toString())))
+                    .toList(),
+              ),
       );
 
   void _showPlot() => _openDialog(
         'プロット',
-        ListView(
-          padding: const EdgeInsets.all(16),
-          children: _plotData.entries
-              .map((e) => ListTile(
-                    title: Text(e.key),
-                    subtitle: Text(e.value.toString()),
-                  ))
-              .toList(),
-        ),
+        _plotData.isEmpty
+            ? const Center(child: Text('未生成'))
+            : ListView(
+                padding: const EdgeInsets.all(16),
+                children: _plotData.entries
+                    .map((e) => ListTile(
+                        title: Text(e.key), subtitle: Text(e.value.toString())))
+                    .toList(),
+              ),
       );
 
   void _showCandidates() => _openDialog(
         '展開候補',
-        ListView(
-          padding: const EdgeInsets.all(16),
-          children: _candidates.entries
-              .expand((e) => [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: Text('★ ${e.key}',
-                          style: Theme.of(context).textTheme.titleMedium),
-                    ),
-                    ...e.value.map((c) => Padding(
-                          padding: const EdgeInsets.only(left: 12, bottom: 8),
-                          child: Text('• $c'),
-                        ))
-                  ])
-              .toList(),
-        ),
+        _candidates.isEmpty
+            ? const Center(child: Text('未生成'))
+            : ListView(
+                padding: const EdgeInsets.all(16),
+                children: _candidates.entries
+                    .expand((e) => [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            child: Text('★ ${e.key}',
+                                style: Theme.of(context).textTheme.titleMedium),
+                          ),
+                          ...e.value.map((c) => Padding(
+                                padding:
+                                    const EdgeInsets.only(left: 12, bottom: 8),
+                                child: Text('• $c'),
+                              ))
+                        ])
+                    .toList(),
+              ),
       );
 
   void _showEmotion() => _openDialog(
@@ -365,16 +287,46 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
 
   void _showReviews() => _openDialog(
         'レビュー',
-        ListView(
-          padding: const EdgeInsets.all(16),
-          children: _reviewData.entries
-              .map((e) => ListTile(
-                    title: Text(e.key),
-                    subtitle: Text(e.value),
-                  ))
-              .toList(),
+        _reviewData.values.every((v) => v.isEmpty)
+            ? const Center(child: Text('未生成'))
+            : ListView(
+                padding: const EdgeInsets.all(16),
+                children: _reviewData.entries
+                    .map((e) =>
+                        ListTile(title: Text(e.key), subtitle: Text(e.value)))
+                    .toList(),
+              ),
+      );
+
+  void _showAIDocsPreview() => _openDialog(
+        'AI 執筆支援資料',
+        Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: ElevatedButton.icon(
+                onPressed: () => _generateAIDocs(),
+                icon: const Icon(Icons.refresh),
+                label: const Text('再生成'),
+              ),
+            ),
+            Expanded(
+              child: _aiDocsPreview.isEmpty
+                  ? const Center(child: Text('資料がまだ生成されていません'))
+                  : SingleChildScrollView(
+                      padding: const EdgeInsets.all(16),
+                      child: SelectableText(_aiDocsPreview),
+                    ),
+            ),
+          ],
         ),
       );
+
+  void _importFromPlotBooster() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('プロットブースター連携は未実装です')),
+    );
+  }
 
   // ---------------------------------------------------------------------------
   // UI
@@ -397,7 +349,7 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _generateResources,
-        label: const Text('AI資料生成'),
+        label: const Text('AI 資料生成'),
         icon: const Icon(Icons.auto_awesome),
       ),
       body: Stack(
@@ -438,16 +390,9 @@ class _NovelEditorScreenState extends State<NovelEditorScreen> {
                         enabled: _emotionAnalysis != null),
                     _QuickButton('レビュー', _showReviews,
                         enabled: _reviewData.values.any((v) => v.isNotEmpty)),
-<<<<<<< HEAD
-                    _QuickButton('AI執筆支援資料', _showAIDocsPreview,
+                    _QuickButton('AI 執筆支援資料', _showAIDocsPreview,
                         enabled: _aiDocsPreview.isNotEmpty),
-<<<<<<< HEAD
-                    _QuickButton('プロットブースター', _importFromPlotBooster,
-                        enabled: true),
-=======
->>>>>>> parent of 8de1867 (修正６)
-=======
->>>>>>> parent of b11a7f4 (UI修正)
+                    _QuickButton('プロットブースター', _importFromPlotBooster),
                   ],
                 ),
               ),
