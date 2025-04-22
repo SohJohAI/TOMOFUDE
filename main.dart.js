@@ -106684,7 +106684,7 @@ return A.t($async$Ae,r)},
 ms(a,b){return this.aqI(a,b)},
 aqI(a,b){var s=0,r=A.u(t.a),q,p=2,o=[],n,m,l,k,j,i,h,g,f,e,d
 var $async$ms=A.p(function(c,a0){if(c===1){o.push(a0)
-s=p}while(true)switch(s){case 0:g=A.dW("https://awbrfvdyokwkpwrqmfwd.supabase.co/functions/v1/claude-gateway",0,null)
+s=p}while(true)switch(s){case 0:g=A.dW("https://tomofudeserver-production.up.railway.app/claude",0,null)
 f=t.N
 e=A.x(f,t.z)
 e.m(0,"type",b)
