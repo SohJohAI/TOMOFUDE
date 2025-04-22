@@ -95,7 +95,7 @@ serve(async (req) => {
     body: JSON.stringify({
       model,
       max_tokens: max_tokens ?? 1024,
-      stream,
+      stream: false, 
       system,
       messages: [{ role: "user", content }],
     }),
@@ -111,12 +111,21 @@ serve(async (req) => {
 
   // ─────────── クライアントへ転送 ───────────
   // stream = true なら SSE, false なら普通の JSON
+  const responseHeaders = {
+    ...cors,
+    "content-type": stream ? "text/event-stream" : "application/json",
+    "cache-control": "no-cache",
+  };
+
+  // ストリーミングの場合、接続維持とチャンク転送を明示的にヘッダーに追加
+  // Deno は通常自動で処理するが、明示することで安定性が増す場合がある
+  if (stream) {
+    responseHeaders["connection"] = "keep-alive";
+    responseHeaders["transfer-encoding"] = "chunked";
+  }
+
   return new Response(anthropicRes.body, {
     status: anthropicRes.status,
-    headers: {
-      ...cors,
-      "content-type": stream ? "text/event-stream" : "application/json",
-      "cache-control": "no-cache",
-    },
+    headers: responseHeaders,
   });
 });
