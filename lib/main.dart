@@ -15,6 +15,7 @@ import 'screens/home_screen.dart';
 import 'screens/transaction_law_screen.dart';
 import 'screens/subscription_screen.dart';
 import 'screens/faq_screen.dart';
+import 'examples/claude_ai_service_test.dart';
 import 'services/service_locator.dart';
 
 void main() async {
@@ -88,6 +89,7 @@ class TomofudeApp extends StatelessWidget {
         '/transaction_law': (context) => const TransactionLawScreen(),
         '/subscription': (context) => const SubscriptionScreen(),
         '/faq': (context) => const FAQScreen(),
+        '/api_test': (context) => const ClaudeAIServiceTest(),
       },
       initialRoute: '/',
     );

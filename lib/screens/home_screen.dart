@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../examples/claude_ai_service_test.dart';
 
 /// A screen that displays the homepage of the app.
 ///
@@ -70,6 +71,23 @@ class HomeScreen extends StatelessWidget {
                   Navigator.of(context).pushNamed('/auth');
                 },
                 child: const Text('ログイン'),
+              ),
+              const SizedBox(width: 8),
+              // Claude AI Service テスト用ボタン
+              OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const ClaudeAIServiceTest(),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.bug_report),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: const BorderSide(color: Colors.white),
+                ),
+                label: const Text('API テスト'),
               ),
             ],
           ),
