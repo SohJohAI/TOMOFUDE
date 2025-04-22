@@ -27,7 +27,7 @@ serve(async (req) => {
         "anthropic-version": "2023-06-01", // 必須ヘッダー :contentReference[oaicite:0]{index=0}
       },
       body: JSON.stringify({
-        model: "claude-3.7-sonnet-2025-04-09",
+        model: "claude-3.7-sonnet-20250219",
         stream: true, // ← これ追加
         system,
         messages,
