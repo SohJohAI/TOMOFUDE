@@ -17,6 +17,11 @@ abstract class SupabaseServiceInterface {
   /// Get the Supabase public anonymous key
   String get supabaseAnonKey;
 
+  /// Ensure the session is valid and refresh it if needed
+  /// Returns true if a valid session exists or was successfully refreshed
+  /// Returns false if no session exists or refresh failed
+  Future<bool> ensureValidSession();
+
   /// Sign in with email and password
   Future<AuthResponse> signInWithEmailAndPassword(
       String email, String password);

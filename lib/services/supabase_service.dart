@@ -90,4 +90,35 @@ class SupabaseService implements SupabaseServiceInterface {
   Future<void> updateUserData(Map<String, dynamic> userData) async {
     await client.from('users').upsert(userData).eq('id', currentUser?.id ?? '');
   }
+
+  /// Ensure the session is valid and refresh it if needed
+  /// Returns true if a valid session exists or was successfully refreshed
+  /// Returns false if no session exists or refresh failed
+  @override
+  Future<bool> ensureValidSession() async {
+    final session = client.auth.currentSession;
+
+    if (session == null) {
+      print('SupabaseService: No session exists');
+      return false; // セッションなし
+    }
+
+    final expiresAt = session.expiresAt;
+    final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+
+    // 期限切れが近い場合（5分以内）にリフレッシュ
+    if (expiresAt != null && expiresAt - now < 300) {
+      try {
+        print('SupabaseService: Session expiring soon, refreshing...');
+        await client.auth.refreshSession();
+        print('SupabaseService: Session refreshed successfully');
+        return true;
+      } catch (e) {
+        print('SupabaseService: Session refresh error: $e');
+        return false;
+      }
+    }
+
+    return true; // 有効なセッションあり
+  }
 }

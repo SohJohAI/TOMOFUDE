@@ -19,6 +19,21 @@ class ClaudeAIService implements AIService {
   Future<dynamic> _postToClaude(
       String type, Map<String, dynamic> payload) async {
     try {
+      // Ensure session validity before making the request
+      try {
+        final sessionValid = await _supabaseService.ensureValidSession();
+        if (!sessionValid) {
+          developer.log('Failed to ensure valid session',
+              name: 'ClaudeAIService');
+          throw Exception(
+              'User not authenticated or session expired. Please log in again.');
+        }
+      } catch (e) {
+        developer.log('Error ensuring valid session: $e',
+            name: 'ClaudeAIService', error: e);
+        throw Exception('Authentication error: $e');
+      }
+
       developer.log('Sending request to Claude API: $type',
           name: 'ClaudeAIService');
 
@@ -74,7 +89,9 @@ class ClaudeAIService implements AIService {
   Future<Map<String, dynamic>> generateSettings(String content,
       {String? aiDocs, String? contentType}) async {
     final result = await _postToClaude('generateSettings', {
-      'content': content,
+      'messages': [
+        {'role': 'user', 'content': content}
+      ],
       'aiDocs': aiDocs,
       'contentType': contentType,
     });
@@ -85,7 +102,9 @@ class ClaudeAIService implements AIService {
   Future<Map<String, dynamic>> generatePlotAnalysis(String content,
       {String? aiDocs, String? newContent}) async {
     final result = await _postToClaude('generatePlotAnalysis', {
-      'content': content,
+      'messages': [
+        {'role': 'user', 'content': content}
+      ],
       'aiDocs': aiDocs,
       'newContent': newContent,
     });
@@ -95,7 +114,9 @@ class ClaudeAIService implements AIService {
   @override
   Future<Map<String, String>> generateReview(String analysisContent) async {
     final result = await _postToClaude('generateReview', {
-      'analysisContent': analysisContent,
+      'messages': [
+        {'role': 'user', 'content': analysisContent}
+      ],
     });
     return Map<String, String>.from(result);
   }
@@ -104,7 +125,9 @@ class ClaudeAIService implements AIService {
   Future<List<String>> generateContinuations(String content,
       {String? aiDocs, String? newContent, String? settingInfo}) async {
     final result = await _postToClaude('generateContinuations', {
-      'content': content,
+      'messages': [
+        {'role': 'user', 'content': content}
+      ],
       'aiDocs': aiDocs,
       'newContent': newContent,
       'settingInfo': settingInfo,
@@ -116,8 +139,9 @@ class ClaudeAIService implements AIService {
   Future<String> expandSuggestion(String content, String suggestion,
       {String? aiDocs, String? recentContent}) async {
     final result = await _postToClaude('expandSuggestion', {
-      'content': content,
-      'suggestion': suggestion,
+      'messages': [
+        {'role': 'user', 'content': '$content\n\nSuggestion: $suggestion'}
+      ],
       'aiDocs': aiDocs,
       'recentContent': recentContent,
     });
@@ -128,7 +152,9 @@ class ClaudeAIService implements AIService {
   Future<Map<String, dynamic>> analyzeEmotion(String content,
       {String? aiDocs}) async {
     final result = await _postToClaude('analyzeEmotion', {
-      'content': content,
+      'messages': [
+        {'role': 'user', 'content': content}
+      ],
       'aiDocs': aiDocs,
     });
     return result;
@@ -137,11 +163,16 @@ class ClaudeAIService implements AIService {
   @override
   Future<String> generateAIDocs(String content,
       {String? settingInfo, String? plotInfo, String? emotionInfo}) async {
+    // Combine all information into a single message
+    String fullContent = content;
+    if (settingInfo != null) fullContent += '\n\nSetting Info: $settingInfo';
+    if (plotInfo != null) fullContent += '\n\nPlot Info: $plotInfo';
+    if (emotionInfo != null) fullContent += '\n\nEmotion Info: $emotionInfo';
+
     final result = await _postToClaude('generateAIDocs', {
-      'content': content,
-      'settingInfo': settingInfo,
-      'plotInfo': plotInfo,
-      'emotionInfo': emotionInfo,
+      'messages': [
+        {'role': 'user', 'content': fullContent}
+      ],
     });
     return result['markdown'];
   }
@@ -155,6 +186,21 @@ class ClaudeAIService implements AIService {
       List<Map<String, String>> Function(String) buildMessageList,
       {String Function()? buildSystemPrompt}) async {
     try {
+      // Ensure session validity before making the request
+      try {
+        final sessionValid = await _supabaseService.ensureValidSession();
+        if (!sessionValid) {
+          developer.log('Failed to ensure valid session',
+              name: 'ClaudeAIService');
+          throw Exception(
+              'User not authenticated or session expired. Please log in again.');
+        }
+      } catch (e) {
+        developer.log('Error ensuring valid session: $e',
+            name: 'ClaudeAIService', error: e);
+        throw Exception('Authentication error: $e');
+      }
+
       developer.log('Sending request to Supabase Claude Gateway',
           name: 'ClaudeAIService');
 
@@ -202,22 +248,38 @@ class ClaudeAIService implements AIService {
     String model = "claude-3-sonnet-20240229", // Or your preferred default
     int maxTokens = 1024,
   }) async* {
+    // Check and ensure session validity before making the request
+    try {
+      final sessionValid = await _supabaseService.ensureValidSession();
+      if (!sessionValid) {
+        developer.log('Failed to ensure valid session',
+            name: 'ClaudeAIService');
+        throw Exception(
+            'User not authenticated or session expired. Please log in again.');
+      }
+    } catch (e) {
+      developer.log('Error ensuring valid session: $e',
+          name: 'ClaudeAIService', error: e);
+      throw Exception('Authentication error: $e');
+    }
+
     // Use async* for streams
     final uri = Uri.parse(_endpoint);
     final client = http.Client();
     final request = http.Request('POST', uri);
 
+    // Get the access token after ensuring session is valid
     final accessToken =
         _supabaseService.client.auth.currentSession?.accessToken;
     // Use the public anon key from the Supabase service interface
     final anonKey = _supabaseService.supabaseAnonKey;
 
     if (accessToken == null) {
-      // It's often better to let Supabase handle token refresh automatically,
-      // but check if the session is valid. If not, throw an error.
-      developer.log('User session invalid or expired.',
+      // This should not happen after ensureValidSession, but check anyway
+      developer.log('User session invalid or expired after refresh attempt.',
           name: 'ClaudeAIService');
-      throw Exception('User not authenticated or session expired.');
+      throw Exception(
+          'User not authenticated or session expired after refresh attempt.');
     }
     if (anonKey == null) {
       developer.log('Supabase anon key is missing.', name: 'ClaudeAIService');
@@ -244,8 +306,7 @@ class ClaudeAIService implements AIService {
     };
 
     request.body = jsonEncode(requestBody);
-    developer.log('Streaming request body: ${request.body}',
-        name: 'ClaudeAIService');
+    developer.log('📤 REQUEST >>> ${request.body}', name: 'ClaudeAIService');
 
     try {
       final response = await client
@@ -255,23 +316,20 @@ class ClaudeAIService implements AIService {
       developer.log('Streaming response status: ${response.statusCode}',
           name: 'ClaudeAIService');
 
-      if (response.statusCode == 200) {
-        // Yield chunks from the stream
-        await for (final chunk in response.stream.transform(utf8.decoder)) {
-          developer.log('Received stream chunk: $chunk',
-              name: 'ClaudeAIService'); // Log received chunks
-          yield chunk;
-        }
-        developer.log('Stream finished.', name: 'ClaudeAIService');
-      } else {
-        // Handle non-200 responses (errors)
+      if (response.statusCode != 200) {
         final errorBody = await response.stream.bytesToString();
-        developer.log(
-            'Error streaming from Claude: ${response.statusCode} - $errorBody',
-            name: 'ClaudeAIService');
+        developer.log('❌ ERROR BODY <<< $errorBody', name: 'ClaudeAIService');
         throw Exception(
             'Claude streaming error ${response.statusCode}: $errorBody');
       }
+
+      // Yield chunks from the stream
+      await for (final chunk in response.stream.transform(utf8.decoder)) {
+        developer.log('Received stream chunk: $chunk',
+            name: 'ClaudeAIService'); // Log received chunks
+        yield chunk;
+      }
+      developer.log('Stream finished.', name: 'ClaudeAIService');
     } catch (e, stackTrace) {
       // Catch stackTrace
       developer.log('Exception during streaming: $e\n$stackTrace',

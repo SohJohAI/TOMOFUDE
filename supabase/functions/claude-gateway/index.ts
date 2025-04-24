@@ -1,10 +1,10 @@
 // supabase/functions/claude-gateway/index.ts
 //
-// Claude 3 Messages API を叩く Supabase Edge Function
+// Claude 3 Messages API を叩く Supabase Edge Function
 // -----------------------------------------------
 // 期待する POST ボディ:
 // {
-//   "content": "ユーザーが送るプロンプト文字列",
+//   "messages": [{"role": "user", "content": "ユーザーが送るプロンプト文字列"}],
 //   "model"?: "claude-3-sonnet-20240229", // 省略時は sonnet
 //   "system"?: "システムプロンプト文字列",          // 任意
 //   "max_tokens"?: number,                         // 任意
@@ -36,7 +36,7 @@ async function safeJson<T>(req: Request): Promise<T | Response> {
 }
 
 interface GatewayBody {
-  content: string;
+  messages: Array<{role: string, content: string}>;
   model?: string;
   system?: string;
   max_tokens?: number;
@@ -44,10 +44,11 @@ interface GatewayBody {
 }
 
 serve(async (req) => {
-  // ─────────── OPTIONS (CORS プリフライト) ───────────
-  if (req.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers: cors });
-  }
+  try {
+    // ─────────── OPTIONS (CORS プリフライト) ───────────
+    if (req.method === "OPTIONS") {
+      return new Response(null, { status: 204, headers: cors });
+    }
 
   // ─────────── バリデーション ───────────
   if (req.method !== "POST") {
@@ -57,20 +58,21 @@ serve(async (req) => {
     );
   }
 
-  const parsed = await safeJson<GatewayBody>(req);
-  if (parsed instanceof Response) return parsed; // JSON parse error
+  // ① 受信直後。body を丸ごと吐く
+  const reqBody = await req.json();
+  console.log("📥 GATEWAY RECEIVED >>>", JSON.stringify(reqBody, null, 2));
 
   const {
-    content,
+    messages,
     model = "claude-3-7-sonnet-20250219",
     system,
     max_tokens,
     stream = true,
-  } = parsed;
+  } = reqBody;
 
-  if (!content) {
+  if (!messages || messages.length === 0) {
     return new Response(
-      JSON.stringify({ error: "`content` is required" }),
+      JSON.stringify({ error: "`messages` is required" }),
       { status: 400, headers: { ...cors, "content-type": "application/json" } },
     );
   }
@@ -85,6 +87,16 @@ serve(async (req) => {
     );
   }
 
+  // ② Claude に投げる直前で中身を確認
+  const claudePayload = {
+    model,
+    max_tokens: max_tokens ?? 1024,
+    stream,
+    system,
+    messages,
+  };
+  console.log("🚀 FORWARD TO CLAUDE >>>", JSON.stringify(claudePayload, null, 2));
+
   const anthropicRes = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
@@ -92,21 +104,16 @@ serve(async (req) => {
       "anthropic-version": "2023-06-01",
       "x-api-key": apiKey,
     },
-    body: JSON.stringify({
-      model,
-      max_tokens: max_tokens ?? 1024,
-      stream: false, 
-      system,
-      messages: [{ role: "user", content }],
-    }),
+    body: JSON.stringify(claudePayload),
   });
 
+  // ③ 失敗時のレスポンスに body も同梱
   if (!anthropicRes.ok) {
     const errText = await anthropicRes.text();
-    return new Response(errText, {
-      status: anthropicRes.status,
-      headers: { ...cors, "content-type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ error: errText, forwardedBody: claudePayload }),
+      { status: anthropicRes.status, headers: { ...cors, "content-type": "application/json" } },
+    );
   }
 
   // ─────────── クライアントへ転送 ───────────
@@ -124,8 +131,15 @@ serve(async (req) => {
     responseHeaders["transfer-encoding"] = "chunked";
   }
 
-  return new Response(anthropicRes.body, {
-    status: anthropicRes.status,
-    headers: responseHeaders,
-  });
+    return new Response(anthropicRes.body, {
+      status: anthropicRes.status,
+      headers: responseHeaders,
+    });
+  } catch (err) {
+    console.error("❌ EDGE EXCEPTION", err);
+    return new Response(
+      JSON.stringify({ error: String(err), body: reqBody }),
+      { status: 400, headers: { ...cors, "content-type": "application/json" } },
+    );
+  }
 });
