@@ -14,12 +14,14 @@ This guide explains how to set up the required tables in your Supabase PostgreSQ
 This will create the following tables with appropriate Row Level Security (RLS) policies:
 
 ### users Table
+
 - `id` (UUID, Primary Key, auto-generated)
 - `email` (text, unique)
 - `plan` (text, default 'free')
 - `points` (integer, default 300)
 
 ### projects Table
+
 - `id` (UUID, Primary Key, auto-generated)
 - `user_id` (UUID, references users.id)
 - `title` (text)
@@ -27,6 +29,7 @@ This will create the following tables with appropriate Row Level Security (RLS) 
 - `created_at` (timestamp, auto-generated)
 
 ### plot_data Table
+
 - `id` (UUID, Primary Key, auto-generated)
 - `project_id` (UUID, references projects.id)
 - `type` (text) - examples: setting, plot, scene
@@ -72,8 +75,8 @@ await SupabaseExamples.insertData('projects', {
 
 // Get all projects for current user
 final userProjects = await SupabaseExamples.queryData(
-  'projects', 
-  'user_id', 
+  'projects',
+  'user_id',
   supabaseService.currentUser?.id
 );
 
@@ -99,8 +102,8 @@ await SupabaseExamples.insertData('plot_data', {
 
 // Get all plot data for a project
 final plotData = await SupabaseExamples.queryData(
-  'plot_data', 
-  'project_id', 
+  'plot_data',
+  'project_id',
   projectId
 );
 

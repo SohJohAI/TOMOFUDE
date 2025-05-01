@@ -39,7 +39,8 @@ supabase functions deploy claude-gateway
 ```
 
 デプロイが成功すると、以下のようなURLが表示されます：
-```
+
+```txt
 https://[project-id].functions.supabase.co/claude-gateway
 ```
 
@@ -96,7 +97,7 @@ List<String> continuations = await aiService.generateContinuations(novelText);
 ```dart
 // 選択した候補を展開して段落にする
 String expandedText = await aiService.expandSuggestion(
-  novelText, 
+  novelText,
   "彼女は深く息を吸い込み、決意を固めた。これが最後のチャンスだと分かっていた。"
 );
 

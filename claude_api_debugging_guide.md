@@ -90,6 +90,7 @@ You can use this as a reference for implementing proper error handling in your o
 ### Edge Function
 
 1. Update your Edge Function with the enhanced logging:
+
    ```bash
    cd supabase/functions/claude-gateway
    supabase functions deploy claude-gateway
@@ -106,6 +107,7 @@ You can use this as a reference for implementing proper error handling in your o
 By following this systematic approach and using the provided tools, you should be able to quickly identify and fix the cause of 400 errors when using the Claude API.
 
 Remember that most 400 errors are due to:
+
 1. Incorrect request format
 2. Authentication issues
 3. Parameter type mismatches

@@ -1,4 +1,12 @@
 {
+  "files.autoSave": "afterDelay",
+  "editor.formatOnSave": true,
+  "[markdown]": {
+    "editor.defaultFormatter": "DavidAnson.vscode-markdownlint"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "denoland.vscode-deno"
+  },
   "deno.enablePaths": [
     "supabase/functions"
   ],
@@ -18,7 +26,4 @@
     "http",
     "net"
   ],
-  "[typescript]": {
-    "editor.defaultFormatter": "denoland.vscode-deno"
-  }
 }

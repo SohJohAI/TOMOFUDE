@@ -5,6 +5,7 @@ This Edge Function serves as a middleware between the frontend and Claude API, p
 ## Functionality
 
 The function:
+
 1. Accepts a POST request with a JSON body containing a `prompt` field
 2. Forwards the request to Claude API with proper authentication
 3. Returns Claude's response back to the client

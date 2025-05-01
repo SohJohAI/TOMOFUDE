@@ -43,22 +43,26 @@ Stripeを使用して月額サブスクリプションプラン（梅・竹・�
 ### 2.2 Supabase Functionsの設定
 
 1. Supabase CLIをインストール（まだの場合）
+
    ```bash
    npm install -g supabase
    ```
 
 2. ローカル開発環境を設定
+
    ```bash
    supabase login
    supabase init
    ```
 
 3. Edge Functionをデプロイ
+
    ```bash
    supabase functions deploy stripe-webhook --project-ref [YOUR_SUPABASE_PROJECT_ID]
    ```
 
 4. 環境変数を設定
+
    ```bash
    supabase secrets set STRIPE_SECRET_KEY=sk_xxx --project-ref [YOUR_SUPABASE_PROJECT_ID]
    supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_xxx --project-ref [YOUR_SUPABASE_PROJECT_ID]
@@ -67,6 +71,7 @@ Stripeを使用して月額サブスクリプションプラン（梅・竹・�
 ### 2.3 アプリケーションの設定
 
 1. `lib/services/stripe_service.dart`を編集して、Stripeの公開可能キーを設定
+
    ```dart
    Stripe.publishableKey = kReleaseMode
        ? 'pk_live_your_publishable_key' // 本番環境用キー
@@ -74,6 +79,7 @@ Stripeを使用して月額サブスクリプションプラン（梅・竹・�
    ```
 
 2. バックエンドAPIのURLを設定
+
    ```dart
    _apiUrl = kReleaseMode
        ? 'https://your-production-api.com' // 本番環境用API URL
@@ -143,10 +149,13 @@ Stripeのテストモードでは、以下のテストカード情報を使用�
 
 1. [Stripe CLIをインストール](https://stripe.com/docs/stripe-cli)
 2. ローカル環境でWebhookをリッスン
+
    ```bash
    stripe listen --forward-to http://localhost:54321/functions/v1/stripe-webhook
    ```
+
 3. イベントをトリガー
+
    ```bash
    stripe trigger checkout.session.completed
    ```

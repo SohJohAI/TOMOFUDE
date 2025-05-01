@@ -7,12 +7,14 @@
 Supabase は PostgreSQL データベースをベースにした BaaS (Backend as a Service) で、Flutter アプリケーションから簡単にデータベース操作を行うことができます。このプロジェクトでは以下のテーブルが設定されています：
 
 ### users テーブル
+
 - id (UUID, Primary Key)
 - email (text, unique)
 - plan (text, default: 'free')
 - points (integer, default: 300)
 
 ### projects テーブル
+
 - id (UUID, Primary Key)
 - user_id (UUID, users.id と紐付け)
 - title (text)
@@ -20,6 +22,7 @@ Supabase は PostgreSQL データベースをベースにした BaaS (Backend as
 - created_at (timestamp)
 
 ### plot_data テーブル
+
 - id (UUID, Primary Key)
 - project_id (UUID, projects.id と紐付け)
 - type (text) - 例：setting、plot、scene
@@ -125,19 +128,19 @@ await supabase.from('projects').delete().eq('id', projectId);
 Future<String?> createProject(String title, String description) async {
   final supabase = Supabase.instance.client;
   final userId = supabase.auth.currentUser?.id;
-  
+
   if (userId == null) return null;
-  
+
   // UUIDの生成（オプション）
   final projectId = const Uuid().v4();
-  
+
   await supabase.from('projects').insert({
     'id': projectId, // 自動生成させる場合は省略可能
     'user_id': userId,
     'title': title,
     'description': description,
   });
-  
+
   return projectId;
 }
 
@@ -145,15 +148,15 @@ Future<String?> createProject(String title, String description) async {
 Future<List<Map<String, dynamic>>> getUserProjects() async {
   final supabase = Supabase.instance.client;
   final userId = supabase.auth.currentUser?.id;
-  
+
   if (userId == null) return [];
-  
+
   final response = await supabase
     .from('projects')
     .select()
     .eq('user_id', userId)
     .order('created_at', ascending: false);
-    
+
   return response;
 }
 
@@ -170,51 +173,51 @@ Future<void> deleteProject(String projectId) async {
 // プロットデータ追加
 Future<String?> addPlotData(String projectId, String type, String content) async {
   final supabase = Supabase.instance.client;
-  
+
   // UUIDの生成（オプション）
   final plotDataId = const Uuid().v4();
-  
+
   await supabase.from('plot_data').insert({
     'id': plotDataId, // 自動生成させる場合は省略可能
     'project_id': projectId,
     'type': type,
     'content': content,
   });
-  
+
   return plotDataId;
 }
 
 // プロジェクトのプロットデータ取得
 Future<List<Map<String, dynamic>>> getProjectPlotData(String projectId) async {
   final supabase = Supabase.instance.client;
-  
+
   final response = await supabase
     .from('plot_data')
     .select()
     .eq('project_id', projectId)
     .order('created_at', ascending: true);
-    
+
   return response;
 }
 
 // タイプ別プロットデータ取得
 Future<List<Map<String, dynamic>>> getPlotDataByType(String projectId, String type) async {
   final supabase = Supabase.instance.client;
-  
+
   final response = await supabase
     .from('plot_data')
     .select()
     .eq('project_id', projectId)
     .eq('type', type)
     .order('created_at', ascending: true);
-    
+
   return response;
 }
 
 // プロットデータ更新
 Future<void> updatePlotData(String plotDataId, String content) async {
   final supabase = Supabase.instance.client;
-  
+
   await supabase.from('plot_data').update({
     'content': content,
   }).eq('id', plotDataId);
@@ -223,7 +226,7 @@ Future<void> updatePlotData(String plotDataId, String content) async {
 // プロットデータ削除
 Future<void> deletePlotData(String plotDataId) async {
   final supabase = Supabase.instance.client;
-  
+
   await supabase.from('plot_data').delete().eq('id', plotDataId);
 }
 ```

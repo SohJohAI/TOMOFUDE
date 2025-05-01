@@ -5,13 +5,16 @@
 ## 主な機能
 
 ### AI小説執筆支援
+
 - **文章生成**: Claude AIを活用した高品質な文章生成
 - **続き提案**: 小説の続きを複数候補から選択
 - **文章展開**: 選択した候補を自然な段落に展開
 - **感情分析**: 小説の感情の流れを視覚化
 
 ### プロットブースター
+
 プロットブースターは、物語の骨子を対話的に作り上げる8ステップの支援ツールです。
+
 1. **ジャンル・作風**: 物語のジャンルと全体的な作風を決定
 2. **ログライン**: 物語の核となる一文を作成
 3. **テーマ**: 物語のテーマと伝えたいメッセージを設定
@@ -22,12 +25,14 @@
 8. **出力**: 完成したプロットの確認と出力
 
 ### ポイント決済システム
+
 - **ポイント管理**: 無料ポイントと有料ポイントの管理
 - **紹介コード**: 友達紹介プログラムによるポイント獲得
 - **ポイント履歴**: ポイントの獲得・消費履歴の表示
 - **月次リセット**: 無料ポイントの月次リセット機能
 
 ### サブスクリプションプラン
+
 - **梅プラン**: ¥500/月、500ポイント/月
 - **竹プラン**: ¥980/月、1000ポイント/月
 - **松プラン**: ¥1980/月、2000ポイント/月
@@ -46,29 +51,33 @@
 ## アーキテクチャの改善
 
 ### サービス層
+
 - **サービスロケーター**: `get_it`パッケージを使用した依存性注入の実装
 - **インターフェース分離**: サービスクラスにインターフェースを導入し、テスト容易性を向上
 - **エラーハンドリング**: 統一されたエラーハンドリングメカニズムの導入
 - **コード構造**: サービス層の一貫性を確保し、責任の分離を明確化
 
 ### Web対応の改善
+
 - **プラットフォーム分離**: Web版とネイティブ版の実装を明確に分離
 - **モックサービス**: Web版での一貫したモックサービスの提供
 - **互換性**: JavaScriptインターオペラビリティの改善
 
 ### セキュリティの強化
+
 - **エラーログ**: 適切なエラーログ記録と表示の実装
 - **例外処理**: すべてのサービスでの統一された例外処理
 - **ユーザーフィードバック**: エラー発生時のユーザーフレンドリーなメッセージ表示
 
 ### 開発者エクスペリエンスの向上
+
 - **ドキュメント**: コードコメントとREADMEの充実
 - **テスト容易性**: インターフェースを活用したモック可能な設計
 - **コード再利用**: 共通ロジックの抽出と再利用
 
 ## ディレクトリ構造
 
-```
+```txt
 lib/
   ├── models/                    # データモデル
   │   ├── chapter.dart           # 章モデル
@@ -145,13 +154,13 @@ supabase/
 2. プロジェクトのURLとAPIキーを取得します。
 3. `lib/services/supabase_service.dart`を編集して、Supabaseの認証情報を設定します。
 
-```dart
-/// Supabase URL - Replace with your Supabase URL
-static const String _supabaseUrl = 'YOUR_SUPABASE_URL';
+   ```dart
+   /// Supabase URL - Replace with your Supabase URL
+   static const String _supabaseUrl = 'YOUR_SUPABASE_URL';
 
-/// Supabase API Key - Replace with your Supabase API Key
-static const String _supabaseKey = 'YOUR_SUPABASE_API_KEY';
-```
+   /// Supabase API Key - Replace with your Supabase API Key
+   static const String _supabaseKey = 'YOUR_SUPABASE_API_KEY';
+   ```
 
 4. Supabase CLIをインストールし、Edge Functionsをデプロイします。
 
@@ -171,13 +180,13 @@ supabase init
 1. Claude APIキーを取得します。
 2. Supabase Edge Functionsに環境変数を設定します。
 
-```bash
-# 環境変数（API キー）の設定
-supabase secrets set CLAUDE_API_KEY=sk_xxx
+   ```bash
+   # 環境変数（API キー）の設定
+   supabase secrets set CLAUDE_API_KEY=sk_xxx
 
-# Edge Functionのデプロイ
-supabase functions deploy claude-gateway
-```
+   # Edge Functionのデプロイ
+   supabase functions deploy claude-gateway
+   ```
 
 3. `lib/services/claude_ai_service.dart`を編集して、Edge FunctionのURLを設定します。
 
@@ -195,16 +204,16 @@ final aiService = ClaudeAIService(
    - イベント: `checkout.session.completed`, `invoice.payment_succeeded`, `customer.subscription.deleted`
 3. Supabase Edge Functionsに環境変数を設定します。
 
-```bash
-supabase secrets set STRIPE_SECRET_KEY=sk_xxx --project-ref [YOUR_SUPABASE_PROJECT_ID]
-supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_xxx --project-ref [YOUR_SUPABASE_PROJECT_ID]
-```
+   ```bash
+   supabase secrets set STRIPE_SECRET_KEY=sk_xxx --project-ref [YOUR_SUPABASE_PROJECT_ID]
+   supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_xxx --project-ref [YOUR_SUPABASE_PROJECT_ID]
+   ```
 
 4. Edge Functionをデプロイします。
 
-```bash
-supabase functions deploy stripe-webhook --project-ref [YOUR_SUPABASE_PROJECT_ID]
-```
+   ```bash
+   supabase functions deploy stripe-webhook --project-ref [YOUR_SUPABASE_PROJECT_ID]
+   ```
 
 5. `lib/services/stripe_service.dart`を編集して、Stripeの公開可能キーを設定します。
 
