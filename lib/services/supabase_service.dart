@@ -3,12 +3,11 @@ import 'supabase_service_interface.dart';
 
 /// Implementation of the Supabase service
 class SupabaseService implements SupabaseServiceInterface {
-  /// Supabase URL - Replace with your Supabase URL
-  static const String _supabaseUrl = 'https://awbrfvdyokwkpwrqmfwd.supabase.co';
+  /// Get Supabase URL from environment variables
+  String get _supabaseUrl => supabaseUrl;
 
-  /// Supabase API Key - Replace with your Supabase API Key
-  static const String _supabaseKey =
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3YnJmdmR5b2t3a3B3cnFtZndkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ3MTcwODQsImV4cCI6MjA2MDI5MzA4NH0.e57mIz0nhuZpm-scH6k60w4ugzMNinaSthQTaeTZ2SQ';
+  /// Get Supabase API Key from environment variables
+  String get _supabaseKey => supabaseAnonKey;
 
   /// Singleton instance
   static final SupabaseService _instance = SupabaseService._internal();

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'models/plot_booster.dart';
 import 'providers/plot_booster_provider.dart';
 import 'services/plot_booster_service.dart';
 

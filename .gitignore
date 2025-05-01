@@ -61,3 +61,6 @@ app.*.map.json
 *.rar
 *.7z
 *.tar.gz
+
+# Environment files
+.env
