@@ -1,5 +1,3 @@
-import '../models/novel.dart';
-
 abstract class AIService {
   Future<List<String>> generateContinuations(String content,
       {String? aiDocs, String? newContent, String? settingInfo});

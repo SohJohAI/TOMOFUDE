@@ -2,7 +2,6 @@ import 'dart:html' as html;
 import 'dart:convert';
 import '../models/novel.dart';
 import '../models/work.dart';
-import '../models/chapter.dart';
 
 class ExportService {
   // 小説のエクスポート
@@ -99,7 +98,7 @@ class ExportService {
       <h1>$title</h1>
       <div class="author">著者: $authorName</div>
       <div class="date">作成日: $formattedDate</div>
-      
+
     $formattedParagraphs
     </body>
     </html>
@@ -253,9 +252,9 @@ class ExportService {
       <h1>$title</h1>
       <div class="author">著者: $authorName</div>
       <div class="date">作成日: $formattedDate</div>
-      
+
       ${work.description.isNotEmpty ? '<div class="description">${work.description}</div>' : ''}
-      
+
       $chaptersHtml
     </body>
     </html>

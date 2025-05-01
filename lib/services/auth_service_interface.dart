@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
-
 /// Interface for authentication services
 ///
 /// This interface defines the contract for authentication services,

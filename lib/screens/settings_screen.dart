@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
-import '../models/app_settings.dart';
 import 'transaction_law_screen.dart';
 
 class SettingsScreen extends StatefulWidget {

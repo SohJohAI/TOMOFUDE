@@ -1,10 +1,8 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:get_it/get_it.dart';
 
-import 'ai_service.dart';
 import 'ai_service_interface.dart';
 import 'claude_ai_service.dart';
-import 'auth_service.dart';
 import 'auth_service_interface.dart';
 import 'export_service.dart';
 import 'file_system_service.dart';

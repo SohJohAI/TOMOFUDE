@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import '../models/novel.dart';
 import '../services/preview_service.dart';
 import 'text_formatting_toolbar.dart';
 

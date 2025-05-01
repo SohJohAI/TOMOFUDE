@@ -3,7 +3,6 @@ import 'dart:convert';
 import '../models/novel.dart';
 import '../models/app_settings.dart';
 import '../models/work.dart';
-import '../models/chapter.dart';
 
 class StorageService {
   static const String novelListKey = 'novel_list';
