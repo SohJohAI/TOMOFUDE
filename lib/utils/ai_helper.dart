@@ -10,8 +10,8 @@ class AIHelper {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('AIアシスト'),
-        content: Container(
+        title: const Text('AIアシスト'),
+        content: SizedBox(
           width: double.maxFinite,
           child: SingleChildScrollView(
             child: Markdown(
@@ -25,7 +25,7 @@ class AIHelper {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: Text('閉じる'),
+            child: const Text('閉じる'),
           ),
         ],
       ),
@@ -56,20 +56,20 @@ class AIHelper {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text('AIアシストに失敗しました'),
+        title: const Text('AIアシストに失敗しました'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(errorMessage),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(detailMessage),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('閉じる'),
+            child: const Text('閉じる'),
           ),
         ],
       ),

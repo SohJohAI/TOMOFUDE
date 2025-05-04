@@ -250,21 +250,21 @@ class _SupabaseDatabaseServiceExampleState
                     ),
                     const SizedBox(height: 24),
                     // Code example section
-                    Card(
+                    const Card(
                       child: Padding(
-                        padding: const EdgeInsets.all(16.0),
+                        padding: EdgeInsets.all(16.0),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            const Text(
+                            Text(
                               'コード例',
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            const SizedBox(height: 16),
-                            const Text(
+                            SizedBox(height: 16),
+                            Text(
                               '// サービスロケーターからデータベースサービスを取得\n'
                               'final databaseService = serviceLocator<SupabaseDatabaseService>();\n\n'
                               '// プロジェクト作成\n'

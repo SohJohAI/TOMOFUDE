@@ -19,10 +19,10 @@ class Novel {
     DateTime? updatedAt,
   }) {
     return Novel(
-      id: this.id,
+      id: id,
       title: title ?? this.title,
       content: content ?? this.content,
-      createdAt: this.createdAt,
+      createdAt: createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }

@@ -59,7 +59,7 @@ class AuthService implements AuthServiceInterface {
   User? _currentUser;
 
   /// Auth state controller
-  final _authStateController = Stream<User?>.empty().asBroadcastStream();
+  final _authStateController = const Stream<User?>.empty().asBroadcastStream();
 
   /// Key for storing users in SharedPreferences
   static const String _usersKey = 'auth_users';

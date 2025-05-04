@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'providers/plot_booster_provider.dart';
-import 'services/plot_booster_service.dart';
 
 // ステップウィジェットのインポート
 import 'widgets/steps/step0_genre_style_widget.dart';
@@ -29,7 +28,6 @@ class _PlotBoosterPageState extends State<PlotBoosterPage> {
   final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey =
       GlobalKey<ScaffoldMessengerState>();
   bool _isAIAssistEnabled = true;
-  final PlotBoosterService _plotBoosterService = PlotBoosterService();
 
   @override
   void dispose() {
@@ -44,7 +42,7 @@ class _PlotBoosterPageState extends State<PlotBoosterPage> {
       });
       _pageController.animateToPage(
         _currentStep,
-        duration: Duration(milliseconds: 300),
+        duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
     }
@@ -57,7 +55,7 @@ class _PlotBoosterPageState extends State<PlotBoosterPage> {
       });
       _pageController.animateToPage(
         _currentStep,
-        duration: Duration(milliseconds: 300),
+        duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
     }
@@ -70,7 +68,7 @@ class _PlotBoosterPageState extends State<PlotBoosterPage> {
       });
       _pageController.animateToPage(
         step,
-        duration: Duration(milliseconds: 300),
+        duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
     }
@@ -96,12 +94,12 @@ class _PlotBoosterPageState extends State<PlotBoosterPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('最初からやり直しますか？'),
-        content: Text('入力内容はリセットされます。'),
+        title: const Text('最初からやり直しますか？'),
+        content: const Text('入力内容はリセットされます。'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: Text('キャンセル'),
+            child: const Text('キャンセル'),
           ),
           TextButton(
             onPressed: () {
@@ -110,7 +108,7 @@ class _PlotBoosterPageState extends State<PlotBoosterPage> {
               _goToStep(0);
               _showToast('入力内容をリセットしました');
             },
-            child: Text('リセット'),
+            child: const Text('リセット'),
           ),
         ],
       ),
@@ -126,12 +124,12 @@ class _PlotBoosterPageState extends State<PlotBoosterPage> {
         key: _scaffoldMessengerKey,
         child: Scaffold(
           appBar: AppBar(
-            title: Text('プロットブースター'),
+            title: const Text('プロットブースター'),
             actions: [
               // AI支援切り替えスイッチ
               Row(
                 children: [
-                  Text('AI支援'),
+                  const Text('AI支援'),
                   Switch(
                     value: _isAIAssistEnabled,
                     onChanged: (_) => _toggleAIAssist(),
@@ -140,7 +138,7 @@ class _PlotBoosterPageState extends State<PlotBoosterPage> {
               ),
               // リスタートボタン
               IconButton(
-                icon: Icon(Icons.refresh),
+                icon: const Icon(Icons.refresh),
                 tooltip: '最初からやり直す',
                 onPressed: _restart,
               ),
@@ -158,13 +156,13 @@ class _PlotBoosterPageState extends State<PlotBoosterPage> {
               Expanded(
                 child: PageView(
                   controller: _pageController,
-                  physics: NeverScrollableScrollPhysics(),
+                  physics: const NeverScrollableScrollPhysics(),
                   onPageChanged: (index) {
                     setState(() {
                       _currentStep = index;
                     });
                   },
-                  children: [
+                  children: const [
                     Step0GenreStyleWidget(),
                     Step1LoglineWidget(),
                     Step2ThemeWidget(),
@@ -179,20 +177,20 @@ class _PlotBoosterPageState extends State<PlotBoosterPage> {
 
               // ナビゲーションボタン
               Padding(
-                padding: EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     ElevatedButton.icon(
                       onPressed: _currentStep > 0 ? _prevStep : null,
-                      icon: Icon(Icons.arrow_back),
-                      label: Text('前へ'),
+                      icon: const Icon(Icons.arrow_back),
+                      label: const Text('前へ'),
                     ),
                     Text('${_currentStep + 1}/8'),
                     ElevatedButton.icon(
                       onPressed: _currentStep < 7 ? _nextStep : null,
-                      icon: Icon(Icons.arrow_forward),
-                      label: Text('次へ'),
+                      icon: const Icon(Icons.arrow_forward),
+                      label: const Text('次へ'),
                     ),
                   ],
                 ),
@@ -230,7 +228,7 @@ class PlotStepIndicator extends StatelessWidget {
       '出力',
     ];
 
-    return Container(
+    return SizedBox(
       height: 60,
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -242,8 +240,9 @@ class PlotStepIndicator extends StatelessWidget {
             return GestureDetector(
               onTap: () => onStepTapped(index),
               child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                margin: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
                 decoration: BoxDecoration(
                   color: isActive
                       ? Theme.of(context).primaryColor
@@ -260,7 +259,7 @@ class PlotStepIndicator extends StatelessWidget {
                         size: 16,
                         color: isActive ? Colors.white : Colors.grey[700],
                       ),
-                      SizedBox(width: 4),
+                      const SizedBox(width: 4),
                     ],
                     Text(
                       steps[index],

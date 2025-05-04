@@ -236,8 +236,8 @@ class SupabaseAuthSnippets {
 
   void demonstrateAuthSnippets() async {
     // Example email and password
-    final email = 'user@example.com';
-    final password = 'password123';
+    const email = 'user@example.com';
+    const password = 'password123';
 
     // サインアップ (Sign up)
     await supabase.auth.signUp(email: email, password: password);

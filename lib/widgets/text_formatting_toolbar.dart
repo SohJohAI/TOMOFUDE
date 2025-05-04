@@ -76,6 +76,7 @@ class TextFormattingToolbar extends StatelessWidget {
 
     return CupertinoButton(
       padding: const EdgeInsets.symmetric(horizontal: 12),
+      onPressed: onPressed,
       child: Tooltip(
         message: tooltip,
         child: Icon(
@@ -84,7 +85,6 @@ class TextFormattingToolbar extends StatelessWidget {
           color: isDark ? CupertinoColors.white : CupertinoColors.black,
         ),
       ),
-      onPressed: onPressed,
     );
   }
 

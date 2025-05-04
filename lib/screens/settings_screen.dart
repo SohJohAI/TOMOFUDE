@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
@@ -32,7 +31,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               title: 'ダークモード',
               trailing: CupertinoSwitch(
                 value: appState.isDarkMode,
-                activeColor: CupertinoTheme.of(context).primaryColor,
+                activeTrackColor: CupertinoTheme.of(context).primaryColor,
                 onChanged: (value) {
                   appState.toggleTheme();
                 },
@@ -131,15 +130,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   context: context,
                   builder: (context) => CupertinoAlertDialog(
                     title: const Text('共筆。（TOMOFUDE）'),
-                    content: Column(
+                    content: const Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const SizedBox(height: 8),
-                        const Text('バージョン 1.1'),
-                        const SizedBox(height: 8),
-                        const Text('© 2023-2025 TOMOFUDE Project'),
-                        const SizedBox(height: 16),
-                        const Text('AI支援型小説執筆アプリです。\nあなたの創作をサポートします。'),
+                        SizedBox(height: 8),
+                        Text('バージョン 1.1'),
+                        SizedBox(height: 8),
+                        Text('© 2023-2025 TOMOFUDE Project'),
+                        SizedBox(height: 16),
+                        Text('AI支援型小説執筆アプリです。\nあなたの創作をサポートします。'),
                       ],
                     ),
                     actions: [

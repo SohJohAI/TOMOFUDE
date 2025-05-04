@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import '../services/claude_ai_service.dart';
 import '../services/supabase_service_interface.dart';
 import '../services/service_locator.dart';
 
@@ -25,15 +24,9 @@ class _ClaudeAIStreamingStep3TestState
   bool _isStreaming = false;
   String _error = '';
 
-  // Claude AI Service instance
-  late final ClaudeAIService _aiService;
-
   @override
   void initState() {
     super.initState();
-
-    // Initialize Claude AI Service with default endpoint
-    _aiService = ClaudeAIService();
   }
 
   @override
@@ -73,10 +66,6 @@ class _ClaudeAIStreamingStep3TestState
 
       if (accessToken == null) {
         throw Exception('User not authenticated or session expired.');
-      }
-      if (anonKey == null) {
-        throw Exception(
-            'Supabase client not properly initialized (missing anon key).');
       }
 
       // Set headers

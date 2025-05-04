@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
 import '../../providers/plot_booster_provider.dart';
 import '../../services/plot_booster_service.dart';
 import '../../models/plot_booster.dart';
@@ -8,6 +7,8 @@ import '../../utils/ai_helper.dart';
 
 /// STEP 6: 章構成
 class Step6ChapterStructureWidget extends StatefulWidget {
+  const Step6ChapterStructureWidget({super.key});
+
   @override
   _Step6ChapterStructureWidgetState createState() =>
       _Step6ChapterStructureWidgetState();
@@ -80,7 +81,7 @@ class _Step6ChapterStructureWidgetState
 
     try {
       // モックレスポンス
-      final aiResponse = '''
+      const aiResponse = '''
 ## 章構成のアイデア
 
 ### 3幕構成の例
@@ -117,7 +118,7 @@ class _Step6ChapterStructureWidgetState
     final chapters = provider.plotBooster.chapterOutlines;
 
     return SingleChildScrollView(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -125,44 +126,44 @@ class _Step6ChapterStructureWidgetState
             'STEP 6：章構成',
             style: Theme.of(context).textTheme.titleLarge,
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             '物語の章構成を設定します。各章のタイトルと内容を入力してください。',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
 
           // 章入力フォーム
           Card(
             child: Padding(
-              padding: EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     _editingIndex >= 0 ? '章を編集' : '章を追加',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   TextField(
                     controller: _titleController,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       labelText: '章タイトル',
                       hintText: '例：第1章「出会い」',
                       border: OutlineInputBorder(),
                     ),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   TextField(
                     controller: _contentController,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       labelText: '章の内容',
                       hintText: '例：主人公が謎の少女と出会い、彼女が持つ不思議な能力に驚く。',
                       border: OutlineInputBorder(),
                     ),
                     maxLines: 4,
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
@@ -175,9 +176,9 @@ class _Step6ChapterStructureWidgetState
                               _contentController.clear();
                             });
                           },
-                          child: Text('キャンセル'),
+                          child: const Text('キャンセル'),
                         ),
-                      SizedBox(width: 8),
+                      const SizedBox(width: 8),
                       ElevatedButton(
                         onPressed: _addChapter,
                         child: Text(_editingIndex >= 0 ? '更新' : '追加'),
@@ -191,8 +192,8 @@ class _Step6ChapterStructureWidgetState
 
           // 追加された章のリスト
           if (chapters.isNotEmpty) ...[
-            SizedBox(height: 24),
-            Row(
+            const SizedBox(height: 24),
+            const Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
@@ -205,17 +206,17 @@ class _Step6ChapterStructureWidgetState
                 ),
               ],
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             ReorderableListView.builder(
               shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
+              physics: const NeverScrollableScrollPhysics(),
               itemCount: chapters.length,
               onReorder: _reorderChapters,
               itemBuilder: (context, index) {
                 final chapter = chapters[index];
                 return Card(
                   key: ValueKey(index),
-                  margin: EdgeInsets.only(bottom: 8),
+                  margin: const EdgeInsets.only(bottom: 8),
                   child: ListTile(
                     title: Text(chapter.title),
                     subtitle: Text(
@@ -227,11 +228,11 @@ class _Step6ChapterStructureWidgetState
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
-                          icon: Icon(Icons.edit),
+                          icon: const Icon(Icons.edit),
                           onPressed: () => _editChapter(index, chapter),
                         ),
                         IconButton(
-                          icon: Icon(Icons.delete),
+                          icon: const Icon(Icons.delete),
                           onPressed: () => _removeChapter(index),
                         ),
                       ],
@@ -243,18 +244,18 @@ class _Step6ChapterStructureWidgetState
           ],
 
           // AIアシスト
-          SizedBox(height: 24),
+          const SizedBox(height: 24),
           if (provider.isAIAssistEnabled) ...[
             ElevatedButton.icon(
-              icon: Icon(Icons.lightbulb_outline),
-              label: Text('AIに助けを求める'),
+              icon: const Icon(Icons.lightbulb_outline),
+              label: const Text('AIに助けを求める'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.amber,
               ),
               onPressed: _isLoading ? null : _requestAIHelp,
             ),
             if (_isLoading)
-              Padding(
+              const Padding(
                 padding: EdgeInsets.all(16),
                 child: Center(child: CircularProgressIndicator()),
               ),

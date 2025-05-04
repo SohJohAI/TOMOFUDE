@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../examples/claude_ai_service_test.dart';
 
 /// A screen that displays the homepage of the app.
@@ -13,15 +12,6 @@ class HomeScreen extends StatelessWidget {
 
   final Uri plotBoosterUrl =
       Uri.parse('https://poe.com/no_deep_link/plotbooster');
-
-  /// Launches the plot booster URL.
-  void _launchURL() async {
-    if (await canLaunchUrl(plotBoosterUrl)) {
-      await launchUrl(plotBoosterUrl);
-    } else {
-      throw 'Could not launch $plotBoosterUrl';
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -237,16 +227,16 @@ class _FeaturesSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 80, horizontal: 24),
-      child: Column(
+      child: const Column(
         children: [
-          const Text('主な機能',
+          Text('主な機能',
               style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 40),
+          SizedBox(height: 40),
           Wrap(
             alignment: WrapAlignment.center,
             spacing: 24,
             runSpacing: 24,
-            children: const [
+            children: [
               _FeatureCard(
                   icon: Icons.map,
                   title: 'プロットブースター',
@@ -321,11 +311,11 @@ class _PricingSection extends StatelessWidget {
           const Text('料金プラン',
               style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold)),
           const SizedBox(height: 40),
-          Wrap(
+          const Wrap(
             alignment: WrapAlignment.center,
             spacing: 24,
             runSpacing: 24,
-            children: const [
+            children: [
               _PlanCard(
                   name: '梅',
                   price: '¥500/月',

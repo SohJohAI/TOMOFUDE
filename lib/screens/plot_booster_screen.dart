@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import '../providers/plot_booster_provider.dart';
 import '../widgets/plot_step_indicator.dart';
@@ -15,6 +14,8 @@ import '../models/work.dart';
 import '../providers/work_list_provider.dart';
 
 class PlotBoosterScreen extends StatefulWidget {
+  const PlotBoosterScreen({super.key});
+
   @override
   _PlotBoosterScreenState createState() => _PlotBoosterScreenState();
 }
@@ -28,7 +29,7 @@ class _PlotBoosterScreenState extends State<PlotBoosterScreen> {
   @override
   void initState() {
     super.initState();
-    print("PlotBoosterScreen initState called");
+    debugPrint("PlotBoosterScreen initState called");
     // プロバイダーを一度だけ初期化
     _plotBoosterProvider = PlotBoosterProvider()
       ..setAIAssistEnabled(_isAIAssistEnabled);
@@ -47,7 +48,7 @@ class _PlotBoosterScreenState extends State<PlotBoosterScreen> {
       });
       _pageController.animateToPage(
         _currentStep,
-        duration: Duration(milliseconds: 300),
+        duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
     }
@@ -60,7 +61,7 @@ class _PlotBoosterScreenState extends State<PlotBoosterScreen> {
       });
       _pageController.animateToPage(
         _currentStep,
-        duration: Duration(milliseconds: 300),
+        duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
     }
@@ -73,7 +74,7 @@ class _PlotBoosterScreenState extends State<PlotBoosterScreen> {
       });
       _pageController.animateToPage(
         step,
-        duration: Duration(milliseconds: 300),
+        duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
     }
@@ -96,7 +97,7 @@ class _PlotBoosterScreenState extends State<PlotBoosterScreen> {
     // 作品タイトルを決定（ログラインの最初の部分を使用）
     String title = plotBooster.logline;
     if (title.length > 30) {
-      title = title.substring(0, 30) + '...';
+      title = '${title.substring(0, 30)}...';
     }
 
     // 作品説明を生成
@@ -127,23 +128,22 @@ class _PlotBoosterScreenState extends State<PlotBoosterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    print("PlotBoosterScreen build method called");
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    debugPrint("PlotBoosterScreen build method called");
 
     return ChangeNotifierProvider.value(
       value: _plotBoosterProvider,
       child: Scaffold(
         appBar: AppBar(
-          title: Text('プロットブースター'),
+          title: const Text('プロットブースター'),
           leading: IconButton(
-            icon: Icon(Icons.close),
+            icon: const Icon(Icons.close),
             onPressed: () => Navigator.pop(context),
           ),
           actions: [
             // AI支援切り替えスイッチ
             Row(
               children: [
-                Text('AI支援'),
+                const Text('AI支援'),
                 Switch(
                   value: _isAIAssistEnabled,
                   onChanged: (_) => _toggleAIAssist(),
@@ -153,7 +153,7 @@ class _PlotBoosterScreenState extends State<PlotBoosterScreen> {
             // 作品作成ボタン（最終ステップでのみ表示）
             if (_currentStep == 7)
               IconButton(
-                icon: Icon(Icons.save),
+                icon: const Icon(Icons.save),
                 tooltip: '作品として保存',
                 onPressed: _createWorkFromPlot,
               ),
@@ -171,13 +171,13 @@ class _PlotBoosterScreenState extends State<PlotBoosterScreen> {
             Expanded(
               child: PageView(
                 controller: _pageController,
-                physics: NeverScrollableScrollPhysics(),
+                physics: const NeverScrollableScrollPhysics(),
                 onPageChanged: (index) {
                   setState(() {
                     _currentStep = index;
                   });
                 },
-                children: [
+                children: const [
                   Step0GenreStyleWidget(),
                   Step1LoglineWidget(),
                   Step2ThemeWidget(),
@@ -192,18 +192,18 @@ class _PlotBoosterScreenState extends State<PlotBoosterScreen> {
 
             // ナビゲーションボタン
             Padding(
-              padding: EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   ElevatedButton(
                     onPressed: _currentStep > 0 ? _prevStep : null,
-                    child: Text('前へ'),
+                    child: const Text('前へ'),
                   ),
                   Text('${_currentStep + 1}/8'),
                   ElevatedButton(
                     onPressed: _currentStep < 7 ? _nextStep : null,
-                    child: Text('次へ'),
+                    child: const Text('次へ'),
                   ),
                 ],
               ),

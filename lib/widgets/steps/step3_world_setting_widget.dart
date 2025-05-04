@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
 import '../../providers/plot_booster_provider.dart';
 import '../../services/plot_booster_service.dart';
 import '../../utils/ai_helper.dart';
 
 /// STEP 3: 世界観設定
 class Step3WorldSettingWidget extends StatefulWidget {
+  const Step3WorldSettingWidget({super.key});
+
   @override
   _Step3WorldSettingWidgetState createState() =>
       _Step3WorldSettingWidgetState();
@@ -38,7 +39,7 @@ class _Step3WorldSettingWidgetState extends State<Step3WorldSettingWidget> {
 
     try {
       // モックレスポンス
-      final aiResponse = '''
+      const aiResponse = '''
 ## 世界観設定のアイデア
 
 1. **失われた文明の遺跡が点在する未来世界** - 高度な科学技術と古代の魔法が融合した世界。巨大な浮遊都市と荒廃した地上の対比。
@@ -69,7 +70,7 @@ class _Step3WorldSettingWidgetState extends State<Step3WorldSettingWidget> {
     final provider = Provider.of<PlotBoosterProvider>(context);
 
     return SingleChildScrollView(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -77,22 +78,22 @@ class _Step3WorldSettingWidgetState extends State<Step3WorldSettingWidget> {
             'STEP 3：世界観設定',
             style: Theme.of(context).textTheme.titleLarge,
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             '物語の舞台となる世界の特徴や法則、歴史などを設定します。',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
 
           // 世界観設定入力 - 明示的な高さを設定
           Container(
-            constraints: BoxConstraints(minHeight: 200),
+            constraints: const BoxConstraints(minHeight: 200),
             child: TextField(
               controller: _worldSettingController,
               decoration: InputDecoration(
                 labelText: '世界観設定',
                 hintText: '例：魔法が日常的に使われる中世ファンタジー世界。魔法の才能は生まれつき決まっており...',
-                border: OutlineInputBorder(),
+                border: const OutlineInputBorder(),
                 // 入力欄が見えるようにフィルカラーを設定
                 filled: true,
                 fillColor: Theme.of(context).inputDecorationTheme.fillColor ??
@@ -108,28 +109,28 @@ class _Step3WorldSettingWidgetState extends State<Step3WorldSettingWidget> {
           ),
 
           // AIアシスト - 条件付きレンダリングを修正
-          SizedBox(height: 24),
+          const SizedBox(height: 24),
           // AIアシストボタンを常に表示（無効化はするが非表示にはしない）
           ElevatedButton.icon(
-            icon: Icon(Icons.lightbulb_outline),
-            label: Text('AIに助けを求める'),
+            icon: const Icon(Icons.lightbulb_outline),
+            label: const Text('AIに助けを求める'),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.amber,
               // ボタンが見えるように最小サイズを設定
-              minimumSize: Size(200, 48),
+              minimumSize: const Size(200, 48),
             ),
             onPressed: (_isLoading || !provider.isAIAssistEnabled)
                 ? null
                 : _requestAIHelp,
           ),
           if (_isLoading)
-            Padding(
+            const Padding(
               padding: EdgeInsets.all(16),
               child: Center(child: CircularProgressIndicator()),
             ),
           // AIアシストが無効の場合のメッセージ
           if (!provider.isAIAssistEnabled)
-            Padding(
+            const Padding(
               padding: EdgeInsets.only(top: 8),
               child: Text(
                 'AIアシストは現在無効です。有効にするには画面上部のスイッチをオンにしてください。',

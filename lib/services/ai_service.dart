@@ -10,8 +10,6 @@ import 'ai_service_interface.dart';
 import '../utils/constants.dart';
 
 class SupabaseAIService implements AIService {
-  final String _endpoint =
-      'https://awbrfvdyokwkpwrqmfwd.supabase.co/functions/v1/claude-gateway';
   final Duration _timeout;
 
   const SupabaseAIService({
@@ -134,15 +132,6 @@ class SupabaseAIService implements AIService {
     required String type,
     required Map<String, dynamic> payload,
   }) async {
-    final uri = Uri.parse(_endpoint);
-    final body = jsonEncode({'type': type, ...payload});
-
-    final jwt = Supabase.instance.client.auth.currentSession?.accessToken;
-    final headers = {
-      'Content-Type': 'application/json',
-      if (jwt != null) 'Authorization': 'Bearer $jwt',
-    };
-
     try {
       final client = http.Client();
 

@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 import 'ai_service_interface.dart';
-import '../utils/constants.dart';
 import 'supabase_service_interface.dart';
 import 'service_locator.dart';
 
@@ -280,11 +279,6 @@ class ClaudeAIService implements AIService {
           name: 'ClaudeAIService');
       throw Exception(
           'User not authenticated or session expired after refresh attempt.');
-    }
-    if (anonKey == null) {
-      developer.log('Supabase anon key is missing.', name: 'ClaudeAIService');
-      throw Exception(
-          'Supabase client not properly initialized (missing anon key).');
     }
 
     request.headers.addAll({

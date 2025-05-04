@@ -1,6 +1,6 @@
 // This is a web-specific version of point_service.dart that doesn't use Firebase
 // to avoid compatibility issues with Firebase web packages
-
+import 'package:flutter/foundation.dart';
 import '../models/user_point.dart';
 import '../models/point_history.dart';
 import 'point_service_interface.dart';
@@ -16,9 +16,6 @@ class PointService implements PointServiceInterface {
   /// Factory constructor to return the same instance
   factory PointService() => _instance;
 
-  /// Flag indicating whether Firebase is initialized
-  bool _isFirebaseInitialized = false;
-
   /// Private constructor
   PointService._internal() {
     // Constructor is empty, initialization is done in initialize() method
@@ -27,13 +24,13 @@ class PointService implements PointServiceInterface {
   /// Initialize the service
   @override
   Future<void> initialize() async {
-    print('Web version of PointService initialized, Firebase is disabled');
-    _isFirebaseInitialized = false;
+    debugPrint('Web version of PointService initialized, Firebase is disabled');
   }
 
   /// Get current user's point information
+  @override
   Future<UserPoint?> getUserPoint() async {
-    print('Firebase not initialized on web, returning mock data');
+    debugPrint('Firebase not initialized on web, returning mock data');
     return _getMockUserPoint();
   }
 
@@ -55,8 +52,9 @@ class PointService implements PointServiceInterface {
   }
 
   /// Get user's point history
+  @override
   Future<List<PointHistory>> getPointHistory({int limit = 50}) async {
-    print('Firebase not initialized on web, returning mock data');
+    debugPrint('Firebase not initialized on web, returning mock data');
     return _getMockPointHistory();
   }
 
@@ -95,24 +93,28 @@ class PointService implements PointServiceInterface {
   }
 
   /// Consume points for a specific purpose
+  @override
   Future<bool> consumePoints(int amount, String purpose) async {
-    print('Firebase not initialized on web, simulating point consumption');
+    debugPrint('Firebase not initialized on web, simulating point consumption');
     return true; // Simulate successful consumption in development
   }
 
   /// Apply a referral code to get bonus points
+  @override
   Future<bool> applyReferralCode(String code) async {
-    print(
+    debugPrint(
         'Firebase not initialized on web, simulating referral code application');
     return true; // Simulate successful referral in development
   }
 
   /// Get the user's referral code
+  @override
   Future<String?> getReferralCode() async {
     return 'MOCK1234'; // Return mock referral code in development
   }
 
   /// Check if the user has enough points for a purchase
+  @override
   Future<bool> hasEnoughPoints(int amount) async {
     return true; // Assume user has enough points in development
   }

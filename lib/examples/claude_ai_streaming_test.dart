@@ -72,10 +72,6 @@ class _ClaudeAIStreamingTestState extends State<ClaudeAIStreamingTest> {
       if (accessToken == null) {
         throw Exception('User not authenticated or session expired.');
       }
-      if (anonKey == null) {
-        throw Exception(
-            'Supabase client not properly initialized (missing anon key).');
-      }
 
       // Set headers
       request.headers.addAll({

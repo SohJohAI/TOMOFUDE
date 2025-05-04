@@ -74,18 +74,18 @@ class _AuthScreenState extends State<AuthScreen> {
         if (result.user == null) {
           // ユーザーがnullの場合はメール確認が必要
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('登録が完了しました。確認メールをご確認ください。')),
+            const SnackBar(content: Text('登録が完了しました。確認メールをご確認ください。')),
           );
         } else {
           // Successfully signed up and user is available
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('登録が完了しました！')),
+            const SnackBar(content: Text('登録が完了しました！')),
           );
         }
       } else {
         // Sign up failed
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('不明なエラーが発生しました。')),
+          const SnackBar(content: Text('不明なエラーが発生しました。')),
         );
       }
     } on AuthException catch (e) {
@@ -119,12 +119,12 @@ class _AuthScreenState extends State<AuthScreen> {
       if (result != null) {
         // Successfully signed in
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('ログイン成功')),
+          const SnackBar(content: Text('ログイン成功')),
         );
       } else {
         // Sign in failed
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('不明なエラーが発生しました。')),
+          const SnackBar(content: Text('不明なエラーが発生しました。')),
         );
       }
     } on AuthException catch (e) {
@@ -138,15 +138,6 @@ class _AuthScreenState extends State<AuthScreen> {
         _isLoading = false;
       });
     }
-  }
-
-  /// Show a message to the user
-  void _showMessage(String message) {
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
   }
 
   @override

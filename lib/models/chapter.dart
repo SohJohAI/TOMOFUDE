@@ -18,10 +18,10 @@ class Chapter {
     DateTime? createdAt,
     DateTime? updatedAt,
     this.filePath,
-  })  : this.id = id ?? const Uuid().v4(),
-        this.wordCount = wordCount ?? _calculateWordCount(content),
-        this.createdAt = createdAt ?? DateTime.now(),
-        this.updatedAt = updatedAt ?? DateTime.now();
+  })  : id = id ?? const Uuid().v4(),
+        wordCount = wordCount ?? _calculateWordCount(content),
+        createdAt = createdAt ?? DateTime.now(),
+        updatedAt = updatedAt ?? DateTime.now();
 
   // 文字数計算
   static int _calculateWordCount(String text) {

@@ -8,7 +8,7 @@ class HexColor extends Color {
   static int _getColorFromHex(String hexColor) {
     hexColor = hexColor.toUpperCase().replaceAll('#', '');
     if (hexColor.length == 6) {
-      hexColor = 'FF' + hexColor;
+      hexColor = 'FF$hexColor';
     }
     return int.parse(hexColor, radix: 16);
   }
@@ -260,15 +260,15 @@ class EmotionPanel extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
+          const Row(
             children: [
               Icon(
                 CupertinoIcons.chart_bar_alt_fill,
                 size: 18,
                 color: CupertinoColors.activeBlue,
               ),
-              const SizedBox(width: 8),
-              const Text(
+              SizedBox(width: 8),
+              Text(
                 '感情分析',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
@@ -279,12 +279,12 @@ class EmotionPanel extends StatelessWidget {
           ),
           CupertinoButton(
             padding: EdgeInsets.zero,
+            onPressed: onRefresh,
             child: Icon(
               CupertinoIcons.refresh,
               size: 18,
               color: isDark ? CupertinoColors.white : CupertinoColors.black,
             ),
-            onPressed: onRefresh,
           ),
         ],
       ),

@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
 import '../../providers/plot_booster_provider.dart';
 import '../../services/plot_booster_service.dart';
 import '../../utils/ai_helper.dart';
 
 /// STEP 0: ジャンルと作風の決定
 class Step0GenreStyleWidget extends StatefulWidget {
+  const Step0GenreStyleWidget({super.key});
+
   @override
   _Step0GenreStyleWidgetState createState() => _Step0GenreStyleWidgetState();
 }
@@ -81,10 +82,10 @@ class _Step0GenreStyleWidgetState extends State<Step0GenreStyleWidget> {
     try {
       // ここでClaudeAPIを使用してAIアシストを取得する
       // 実際の実装ではClaudeAIServiceを使用
-      await Future.delayed(Duration(seconds: 1)); // モック遅延
+      await Future.delayed(const Duration(seconds: 1)); // モック遅延
 
       // モックレスポンス
-      final aiResponse = '''
+      const aiResponse = '''
 ## ジャンルと作風のアイデア
 
 1. **ダークファンタジー × 哲学的** - 魔法と神話が存在する世界で、存在の意味や道徳的ジレンマを探求
@@ -111,7 +112,7 @@ class _Step0GenreStyleWidgetState extends State<Step0GenreStyleWidget> {
     final provider = Provider.of<PlotBoosterProvider>(context);
 
     return SingleChildScrollView(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -119,12 +120,12 @@ class _Step0GenreStyleWidgetState extends State<Step0GenreStyleWidget> {
             'STEP 0：ジャンルと作風の決定',
             style: Theme.of(context).textTheme.titleLarge,
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             '小説のジャンルと雰囲気を選んで、物語の方向性を決めましょう。',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
 
           // ジャンルと作風の入力フォーム
           Row(
@@ -134,17 +135,17 @@ class _Step0GenreStyleWidgetState extends State<Step0GenreStyleWidget> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('ジャンル', style: TextStyle(fontWeight: FontWeight.bold)),
-                    SizedBox(height: 8),
+                    const Text('ジャンル', style: TextStyle(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
                     DropdownButtonFormField<String>(
                       value: _genreController.text.isEmpty
                           ? null
                           : _genreController.text,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         border: OutlineInputBorder(),
                         hintText: '選択してください',
                       ),
-                      items: [
+                      items: const [
                         DropdownMenuItem(
                             value: 'ファンタジー', child: Text('ファンタジー')),
                         DropdownMenuItem(value: 'SF', child: Text('SF')),
@@ -168,9 +169,9 @@ class _Step0GenreStyleWidgetState extends State<Step0GenreStyleWidget> {
                       },
                     ),
                     if (_showCustomGenre) ...[
-                      SizedBox(height: 8),
+                      const SizedBox(height: 8),
                       TextField(
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           border: OutlineInputBorder(),
                           hintText: 'ジャンルを自由に入力',
                         ),
@@ -182,23 +183,23 @@ class _Step0GenreStyleWidgetState extends State<Step0GenreStyleWidget> {
                   ],
                 ),
               ),
-              SizedBox(width: 16),
+              const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('作風・雰囲気',
+                    const Text('作風・雰囲気',
                         style: TextStyle(fontWeight: FontWeight.bold)),
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
                     DropdownButtonFormField<String>(
                       value: _styleController.text.isEmpty
                           ? null
                           : _styleController.text,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         border: OutlineInputBorder(),
                         hintText: '選択してください',
                       ),
-                      items: [
+                      items: const [
                         DropdownMenuItem(value: 'ダーク', child: Text('ダーク')),
                         DropdownMenuItem(value: 'コメディ', child: Text('コメディ')),
                         DropdownMenuItem(value: 'シリアス', child: Text('シリアス')),
@@ -221,9 +222,9 @@ class _Step0GenreStyleWidgetState extends State<Step0GenreStyleWidget> {
                       },
                     ),
                     if (_showCustomStyle) ...[
-                      SizedBox(height: 8),
+                      const SizedBox(height: 8),
                       TextField(
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           border: OutlineInputBorder(),
                           hintText: '作風・雰囲気を自由に入力',
                         ),
@@ -240,12 +241,12 @@ class _Step0GenreStyleWidgetState extends State<Step0GenreStyleWidget> {
 
           // その他のジャンル・作風
           if (_showOtherGenreStyle) ...[
-            SizedBox(height: 16),
-            Text('その他のジャンル・作風を入力',
+            const SizedBox(height: 16),
+            const Text('その他のジャンル・作風を入力',
                 style: TextStyle(fontWeight: FontWeight.bold)),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             TextField(
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 border: OutlineInputBorder(),
                 hintText: '例：異世界転生ファンタジー、アンティーク要素のある日常系ミステリーなど',
               ),
@@ -261,28 +262,28 @@ class _Step0GenreStyleWidgetState extends State<Step0GenreStyleWidget> {
           ],
 
           // AIアシスト - 条件付きレンダリングを修正
-          SizedBox(height: 24),
+          const SizedBox(height: 24),
           // AIアシストボタンを常に表示（無効化はするが非表示にはしない）
           ElevatedButton.icon(
-            icon: Icon(Icons.lightbulb_outline),
-            label: Text('AIに助けを求める'),
+            icon: const Icon(Icons.lightbulb_outline),
+            label: const Text('AIに助けを求める'),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.amber,
               // ボタンが見えるように最小サイズを設定
-              minimumSize: Size(200, 48),
+              minimumSize: const Size(200, 48),
             ),
             onPressed: (_isLoading || !provider.isAIAssistEnabled)
                 ? null
                 : _requestAIHelp,
           ),
           if (_isLoading)
-            Padding(
+            const Padding(
               padding: EdgeInsets.all(16),
               child: Center(child: CircularProgressIndicator()),
             ),
           // AIアシストが無効の場合のメッセージ
           if (!provider.isAIAssistEnabled)
-            Padding(
+            const Padding(
               padding: EdgeInsets.only(top: 8),
               child: Text(
                 'AIアシストは現在無効です。有効にするには画面上部のスイッチをオンにしてください。',

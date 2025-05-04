@@ -130,8 +130,9 @@ class _SupabaseDatabaseExampleState extends State<SupabaseDatabaseExample> {
 
   /// Add plot data to the selected project
   Future<void> _addPlotData() async {
-    if (_selectedProjectId == null || !_formKey.currentState!.validate())
+    if (_selectedProjectId == null || !_formKey.currentState!.validate()) {
       return;
+    }
 
     setState(() {
       _isLoading = true;

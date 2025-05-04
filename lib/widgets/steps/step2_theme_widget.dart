@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
 import '../../providers/plot_booster_provider.dart';
 import '../../services/plot_booster_service.dart';
 import '../../utils/ai_helper.dart';
 
 /// STEP 2: テーマやモチーフの選定
 class Step2ThemeWidget extends StatefulWidget {
+  const Step2ThemeWidget({super.key});
+
   @override
   _Step2ThemeWidgetState createState() => _Step2ThemeWidgetState();
 }
@@ -15,7 +16,7 @@ class _Step2ThemeWidgetState extends State<Step2ThemeWidget> {
   final TextEditingController _customThemeController = TextEditingController();
   final PlotBoosterService _service = PlotBoosterService();
 
-  List<String> _themeSuggestions = [
+  final List<String> _themeSuggestions = [
     '愛と喪失',
     '成長と変化',
     '正義と復讐',
@@ -111,7 +112,7 @@ class _Step2ThemeWidgetState extends State<Step2ThemeWidget> {
 
     try {
       // モックレスポンス
-      final aiResponse = '''
+      const aiResponse = '''
 ## テーマ・モチーフのアイデア
 
 1. **贖罪と救済** - 過去の罪や過ちからの精神的な回復と自己許容の旅
@@ -139,7 +140,7 @@ class _Step2ThemeWidgetState extends State<Step2ThemeWidget> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return SingleChildScrollView(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -147,19 +148,19 @@ class _Step2ThemeWidgetState extends State<Step2ThemeWidget> {
             'STEP 2：テーマやモチーフの選定',
             style: Theme.of(context).textTheme.titleLarge,
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             '物語を通して探求するテーマやモチーフを選びましょう。複数選択可能です。',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
 
           // テーマ選択
-          Text(
+          const Text(
             '一般的なテーマ',
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -177,39 +178,39 @@ class _Step2ThemeWidgetState extends State<Step2ThemeWidget> {
           ),
 
           // カスタムテーマ追加
-          SizedBox(height: 24),
-          Text(
+          const SizedBox(height: 24),
+          const Text(
             'カスタムテーマを追加',
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Row(
             children: [
               Expanded(
                 child: TextField(
                   controller: _customThemeController,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     hintText: '例：信頼と裏切り、科学と魔法の融合など',
                     border: OutlineInputBorder(),
                   ),
                 ),
               ),
-              SizedBox(width: 8),
+              const SizedBox(width: 8),
               ElevatedButton(
                 onPressed: _addCustomTheme,
-                child: Text('追加'),
+                child: const Text('追加'),
               ),
             ],
           ),
 
           // 選択したテーマ
           if (_selectedThemes.isNotEmpty) ...[
-            SizedBox(height: 24),
-            Text(
+            const SizedBox(height: 24),
+            const Text(
               '選択したテーマ',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -217,7 +218,7 @@ class _Step2ThemeWidgetState extends State<Step2ThemeWidget> {
                 return Chip(
                   label: Text(theme),
                   onDeleted: () => _toggleTheme(theme),
-                  deleteIcon: Icon(Icons.close, size: 18),
+                  deleteIcon: const Icon(Icons.close, size: 18),
                   backgroundColor:
                       isDark ? Colors.amber[700] : Colors.blue[100],
                   labelStyle: TextStyle(
@@ -229,28 +230,28 @@ class _Step2ThemeWidgetState extends State<Step2ThemeWidget> {
           ],
 
           // AIアシスト - 条件付きレンダリングを修正
-          SizedBox(height: 24),
+          const SizedBox(height: 24),
           // AIアシストボタンを常に表示（無効化はするが非表示にはしない）
           ElevatedButton.icon(
-            icon: Icon(Icons.lightbulb_outline),
-            label: Text('AIに助けを求める'),
+            icon: const Icon(Icons.lightbulb_outline),
+            label: const Text('AIに助けを求める'),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.amber,
               // ボタンが見えるように最小サイズを設定
-              minimumSize: Size(200, 48),
+              minimumSize: const Size(200, 48),
             ),
             onPressed: (_isLoading || !provider.isAIAssistEnabled)
                 ? null
                 : _requestAIHelp,
           ),
           if (_isLoading)
-            Padding(
+            const Padding(
               padding: EdgeInsets.all(16),
               child: Center(child: CircularProgressIndicator()),
             ),
           // AIアシストが無効の場合のメッセージ
           if (!provider.isAIAssistEnabled)
-            Padding(
+            const Padding(
               padding: EdgeInsets.only(top: 8),
               child: Text(
                 'AIアシストは現在無効です。有効にするには画面上部のスイッチをオンにしてください。',

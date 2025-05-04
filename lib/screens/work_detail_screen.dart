@@ -312,7 +312,7 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
                   Container(
                     width: 32,
                     height: 32,
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       color: CupertinoColors.activeBlue,
                       shape: BoxShape.circle,
                     ),
@@ -438,13 +438,13 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
               exportService.exportWorkAsText(widget.work);
               _showExportSuccessAlert('テキストファイルをエクスポートしました');
             },
-            child: Row(
+            child: const Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(CupertinoIcons.doc_text,
                     color: CupertinoColors.activeBlue),
-                const SizedBox(width: 10),
-                const Text('テキストファイル (.txt)'),
+                SizedBox(width: 10),
+                Text('テキストファイル (.txt)'),
               ],
             ),
           ),
@@ -454,13 +454,13 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
               exportService.exportWorkAsHtml(widget.work);
               _showExportSuccessAlert('HTMLファイルをエクスポートしました');
             },
-            child: Row(
+            child: const Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(CupertinoIcons.doc_richtext,
                     color: CupertinoColors.activeBlue),
-                const SizedBox(width: 10),
-                const Text('HTMLファイル (.html)'),
+                SizedBox(width: 10),
+                Text('HTMLファイル (.html)'),
               ],
             ),
           ),
@@ -470,13 +470,13 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
               exportService.exportWorkAsJson(widget.work);
               _showExportSuccessAlert('JSONファイルをエクスポートしました');
             },
-            child: Row(
+            child: const Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(CupertinoIcons.doc_on_doc,
                     color: CupertinoColors.activeBlue),
-                const SizedBox(width: 10),
-                const Text('JSONファイル (.json)'),
+                SizedBox(width: 10),
+                Text('JSONファイル (.json)'),
               ],
             ),
           ),
@@ -532,13 +532,13 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
                     'フォルダへのエクスポートに失敗しました', e.toString());
               }
             },
-            child: Row(
+            child: const Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(CupertinoIcons.folder_badge_plus,
                     color: CupertinoColors.activeBlue),
-                const SizedBox(width: 10),
-                const Text('フォルダにエクスポート'),
+                SizedBox(width: 10),
+                Text('フォルダにエクスポート'),
               ],
             ),
           ),
@@ -565,13 +565,13 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
                     'フォルダへのエクスポートに失敗しました', e.toString());
               }
             },
-            child: Row(
+            child: const Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(CupertinoIcons.folder_open,
                     color: CupertinoColors.activeBlue),
-                const SizedBox(width: 10),
-                const Text('保存先を指定してエクスポート'),
+                SizedBox(width: 10),
+                Text('保存先を指定してエクスポート'),
               ],
             ),
           ),
@@ -589,13 +589,13 @@ class _WorkDetailScreenState extends State<WorkDetailScreen> {
                     'GitHubエクスポートに失敗しました', e.toString());
               }
             },
-            child: Row(
+            child: const Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(CupertinoIcons.cloud_upload,
                     color: CupertinoColors.activeBlue),
-                const SizedBox(width: 10),
-                const Text('GitHubにエクスポート'),
+                SizedBox(width: 10),
+                Text('GitHubにエクスポート'),
               ],
             ),
           ),

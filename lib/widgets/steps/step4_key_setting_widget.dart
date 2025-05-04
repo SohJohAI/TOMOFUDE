@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
 import '../../providers/plot_booster_provider.dart';
 import '../../services/plot_booster_service.dart';
 import '../../models/plot_booster.dart';
@@ -8,6 +7,8 @@ import '../../utils/ai_helper.dart';
 
 /// STEP 4: キー設定
 class Step4KeySettingWidget extends StatefulWidget {
+  const Step4KeySettingWidget({super.key});
+
   @override
   _Step4KeySettingWidgetState createState() => _Step4KeySettingWidgetState();
 }
@@ -78,7 +79,7 @@ class _Step4KeySettingWidgetState extends State<Step4KeySettingWidget> {
 
     try {
       // モックレスポンス
-      final aiResponse = '''
+      const aiResponse = '''
 ## キー設定のアイデア
 
 1. **古代の予言書** - 主人公だけが解読できる謎の予言書。その内容が物語の展開を予告し、同時に主人公の運命を暗示する。
@@ -110,7 +111,7 @@ class _Step4KeySettingWidgetState extends State<Step4KeySettingWidget> {
     final keySettings = provider.plotBooster.keySettings;
 
     return SingleChildScrollView(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -118,54 +119,54 @@ class _Step4KeySettingWidgetState extends State<Step4KeySettingWidget> {
             'STEP 4：キー設定',
             style: Theme.of(context).textTheme.titleLarge,
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             '物語の鍵となる重要な設定（アイテム、場所、イベントなど）を決めます。',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
 
           // キー設定入力フォーム
           Card(
             child: Padding(
-              padding: EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     _editingIndex >= 0 ? 'キー設定を編集' : 'キー設定を追加',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   TextField(
                     controller: _nameController,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       labelText: '名前',
                       hintText: '例：古代の予言書、記憶を映し出す鏡など',
                       border: OutlineInputBorder(),
                     ),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   TextField(
                     controller: _effectController,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       labelText: '効果・役割',
                       hintText: '例：触れた者の記憶を映し出す',
                       border: OutlineInputBorder(),
                     ),
                     maxLines: 2,
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   TextField(
                     controller: _limitationController,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       labelText: '制限・代償',
                       hintText: '例：真実を知ることの恐怖と必要性のジレンマを生む',
                       border: OutlineInputBorder(),
                     ),
                     maxLines: 2,
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
@@ -179,9 +180,9 @@ class _Step4KeySettingWidgetState extends State<Step4KeySettingWidget> {
                               _limitationController.clear();
                             });
                           },
-                          child: Text('キャンセル'),
+                          child: const Text('キャンセル'),
                         ),
-                      SizedBox(width: 8),
+                      const SizedBox(width: 8),
                       ElevatedButton(
                         onPressed: _addKeySettings,
                         child: Text(_editingIndex >= 0 ? '更新' : '追加'),
@@ -195,20 +196,20 @@ class _Step4KeySettingWidgetState extends State<Step4KeySettingWidget> {
 
           // 追加されたキー設定のリスト
           if (keySettings.isNotEmpty) ...[
-            SizedBox(height: 24),
-            Text(
+            const SizedBox(height: 24),
+            const Text(
               '追加したキー設定',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             ListView.builder(
               shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
+              physics: const NeverScrollableScrollPhysics(),
               itemCount: keySettings.length,
               itemBuilder: (context, index) {
                 final setting = keySettings[index];
                 return Card(
-                  margin: EdgeInsets.only(bottom: 8),
+                  margin: const EdgeInsets.only(bottom: 8),
                   child: ListTile(
                     title: Text(setting.name),
                     subtitle: Column(
@@ -224,11 +225,11 @@ class _Step4KeySettingWidgetState extends State<Step4KeySettingWidget> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
-                          icon: Icon(Icons.edit),
+                          icon: const Icon(Icons.edit),
                           onPressed: () => _editKeySettings(index, setting),
                         ),
                         IconButton(
-                          icon: Icon(Icons.delete),
+                          icon: const Icon(Icons.delete),
                           onPressed: () => _removeKeySettings(index),
                         ),
                       ],
@@ -240,18 +241,18 @@ class _Step4KeySettingWidgetState extends State<Step4KeySettingWidget> {
           ],
 
           // AIアシスト
-          SizedBox(height: 24),
+          const SizedBox(height: 24),
           if (provider.isAIAssistEnabled) ...[
             ElevatedButton.icon(
-              icon: Icon(Icons.lightbulb_outline),
-              label: Text('AIに助けを求める'),
+              icon: const Icon(Icons.lightbulb_outline),
+              label: const Text('AIに助けを求める'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.amber,
               ),
               onPressed: _isLoading ? null : _requestAIHelp,
             ),
             if (_isLoading)
-              Padding(
+              const Padding(
                 padding: EdgeInsets.all(16),
                 child: Center(child: CircularProgressIndicator()),
               ),

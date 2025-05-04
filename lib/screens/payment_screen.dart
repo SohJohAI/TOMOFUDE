@@ -112,12 +112,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
   Widget _buildSubscriptionButton(bool isDark) {
     return CupertinoButton.filled(
       onPressed: _navigateToSubscriptionScreen,
-      child: Row(
+      child: const Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(CupertinoIcons.star_fill),
-          const SizedBox(width: 8),
-          const Text('月額プランに加入する'),
+          Icon(CupertinoIcons.star_fill),
+          SizedBox(width: 8),
+          Text('月額プランに加入する'),
         ],
       ),
     );

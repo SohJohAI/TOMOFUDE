@@ -23,7 +23,7 @@ class PlotStepIndicator extends StatelessWidget {
       '出力',
     ];
 
-    return Container(
+    return SizedBox(
       height: 60,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
@@ -35,8 +35,8 @@ class PlotStepIndicator extends StatelessWidget {
           return GestureDetector(
             onTap: () => onStepTapped(index),
             child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              margin: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
               decoration: BoxDecoration(
                 color: isActive
                     ? Theme.of(context).primaryColor
@@ -53,7 +53,7 @@ class PlotStepIndicator extends StatelessWidget {
                       size: 16,
                       color: isActive ? Colors.white : Colors.grey[700],
                     ),
-                    SizedBox(width: 4),
+                    const SizedBox(width: 4),
                   ],
                   Text(
                     steps[index],

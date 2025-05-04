@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:provider/provider.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
 import '../../providers/plot_booster_provider.dart';
 import '../../services/plot_booster_service.dart';
 import '../../utils/ai_helper.dart';
 
 /// STEP 1: ログライン（物語の要約）の作成
 class Step1LoglineWidget extends StatefulWidget {
+  const Step1LoglineWidget({super.key});
+
   @override
   _Step1LoglineWidgetState createState() => _Step1LoglineWidgetState();
 }
@@ -42,7 +43,7 @@ class _Step1LoglineWidgetState extends State<Step1LoglineWidget> {
       final style = provider.plotBooster.style;
 
       // モックレスポンス
-      final aiResponse = '''
+      const aiResponse = '''
 ## ログラインのアイデア
 
 1. 「記憶を失った元暗殺者が、自分の過去と向き合いながら、かつての組織から家族を守るために戦う。」
@@ -91,7 +92,7 @@ class _Step1LoglineWidgetState extends State<Step1LoglineWidget> {
     return Material(
       color: Colors.transparent,
       child: SingleChildScrollView(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -99,17 +100,17 @@ class _Step1LoglineWidgetState extends State<Step1LoglineWidget> {
               'STEP 1：ログライン（物語の要約）の作成',
               style: Theme.of(context).textTheme.titleLarge,
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(
               '主人公の目的と、それを阻む障害を簡潔に一文で表現します。\n例：「復讐のために帝国を滅ぼそうとする少女が、仲間との絆に揺れる。」',
               style: Theme.of(context).textTheme.bodyMedium,
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
 
             // ログライン入力 - Web環境でも確実に表示されるよう調整
             Container(
               constraints:
-                  BoxConstraints(minHeight: 100, minWidth: double.infinity),
+                  const BoxConstraints(minHeight: 100, minWidth: double.infinity),
               decoration: kIsWeb
                   ? BoxDecoration(
                       color: Theme.of(context).brightness == Brightness.dark
@@ -128,7 +129,7 @@ class _Step1LoglineWidgetState extends State<Step1LoglineWidget> {
                 decoration: InputDecoration(
                   labelText: 'ログライン',
                   hintText: '例：復讐のために帝国を滅ぼそうとする少女が、仲間との絆に揺れる。',
-                  border: OutlineInputBorder(),
+                  border: const OutlineInputBorder(),
                   // 入力欄が見えるようにフィルカラーを設定
                   filled: true,
                   fillColor: kIsWeb
@@ -157,17 +158,17 @@ class _Step1LoglineWidgetState extends State<Step1LoglineWidget> {
             ),
 
             // AIアシスト - Web環境でも確実に表示されるよう調整
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
             // AIアシストボタンを常に表示（無効化はするが非表示にはしない）
-            Container(
+            SizedBox(
               width: kIsWeb ? double.infinity : null,
               child: ElevatedButton.icon(
-                icon: Icon(Icons.lightbulb_outline),
-                label: Text('AIに助けを求める'),
+                icon: const Icon(Icons.lightbulb_outline),
+                label: const Text('AIに助けを求める'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.amber,
                   // ボタンが見えるように最小サイズを設定
-                  minimumSize: Size(200, 48),
+                  minimumSize: const Size(200, 48),
                   // Web環境では明示的に色を指定
                   foregroundColor: Colors.black,
                 ),
@@ -177,13 +178,13 @@ class _Step1LoglineWidgetState extends State<Step1LoglineWidget> {
               ),
             ),
             if (_isLoading)
-              Padding(
+              const Padding(
                 padding: EdgeInsets.all(16),
                 child: Center(child: CircularProgressIndicator()),
               ),
             // AIアシストが無効の場合のメッセージ
             if (!provider.isAIAssistEnabled)
-              Padding(
+              const Padding(
                 padding: EdgeInsets.only(top: 8),
                 child: Text(
                   'AIアシストは現在無効です。有効にするには画面上部のスイッチをオンにしてください。',
@@ -194,8 +195,8 @@ class _Step1LoglineWidgetState extends State<Step1LoglineWidget> {
             // デバッグ情報（開発時のみ表示）
             if (kIsWeb && false) // 本番環境では false に設定
               Container(
-                margin: EdgeInsets.only(top: 24),
-                padding: EdgeInsets.all(8),
+                margin: const EdgeInsets.only(top: 24),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: Colors.red[100],
                   border: Border.all(color: Colors.red),
@@ -204,9 +205,9 @@ class _Step1LoglineWidgetState extends State<Step1LoglineWidget> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('デバッグ情報:',
+                    const Text('デバッグ情報:',
                         style: TextStyle(fontWeight: FontWeight.bold)),
-                    Text('isWeb: $kIsWeb'),
+                    const Text('isWeb: $kIsWeb'),
                     Text('isAIAssistEnabled: ${provider.isAIAssistEnabled}'),
                     Text('logline: ${provider.plotBooster.logline}'),
                     Text('brightness: ${Theme.of(context).brightness}'),

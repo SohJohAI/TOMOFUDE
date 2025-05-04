@@ -42,8 +42,6 @@ class _NovelListScreenState extends State<NovelListScreen> {
     final novelListProvider = Provider.of<NovelListProvider>(context);
     final novels = novelListProvider.novels;
 
-    final isDark = CupertinoTheme.of(context).brightness == Brightness.dark;
-
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
         middle: const Row(
@@ -83,7 +81,8 @@ class _NovelListScreenState extends State<NovelListScreen> {
               onPressed: () {
                 Navigator.push(
                   context,
-                  CupertinoPageRoute(builder: (context) => PlotBoosterScreen()),
+                  CupertinoPageRoute(
+                      builder: (context) => const PlotBoosterScreen()),
                 );
               },
             ),
@@ -122,8 +121,8 @@ class _NovelListScreenState extends State<NovelListScreen> {
             // ログアウトボタン
             CupertinoButton(
               padding: EdgeInsets.zero,
-              child: const Icon(CupertinoIcons.square_arrow_right),
               onPressed: _signOut,
+              child: const Icon(CupertinoIcons.square_arrow_right),
             ),
           ],
         ),
@@ -170,7 +169,7 @@ class _NovelListScreenState extends State<NovelListScreen> {
                 : CupertinoColors.systemGrey3,
           ),
           const SizedBox(height: 16),
-          Text(
+          const Text(
             '小説がありません',
             style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
           ),

@@ -7,7 +7,7 @@ class PlotBoosterService {
   // ジャンル提案
   Future<List<String>> suggestGenres() async {
     // モックデータ（後でPoe APIに置き換え）
-    await Future.delayed(Duration(milliseconds: 500));
+    await Future.delayed(const Duration(milliseconds: 500));
     return [
       'ファンタジー',
       'SF',
@@ -25,7 +25,7 @@ class PlotBoosterService {
   // 作風提案
   Future<List<String>> suggestStyles() async {
     // モックデータ（後でPoe APIに置き換え）
-    await Future.delayed(Duration(milliseconds: 500));
+    await Future.delayed(const Duration(milliseconds: 500));
     return [
       'シリアス',
       'コメディ',
@@ -43,7 +43,7 @@ class PlotBoosterService {
   // ログライン提案
   Future<List<String>> suggestLoglines(String genre, String style) async {
     // モックデータ（後でPoe APIに置き換え）
-    await Future.delayed(Duration(milliseconds: 800));
+    await Future.delayed(const Duration(milliseconds: 800));
 
     final loglines = [
       '魔法の力を失った少年が、古代の遺跡で見つけた謎の石を通じて失われた力を取り戻す冒険に出る。',
@@ -61,7 +61,7 @@ class PlotBoosterService {
   // テーマ提案
   Future<List<String>> suggestThemes(String genre, String logline) async {
     // モックデータ（後でPoe APIに置き換え）
-    await Future.delayed(Duration(milliseconds: 700));
+    await Future.delayed(const Duration(milliseconds: 700));
 
     final themes = [
       '成長',
@@ -90,7 +90,7 @@ class PlotBoosterService {
   Future<String> suggestWorldSetting(
       String genre, String logline, List<String> themes) async {
     // モックデータ（後でPoe APIに置き換え）
-    await Future.delayed(Duration(milliseconds: 1000));
+    await Future.delayed(const Duration(milliseconds: 1000));
 
     final worldSettings = [
       '魔法と科学が共存する未来世界。古代の魔法文明の遺跡が点在し、人々は魔法と科学の力を組み合わせて生活している。しかし、魔法の力は徐々に衰えつつあり、それを食い止めようとする者と、科学の力だけで進もうとする者との間で対立が生まれている。',
@@ -108,7 +108,7 @@ class PlotBoosterService {
   Future<List<KeySetting>> suggestKeySettings(
       String genre, String worldSetting) async {
     // モックデータ（後でPoe APIに置き換え）
-    await Future.delayed(Duration(milliseconds: 900));
+    await Future.delayed(const Duration(milliseconds: 900));
 
     final keySettings = [
       KeySetting(
@@ -138,7 +138,7 @@ class PlotBoosterService {
   Future<Character> suggestProtagonist(
       String logline, List<String> themes) async {
     // モックデータ（後でPoe APIに置き換え）
-    await Future.delayed(Duration(milliseconds: 800));
+    await Future.delayed(const Duration(milliseconds: 800));
 
     final protagonists = [
       Character(
@@ -169,7 +169,7 @@ class PlotBoosterService {
   Future<Character> suggestAntagonist(
       String logline, Character protagonist) async {
     // モックデータ（後でPoe APIに置き換え）
-    await Future.delayed(Duration(milliseconds: 800));
+    await Future.delayed(const Duration(milliseconds: 800));
 
     final antagonists = [
       Character(
@@ -207,7 +207,7 @@ class PlotBoosterService {
     Character antagonist,
   ) async {
     // モックデータ（後でPoe APIに置き換え）
-    await Future.delayed(Duration(milliseconds: 1200));
+    await Future.delayed(const Duration(milliseconds: 1200));
 
     return [
       ChapterOutline(
@@ -255,7 +255,7 @@ class PlotBoosterService {
   Future<String> generateSupportMaterial(PlotBooster plotBooster) async {
     // 実際の実装では、AIサービスを使用してClaudeにリクエストを送信する
     // 現在はモックデータを返す
-    await Future.delayed(Duration(milliseconds: 1500));
+    await Future.delayed(const Duration(milliseconds: 1500));
 
     // Claudeプロンプトを構築（実際の実装では、このプロンプトをAIサービスに送信する）
     final prompt = '''
@@ -269,7 +269,7 @@ ${plotBooster.logline}
 作風: ${plotBooster.style}
 テーマ: ${plotBooster.themes.join(', ')}
 世界観: ${plotBooster.worldSetting}
-${plotBooster.keySettings.isNotEmpty ? 'キー設定: ' + plotBooster.keySettings.map((k) => '${k.name}（${k.effect}）').join(', ') : ''}
+${plotBooster.keySettings.isNotEmpty ? 'キー設定: ${plotBooster.keySettings.map((k) => '${k.name}（${k.effect}）').join(', ')}' : ''}
 
 プロット情報:
 主人公: ${plotBooster.protagonist.name} - ${plotBooster.protagonist.description}
@@ -278,7 +278,7 @@ ${plotBooster.keySettings.isNotEmpty ? 'キー設定: ' + plotBooster.keySetting
 敵対者: ${plotBooster.antagonist.name} - ${plotBooster.antagonist.description}
 敵の動機: ${plotBooster.antagonist.motivation}
 対立点: ${plotBooster.antagonist.conflict}
-${plotBooster.chapterOutlines.isNotEmpty ? '章構成: ' + plotBooster.chapterOutlines.map((c) => c.title).join(' → ') : ''}
+${plotBooster.chapterOutlines.isNotEmpty ? '章構成: ${plotBooster.chapterOutlines.map((c) => c.title).join(' → ')}' : ''}
 
 以下の項目を含む、構造化された資料を作成してください:
 

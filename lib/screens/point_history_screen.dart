@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -51,11 +50,11 @@ class _PointHistoryScreenState extends State<PointHistoryScreen> {
         middle: const Text('ポイント履歴'),
         trailing: CupertinoButton(
           padding: EdgeInsets.zero,
+          onPressed: _loadPointHistory,
           child: const Icon(
             CupertinoIcons.refresh,
             size: 22,
           ),
-          onPressed: _loadPointHistory,
         ),
       ),
       child: SafeArea(

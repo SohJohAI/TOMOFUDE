@@ -74,7 +74,7 @@ class _SupabaseAuthExampleState extends State<SupabaseAuthExample> {
       } else {
         // Sign up failed
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Unknown error occurred.')),
+          const SnackBar(content: Text('Unknown error occurred.')),
         );
       }
     } on AuthException catch (e) {
@@ -114,7 +114,7 @@ class _SupabaseAuthExampleState extends State<SupabaseAuthExample> {
       } else {
         // Sign in failed
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Unknown error occurred.')),
+          const SnackBar(content: Text('Unknown error occurred.')),
         );
       }
     } on AuthException catch (e) {
@@ -140,7 +140,7 @@ class _SupabaseAuthExampleState extends State<SupabaseAuthExample> {
     try {
       await _authService.signOut();
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Successfully signed out')),
+        const SnackBar(content: Text('Successfully signed out')),
       );
     } on AuthException catch (e) {
       _handleAuthError(context, e.message);
@@ -164,7 +164,7 @@ class _SupabaseAuthExampleState extends State<SupabaseAuthExample> {
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No user is currently signed in')),
+        const SnackBar(content: Text('No user is currently signed in')),
       );
     }
   }

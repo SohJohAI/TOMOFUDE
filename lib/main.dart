@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -7,7 +6,6 @@ import 'providers/app_state.dart';
 import 'providers/novel_list_provider.dart';
 import 'providers/work_list_provider.dart';
 import 'providers/payment_provider.dart';
-import 'screens/novel_list_screen.dart';
 import 'screens/work_list_screen.dart';
 import 'screens/payment_screen.dart';
 import 'screens/auth_gate.dart';
@@ -31,16 +29,6 @@ void main() async {
 
   // Initialize service locator
   await setupServiceLocator();
-
-  void loginForTest() async {
-    final response = await Supabase.instance.client.auth.signInWithPassword(
-      email: "sohjohai@gmail.com",
-      password: "D99U+P*zPf_rh2Y",
-    );
-
-    final jwt = response.session?.accessToken;
-    print("ログイン成功！JWT: $jwt");
-  }
 
   runApp(
     MultiProvider(

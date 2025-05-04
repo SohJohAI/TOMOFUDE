@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
 import '../../providers/plot_booster_provider.dart';
 import '../../services/plot_booster_service.dart';
 import '../../models/plot_booster.dart';
@@ -8,6 +7,8 @@ import '../../utils/ai_helper.dart';
 
 /// STEP 5: キャラクター設定
 class Step5CharacterWidget extends StatefulWidget {
+  const Step5CharacterWidget({super.key});
+
   @override
   _Step5CharacterWidgetState createState() => _Step5CharacterWidgetState();
 }
@@ -99,7 +100,7 @@ class _Step5CharacterWidgetState extends State<Step5CharacterWidget>
 
     try {
       // モックレスポンス
-      final aiResponse = '''
+      const aiResponse = '''
 ## キャラクター設定のアイデア
 
 ### 主人公のアイデア
@@ -130,7 +131,7 @@ class _Step5CharacterWidgetState extends State<Step5CharacterWidget>
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -138,22 +139,22 @@ class _Step5CharacterWidgetState extends State<Step5CharacterWidget>
             'STEP 5：キャラクター設定',
             style: Theme.of(context).textTheme.titleLarge,
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             '物語の主人公と敵対者（または障害）を設定します。',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
 
           // タブ
           TabBar(
             controller: _tabController,
-            tabs: [
+            tabs: const [
               Tab(text: '主人公'),
               Tab(text: '敵対者/障害'),
             ],
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
 
           // タブコンテンツ
           SizedBox(
@@ -171,29 +172,29 @@ class _Step5CharacterWidgetState extends State<Step5CharacterWidget>
           ),
 
           // AIアシスト
-          SizedBox(height: 24),
+          const SizedBox(height: 24),
           Consumer<PlotBoosterProvider>(
             builder: (context, provider, child) {
               if (provider.isAIAssistEnabled) {
                 return Column(
                   children: [
                     ElevatedButton.icon(
-                      icon: Icon(Icons.lightbulb_outline),
-                      label: Text('AIに助けを求める'),
+                      icon: const Icon(Icons.lightbulb_outline),
+                      label: const Text('AIに助けを求める'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.amber,
                       ),
                       onPressed: _isLoading ? null : _requestAIHelp,
                     ),
                     if (_isLoading)
-                      Padding(
+                      const Padding(
                         padding: EdgeInsets.all(16),
                         child: Center(child: CircularProgressIndicator()),
                       ),
                   ],
                 );
               }
-              return SizedBox.shrink();
+              return const SizedBox.shrink();
             },
           ),
         ],
@@ -208,17 +209,17 @@ class _Step5CharacterWidgetState extends State<Step5CharacterWidget>
         children: [
           TextField(
             controller: _protagonistNameController,
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               labelText: '名前',
               hintText: '例：鈴木太郎',
               border: OutlineInputBorder(),
             ),
             onChanged: (_) => _updateProtagonist(),
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           TextField(
             controller: _protagonistDescController,
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               labelText: '人物像・特徴',
               hintText: '例：28歳の会社員。真面目で責任感が強いが、自分の感情を表に出すのが苦手。',
               border: OutlineInputBorder(),
@@ -226,10 +227,10 @@ class _Step5CharacterWidgetState extends State<Step5CharacterWidget>
             maxLines: 3,
             onChanged: (_) => _updateProtagonist(),
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           TextField(
             controller: _protagonistMotivationController,
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               labelText: '動機・目標',
               hintText: '例：失踪した妹を見つけ出すこと。',
               border: OutlineInputBorder(),
@@ -237,10 +238,10 @@ class _Step5CharacterWidgetState extends State<Step5CharacterWidget>
             maxLines: 2,
             onChanged: (_) => _updateProtagonist(),
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           TextField(
             controller: _protagonistConflictController,
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               labelText: '内的葛藤・弱点',
               hintText: '例：過去のトラウマから、人を信じることができない。',
               border: OutlineInputBorder(),
@@ -260,17 +261,17 @@ class _Step5CharacterWidgetState extends State<Step5CharacterWidget>
         children: [
           TextField(
             controller: _antagonistNameController,
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               labelText: '名前',
               hintText: '例：黒川一郎、または「社会の無関心」など',
               border: OutlineInputBorder(),
             ),
             onChanged: (_) => _updateAntagonist(),
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           TextField(
             controller: _antagonistDescController,
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               labelText: '人物像・特徴',
               hintText: '例：謎の組織のリーダー。冷静沈着で計算高い。または「情報操作による大衆の無関心」など',
               border: OutlineInputBorder(),
@@ -278,10 +279,10 @@ class _Step5CharacterWidgetState extends State<Step5CharacterWidget>
             maxLines: 3,
             onChanged: (_) => _updateAntagonist(),
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           TextField(
             controller: _antagonistMotivationController,
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               labelText: '動機・目標',
               hintText: '例：世界を支配すること。または「社会の秩序維持」など',
               border: OutlineInputBorder(),
@@ -289,10 +290,10 @@ class _Step5CharacterWidgetState extends State<Step5CharacterWidget>
             maxLines: 2,
             onChanged: (_) => _updateAntagonist(),
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           TextField(
             controller: _antagonistConflictController,
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               labelText: '主人公との対立点',
               hintText: '例：主人公の持つ能力を利用したい。または「主人公の理想と現実社会の壁」など',
               border: OutlineInputBorder(),

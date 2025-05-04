@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
@@ -236,7 +235,7 @@ class WorkListScreen extends StatelessWidget {
                     children: [
                       Text(
                         '${work.getChapterCount()}章',
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 12,
                           color: CupertinoColors.activeBlue,
                         ),
@@ -244,7 +243,7 @@ class WorkListScreen extends StatelessWidget {
                       const SizedBox(width: 8),
                       Text(
                         '${work.getTotalWordCount()}文字',
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 12,
                           color: CupertinoColors.activeBlue,
                         ),
@@ -423,7 +422,7 @@ class WorkListScreen extends StatelessWidget {
     Navigator.push(
       context,
       CupertinoPageRoute(
-        builder: (context) => PlotBoosterScreen(),
+        builder: (context) => const PlotBoosterScreen(),
         fullscreenDialog: true,
       ),
     ).then((result) {

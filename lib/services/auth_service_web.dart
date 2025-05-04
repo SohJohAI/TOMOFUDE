@@ -2,6 +2,7 @@
 // to avoid compatibility issues with Firebase web packages
 
 import 'auth_service_interface.dart';
+import 'package:flutter/foundation.dart';
 
 /// Service for handling user authentication.
 ///
@@ -14,9 +15,6 @@ class AuthService implements AuthServiceInterface {
   /// Factory constructor to return the same instance
   factory AuthService() => _instance;
 
-  /// Flag indicating whether Firebase is initialized
-  bool _isFirebaseInitialized = false;
-
   /// Private constructor
   AuthService._internal() {
     // Constructor is empty, initialization is done in initialize() method
@@ -25,48 +23,54 @@ class AuthService implements AuthServiceInterface {
   /// Initialize the service
   @override
   Future<void> initialize() async {
-    print('Web version of AuthService initialized, Firebase is disabled');
-    _isFirebaseInitialized = false;
+    debugPrint('Web version of AuthService initialized, Firebase is disabled');
   }
 
   /// Get current user
+  @override
   dynamic get currentUser {
     return null;
   }
 
   /// Stream of auth state changes
+  @override
   Stream<dynamic> get authStateChanges {
     // Return an empty stream
     return Stream.value(null);
   }
 
   /// Sign up with email and password
+  @override
   Future<dynamic> signUpWithEmail(String email, String password) async {
-    print('Firebase not initialized on web, cannot sign up');
+    debugPrint('Firebase not initialized on web, cannot sign up');
     return null;
   }
 
   /// Sign in with email and password
+  @override
   Future<dynamic> signInWithEmail(String email, String password) async {
-    print('Firebase not initialized on web, cannot sign in');
+    debugPrint('Firebase not initialized on web, cannot sign in');
     return null;
   }
 
   /// Sign in with Google
+  @override
   Future<dynamic> signInWithGoogle() async {
-    print('Firebase not initialized on web, cannot sign in with Google');
+    debugPrint('Firebase not initialized on web, cannot sign in with Google');
     return null;
   }
 
   /// Sign out
+  @override
   Future<void> signOut() async {
-    print('Firebase not initialized on web, cannot sign out');
+    debugPrint('Firebase not initialized on web, cannot sign out');
     return;
   }
 
   /// Apply referral code during registration
+  @override
   Future<bool> applyReferralCode(String referralCode) async {
-    print('Firebase not initialized on web, cannot apply referral code');
+    debugPrint('Firebase not initialized on web, cannot apply referral code');
     return false;
   }
 }

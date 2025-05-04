@@ -23,10 +23,10 @@ class Work {
     DateTime? updatedAt,
     this.folderPath,
     this.githubRepoUrl,
-  })  : this.id = id ?? const Uuid().v4(),
-        this.chapters = chapters ?? [],
-        this.createdAt = createdAt ?? DateTime.now(),
-        this.updatedAt = updatedAt ?? DateTime.now();
+  })  : id = id ?? const Uuid().v4(),
+        chapters = chapters ?? [],
+        createdAt = createdAt ?? DateTime.now(),
+        updatedAt = updatedAt ?? DateTime.now();
 
   // 統計情報取得メソッド
   int getTotalWordCount() {

@@ -9,6 +9,8 @@ import '../../utils/ai_helper.dart';
 
 /// STEP 7: 出力
 class Step7OutputWidget extends StatefulWidget {
+  const Step7OutputWidget({super.key});
+
   @override
   _Step7OutputWidgetState createState() => _Step7OutputWidgetState();
 }
@@ -137,7 +139,7 @@ class _Step7OutputWidgetState extends State<Step7OutputWidget> {
   void _copyToClipboard() {
     Clipboard.setData(ClipboardData(text: _markdownOutput)).then((_) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('クリップボードにコピーしました')),
+        const SnackBar(content: Text('クリップボードにコピーしました')),
       );
     });
   }
@@ -220,7 +222,7 @@ ${provider.plotBooster.worldSetting}
     final provider = Provider.of<PlotBoosterProvider>(context);
 
     return SingleChildScrollView(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -228,26 +230,26 @@ ${provider.plotBooster.worldSetting}
             'STEP 7：出力',
             style: Theme.of(context).textTheme.titleLarge,
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             'プロットの概要をマークダウン形式で出力します。コピーボタンでクリップボードにコピーできます。',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
 
           // アクションボタン
           Row(
             children: [
               ElevatedButton.icon(
-                icon: Icon(Icons.copy),
-                label: Text('クリップボードにコピー'),
+                icon: const Icon(Icons.copy),
+                label: const Text('クリップボードにコピー'),
                 onPressed: _copyToClipboard,
               ),
-              SizedBox(width: 16),
+              const SizedBox(width: 16),
               if (provider.isAIAssistEnabled) ...[
                 ElevatedButton.icon(
-                  icon: Icon(Icons.lightbulb_outline),
-                  label: Text('執筆支援資料を生成'),
+                  icon: const Icon(Icons.lightbulb_outline),
+                  label: const Text('執筆支援資料を生成'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.amber,
                   ),
@@ -259,27 +261,27 @@ ${provider.plotBooster.worldSetting}
 
           // ローディングインジケーター
           if (_isLoading)
-            Padding(
+            const Padding(
               padding: EdgeInsets.symmetric(vertical: 16),
               child: Center(child: CircularProgressIndicator()),
             ),
 
           // プロットカード
-          SizedBox(height: 24),
-          Text(
+          const SizedBox(height: 24),
+          const Text(
             'プロットカード',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           PlotCardWidget(plotBooster: provider.plotBooster),
 
           // マークダウンプレビュー
-          SizedBox(height: 24),
-          Text(
+          const SizedBox(height: 24),
+          const Text(
             'マークダウンプレビュー',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Container(
             decoration: BoxDecoration(
               border: Border.all(color: Colors.grey),
@@ -288,7 +290,7 @@ ${provider.plotBooster.worldSetting}
             height: 400,
             child: Markdown(
               data: _markdownOutput,
-              padding: EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
             ),
           ),
         ],
@@ -317,7 +319,7 @@ class PlotCardWidget extends StatelessWidget {
       elevation: 4,
       color: cardColor,
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -334,7 +336,7 @@ class PlotCardWidget extends StatelessWidget {
                     ),
                     backgroundColor: accentColor,
                   ),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 if (plotBooster.style.isNotEmpty)
                   Chip(
                     label: Text(
@@ -347,7 +349,7 @@ class PlotCardWidget extends StatelessWidget {
                   ),
               ],
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
 
             // ログライン
             if (plotBooster.logline.isNotEmpty) ...[
@@ -359,7 +361,7 @@ class PlotCardWidget extends StatelessWidget {
                   color: textColor,
                 ),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
             ],
 
             // テーマ
@@ -371,7 +373,7 @@ class PlotCardWidget extends StatelessWidget {
                   color: textColor,
                 ),
               ),
-              SizedBox(height: 4),
+              const SizedBox(height: 4),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
@@ -383,7 +385,7 @@ class PlotCardWidget extends StatelessWidget {
                   );
                 }).toList(),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
             ],
 
             // キャラクター
@@ -403,7 +405,7 @@ class PlotCardWidget extends StatelessWidget {
                             color: textColor,
                           ),
                         ),
-                        SizedBox(height: 4),
+                        const SizedBox(height: 4),
                         Text(
                           plotBooster.protagonist.name,
                           style: TextStyle(color: textColor),
@@ -412,7 +414,7 @@ class PlotCardWidget extends StatelessWidget {
                     ),
                   ),
 
-                SizedBox(width: 16),
+                const SizedBox(width: 16),
 
                 // 敵対者
                 if (plotBooster.antagonist.name.isNotEmpty)
@@ -427,7 +429,7 @@ class PlotCardWidget extends StatelessWidget {
                             color: textColor,
                           ),
                         ),
-                        SizedBox(height: 4),
+                        const SizedBox(height: 4),
                         Text(
                           plotBooster.antagonist.name,
                           style: TextStyle(color: textColor),
